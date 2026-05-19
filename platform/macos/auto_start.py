@@ -1,7 +1,22 @@
-_PLATFORM = __name__.split(".")[1]  # "linux" or "macos"
+from platform.base.auto_start import AutoStartBase
 
-def __getattr__(name):
-    raise NotImplementedError(
-        f"{name} is not implemented for platform '{_PLATFORM}'. "
-        f"This stub exists to support future ports (see Spec Section 17)."
-    )
+_PLATFORM = 'macos'
+
+class AutoStart(AutoStartBase):
+    def enable(self, app_path: str) -> None:
+        raise NotImplementedError(
+            f"AutoStart is not implemented for platform '{_PLATFORM}'. "
+            "This stub exists to support future ports (Spec Section 17)."
+        )
+
+    def disable(self) -> None:
+        raise NotImplementedError(
+            f"AutoStart is not implemented for platform '{_PLATFORM}'. "
+            "This stub exists to support future ports (Spec Section 17)."
+        )
+
+    def is_enabled(self) -> bool:
+        raise NotImplementedError(
+            f"AutoStart is not implemented for platform '{_PLATFORM}'. "
+            "This stub exists to support future ports (Spec Section 17)."
+        )

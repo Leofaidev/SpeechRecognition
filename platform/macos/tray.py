@@ -1,7 +1,28 @@
-_PLATFORM = __name__.split(".")[1]  # "linux" or "macos"
+from platform.base.tray import TrayBase
 
-def __getattr__(name):
-    raise NotImplementedError(
-        f"{name} is not implemented for platform '{_PLATFORM}'. "
-        f"This stub exists to support future ports (see Spec Section 17)."
-    )
+_PLATFORM = 'macos'
+
+class Tray(TrayBase):
+    def create(self, icon_path: str, menu_items: list[dict]) -> None:
+        raise NotImplementedError(
+            f"Tray is not implemented for platform '{_PLATFORM}'. "
+            "This stub exists to support future ports (Spec Section 17)."
+        )
+
+    def destroy(self) -> None:
+        raise NotImplementedError(
+            f"Tray is not implemented for platform '{_PLATFORM}'. "
+            "This stub exists to support future ports (Spec Section 17)."
+        )
+
+    def show_notification(self, title: str, message: str) -> None:
+        raise NotImplementedError(
+            f"Tray is not implemented for platform '{_PLATFORM}'. "
+            "This stub exists to support future ports (Spec Section 17)."
+        )
+
+    def set_menu_item_enabled(self, item_id: str, enabled: bool) -> None:
+        raise NotImplementedError(
+            f"Tray is not implemented for platform '{_PLATFORM}'. "
+            "This stub exists to support future ports (Spec Section 17)."
+        )

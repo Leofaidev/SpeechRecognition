@@ -1,7 +1,10 @@
-_PLATFORM = __name__.split(".")[1]  # "linux" or "macos"
+from platform.base.device_enum import DeviceEnumBase, DeviceInfo
 
-def __getattr__(name):
-    raise NotImplementedError(
-        f"{name} is not implemented for platform '{_PLATFORM}'. "
-        f"This stub exists to support future ports (see Spec Section 17)."
-    )
+_PLATFORM = 'macos'
+
+class DeviceEnum(DeviceEnumBase):
+    def list_devices(self) -> list[DeviceInfo]:
+        raise NotImplementedError(
+            f"DeviceEnum is not implemented for platform '{_PLATFORM}'. "
+            "This stub exists to support future ports (Spec Section 17)."
+        )

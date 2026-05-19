@@ -1,7 +1,16 @@
-_PLATFORM = __name__.split(".")[1]  # "linux" or "macos"
+from platform.base.installer import InstallerBase
 
-def __getattr__(name):
-    raise NotImplementedError(
-        f"{name} is not implemented for platform '{_PLATFORM}'. "
-        f"This stub exists to support future ports (see Spec Section 17)."
-    )
+_PLATFORM = 'macos'
+
+class Installer(InstallerBase):
+    def build_installer(self, spec_file: str, output_dir: str) -> str:
+        raise NotImplementedError(
+            f"Installer is not implemented for platform '{_PLATFORM}'. "
+            "This stub exists to support future ports (Spec Section 17)."
+        )
+
+    def check_disk_space(self, path: str, required_bytes: int) -> bool:
+        raise NotImplementedError(
+            f"Installer is not implemented for platform '{_PLATFORM}'. "
+            "This stub exists to support future ports (Spec Section 17)."
+        )

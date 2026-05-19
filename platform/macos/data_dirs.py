@@ -1,7 +1,16 @@
-_PLATFORM = __name__.split(".")[1]  # "linux" or "macos"
+from platform.base.data_dirs import DataDirsBase
 
-def __getattr__(name):
-    raise NotImplementedError(
-        f"{name} is not implemented for platform '{_PLATFORM}'. "
-        f"This stub exists to support future ports (see Spec Section 17)."
-    )
+_PLATFORM = 'macos'
+
+class DataDirs(DataDirsBase):
+    def get_app_dir(self) -> str:
+        raise NotImplementedError(
+            f"DataDirs is not implemented for platform '{_PLATFORM}'. "
+            "This stub exists to support future ports (Spec Section 17)."
+        )
+
+    def ensure_app_dir(self) -> str:
+        raise NotImplementedError(
+            f"DataDirs is not implemented for platform '{_PLATFORM}'. "
+            "This stub exists to support future ports (Spec Section 17)."
+        )
