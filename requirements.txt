@@ -1,20 +1,135 @@
-# Requirements will be pinned here after installation completes (T-02).
-# Run: pip freeze > requirements.txt
+# Install torch before everything else using the CUDA 12.6 index:
+#   pip install torch==2.12.0+cu126 --index-url https://download.pytorch.org/whl/cu126
 #
-# Core libraries (see docs/Specification.md Section 18):
-#   torch (CUDA 12.6 build from https://download.pytorch.org/whl/cu126)
-#   faster-whisper
-#   pyannote.audio
-#   customtkinter
-#   pyaudio
-#   opencv-python
-#   keyboard
-#   transformers + sentencepiece + sacremoses  (Helsinki-NLP OPUS-MT)
-#   python-vlc
-#   pyinstaller
-#   python-docx
-#   pyperclip
-#   pystray
-#   pytest
-#   ffmpeg-python
-#   huggingface-hub
+# pyaudio is NOT listed here — it requires Microsoft C++ Build Tools to compile:
+#   https://visualstudio.microsoft.com/visual-cpp-build-tools/
+#   After installing Build Tools, run: pip install pyaudio
+#
+# FFmpeg must be installed system-wide (not via pip) for audio/video extraction.
+#   Download "full-shared" build from https://ffmpeg.org/download.html
+#   Add the FFmpeg bin/ directory to PATH.
+
+aiohappyeyeballs==2.6.1
+aiohttp==3.13.5
+aiosignal==1.4.0
+alembic==1.18.4
+altgraph==0.17.5
+annotated-doc==0.0.4
+anyio==4.13.0
+asteroid-filterbanks==0.4.0
+attrs==26.1.0
+av==17.0.1
+certifi==2026.4.22
+charset-normalizer==3.4.7
+click==8.4.0
+colorama==0.4.6
+colorlog==6.10.1
+contourpy==1.3.3
+ctranslate2==4.7.2
+customtkinter==5.2.2
+cycler==0.12.1
+darkdetect==0.8.0
+einops==0.8.2
+faster-whisper==1.2.1
+ffmpeg-python==0.2.0
+filelock==3.29.0
+flatbuffers==25.12.19
+fonttools==4.63.0
+frozenlist==1.8.0
+fsspec==2026.4.0
+future==1.0.0
+googleapis-common-protos==1.75.0
+greenlet==3.5.0
+grpcio==1.80.0
+h11==0.16.0
+hf-xet==1.5.0
+httpcore==1.0.9
+httpx==0.28.1
+huggingface_hub==1.15.0
+idna==3.15
+iniconfig==2.3.0
+Jinja2==3.1.6
+joblib==1.5.3
+julius==0.2.7
+keyboard==0.13.5
+kiwisolver==1.5.0
+lightning==2.6.1
+lightning-utilities==0.15.3
+lxml==6.1.1
+Mako==1.3.12
+markdown-it-py==4.2.0
+MarkupSafe==3.0.3
+matplotlib==3.10.9
+mdurl==0.1.2
+mpmath==1.3.0
+multidict==6.7.1
+networkx==3.6.1
+numpy==2.4.6
+onnxruntime==1.26.0
+opencv-python==4.13.0.92
+opentelemetry-api==1.42.0
+opentelemetry-exporter-otlp==1.42.0
+opentelemetry-exporter-otlp-proto-common==1.42.0
+opentelemetry-exporter-otlp-proto-grpc==1.42.0
+opentelemetry-exporter-otlp-proto-http==1.42.0
+opentelemetry-proto==1.42.0
+opentelemetry-sdk==1.42.0
+opentelemetry-semantic-conventions==0.63b0
+optuna==4.8.0
+packaging==26.2
+pandas==3.0.3
+pefile==2024.8.26
+pillow==12.2.0
+pluggy==1.6.0
+primePy==1.3
+propcache==0.5.2
+protobuf==6.33.6
+pyannote-audio==4.0.4
+pyannote-core==6.0.1
+pyannote-database==6.1.1
+pyannote-metrics==4.1
+pyannote-pipeline==4.0.0
+pyannoteai-sdk==0.4.0
+Pygments==2.20.0
+pyinstaller==6.20.0
+pyinstaller-hooks-contrib==2026.5
+pyparsing==3.3.2
+pyperclip==1.11.0
+pystray==0.19.5
+pytest==9.0.3
+python-dateutil==2.9.0.post0
+python-docx==1.2.0
+python-vlc==3.0.21203
+pytorch-lightning==2.6.1
+pytorch-metric-learning==2.9.0
+pywin32-ctypes==0.2.3
+PyYAML==6.0.3
+regex==2026.5.9
+requests==2.34.2
+rich==15.0.0
+sacremoses==0.1.1
+safetensors==0.7.0
+scikit-learn==1.8.0
+scipy==1.17.1
+sentencepiece==0.2.1
+setuptools==70.2.0
+shellingham==1.5.4
+six==1.17.0
+sortedcontainers==2.4.0
+SQLAlchemy==2.0.49
+sympy==1.14.0
+threadpoolctl==3.6.0
+tokenizers==0.22.2
+torch==2.12.0+cu126
+torch-audiomentations==0.12.0
+torch_pitch_shift==1.2.5
+torchaudio==2.11.0
+torchcodec==0.12.0
+torchmetrics==1.9.0
+tqdm==4.67.3
+transformers==5.8.1
+typer==0.25.1
+typing_extensions==4.15.0
+tzdata==2026.2
+urllib3==2.7.0
+yarl==1.23.0

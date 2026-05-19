@@ -47,8 +47,8 @@ Build and installer instructions will live in `BUILD.md` once the installer is i
 | `config.store` | JSON config file; all persistent settings with defaults |
 | `backup.manager` / `backup.restorer` | ZIP backup/restore of all user data |
 | `cli.parser` | argparse CLI front-end (no GUI); all output always in English |
-| `platform/windows/` | Windows-specific: data dirs (`%LOCALAPPDATA%`), auto-start (HKCU), tray, hotkeys, device enum |
-| `platform/linux/` `platform/macos/` | Stubs raising `NotImplementedError` |
+| `platforms/windows/` | Windows-specific: data dirs (`%LOCALAPPDATA%`), auto-start (HKCU), tray, hotkeys, device enum |
+| `platforms/linux/` `platforms/macos/` | Stubs raising `NotImplementedError` |
 
 ### Processing pipeline (fixed order)
 1. Speaker diarization (pyannote.audio)
@@ -69,7 +69,7 @@ Built with **CustomTkinter**. Nine panels: Settings, Voice Profile Management, S
 - All core processing (speech recognition, speaker ID) must run **locally**. Translation is the only feature that may optionally use an external service.
 - All libraries must be **free and open-source** and listed in `requirements.txt` with pinned versions.
 - pyannote.audio requires **HuggingFace licence acceptance**; if absent, all diarization features are disabled and speakers are labelled Unknown.
-- Platform-specific code must be **isolated in `platform/`** modules to support future ports.
+- Platform-specific code must be **isolated in `platforms/`** modules to support future ports.
 - CLI mode: no GUI, all output in English, exit code 0 on success.
 
 ## Preferred Libraries
