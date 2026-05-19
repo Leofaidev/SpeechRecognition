@@ -1,0 +1,20 @@
+# Requirements will be pinned here after installation completes (T-02).
+# Run: pip freeze > requirements.txt
+#
+# Core libraries (see docs/Specification.md Section 18):
+#   torch (CUDA 12.6 build from https://download.pytorch.org/whl/cu126)
+#   faster-whisper
+#   pyannote.audio
+#   customtkinter
+#   pyaudio
+#   opencv-python
+#   keyboard
+#   transformers + sentencepiece + sacremoses  (Helsinki-NLP OPUS-MT)
+#   python-vlc
+#   pyinstaller
+#   python-docx
+#   pyperclip
+#   pystray
+#   pytest
+#   ffmpeg-python
+#   huggingface-hub
