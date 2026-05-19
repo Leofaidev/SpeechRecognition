@@ -8,7 +8,10 @@
       "PowerShell(Get-Item *)",
       "PowerShell(Get-ChildItem *)",
       "PowerShell(git config *)",
-      "PowerShell(git *)"
+      "PowerShell(git *)",
+      "PowerShell(python --version 2>&1)",
+      "PowerShell(winget search *)",
+      "PowerShell(winget install *)"
     ]
   }
 }
