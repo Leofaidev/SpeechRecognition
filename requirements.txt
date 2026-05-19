@@ -1,9 +1,12 @@
 # Install torch before everything else using the CUDA 12.6 index:
 #   pip install torch==2.12.0+cu126 --index-url https://download.pytorch.org/whl/cu126
 #
-# pyaudio is NOT listed here — it requires Microsoft C++ Build Tools to compile:
-#   https://visualstudio.microsoft.com/visual-cpp-build-tools/
-#   After installing Build Tools, run: pip install pyaudio
+# pyaudio requires Microsoft C++ Build Tools + PortAudio via vcpkg to compile:
+#   1. Install Build Tools: https://visualstudio.microsoft.com/visual-cpp-build-tools/
+#   2. Install vcpkg: git clone https://github.com/microsoft/vcpkg C:\vcpkg && C:\vcpkg\bootstrap-vcpkg.bat
+#   3. Install PortAudio: C:\vcpkg\vcpkg.exe install portaudio:x64-windows
+#   4. pip install pyaudio with env var: VCPKG_PATH=C:\vcpkg\installed\x64-windows pip install pyaudio
+#   5. Copy C:\vcpkg\installed\x64-windows\bin\portaudio.dll into .venv\Lib\site-packages\pyaudio\
 #
 # FFmpeg must be installed system-wide (not via pip) for audio/video extraction.
 #   Download "full-shared" build from https://ffmpeg.org/download.html
@@ -95,6 +98,7 @@ pyinstaller==6.20.0
 pyinstaller-hooks-contrib==2026.5
 pyparsing==3.3.2
 pyperclip==1.11.0
+PyAudio==0.2.14
 pystray==0.19.5
 pytest==9.0.3
 python-dateutil==2.9.0.post0
