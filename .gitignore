@@ -63,6 +63,10 @@ models/
 data/
 datasets/
 
+# Keep committed test fixtures
+!tests/fixtures/*.wav
+!tests/fixtures/*.mp3
+
 # Environment variables
 .env
 .env.*
