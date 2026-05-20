@@ -11,6 +11,7 @@ _DEFAULTS: dict[str, Any] = {
     "source_language": "auto",
     "target_language": "en",
     "whisper_model": "medium",
+    "whisper_model_path": "",   # if non-empty, load from this local directory
     "bad_audio_threshold": 0.6,
     "min_profile_samples": 3,
     "translation_enabled": False,

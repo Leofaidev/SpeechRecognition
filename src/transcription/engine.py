@@ -214,14 +214,15 @@ class TranscriptionEngine:
     def _load_model(self):
         from faster_whisper import WhisperModel
 
-        model_size = self._config.get("whisper_model", "medium")
+        model_path = self._config.get("whisper_model_path", "")
+        model_id = model_path if model_path else self._config.get("whisper_model", "medium")
         gpu_enabled = self._config.get("gpu_enabled", True)
 
         import torch
         device = "cuda" if (gpu_enabled and torch.cuda.is_available()) else "cpu"
         compute_type = "float16" if device == "cuda" else "int8"
 
-        model = WhisperModel(model_size, device=device, compute_type=compute_type)
+        model = WhisperModel(model_id, device=device, compute_type=compute_type)
 
         if self._checksum_path:
             import faster_whisper
