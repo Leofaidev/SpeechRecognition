@@ -54,6 +54,13 @@ def restore(
     create_backup(paths, safety_zip)
 
     # Step 2: extract the archive
+    # Clear directory-based stores first so files removed before the backup are
+    # also removed after restore (not merely overwritten where they overlap).
+    for d in (paths.library_root, paths.sessions_dir):
+        if d.exists():
+            shutil.rmtree(d)
+        d.mkdir(parents=True, exist_ok=True)
+
     restored = 0
     try:
         with zipfile.ZipFile(zip_path, "r") as zf:

@@ -32,3 +32,34 @@ def noisy_wav() -> Path:
 @pytest.fixture(scope="session")
 def short_1s_wav() -> Path:
     return FIXTURES_DIR / "short_1s.wav"
+
+
+# ---------------------------------------------------------------------------
+# Custom CLI options — skip integration/performance tests unless opted in
+# ---------------------------------------------------------------------------
+
+def pytest_addoption(parser: pytest.Parser) -> None:
+    parser.addoption(
+        "--integration",
+        action="store_true",
+        default=False,
+        help="Run integration tests (requires real models downloaded locally)",
+    )
+    parser.addoption(
+        "--performance",
+        action="store_true",
+        default=False,
+        help="Run performance benchmarks (requires real models and real/synthetic audio)",
+    )
+
+
+def pytest_collection_modifyitems(
+    config: pytest.Config, items: list[pytest.Item]
+) -> None:
+    skip_it = pytest.mark.skip(reason="pass --integration to run integration tests")
+    skip_pt = pytest.mark.skip(reason="pass --performance to run performance benchmarks")
+    for item in items:
+        if "integration" in item.keywords and not config.getoption("--integration"):
+            item.add_marker(skip_it)
+        if "performance" in item.keywords and not config.getoption("--performance"):
+            item.add_marker(skip_pt)
