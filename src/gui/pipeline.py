@@ -1,0 +1,359 @@
+"""Background pipeline runner (T-84, T-85).
+
+Runs the full processing pipeline (diarization → transcription → dictionary →
+translation → output) in a daemon thread so the GUI stays responsive.
+
+Usage::
+
+    runner = PipelineRunner(config, on_progress=..., on_done=..., on_error=...)
+    runner.start_file("audio.mp3")          # Regular mode, file input
+    runner.start_microphone(audio, sr)      # Regular mode, microphone
+    runner.start_short_session(audio, sr)   # Short Session mode
+
+All callbacks are called from the background thread.  The GUI must schedule
+any UI updates via ``widget.after(0, callback)`` or a queue.
+"""
+
+from __future__ import annotations
+
+import threading
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Callable, Sequence
+
+from config.store import ConfigStore
+
+
+@dataclass
+class PipelineResult:
+    """Holds the result of a completed pipeline run."""
+    segments: list = field(default_factory=list)
+    output_paths: list[Path] = field(default_factory=list)
+    clipboard_text: str = ""
+    source_path: str = ""
+    error: str = ""
+
+    @property
+    def ok(self) -> bool:
+        return not self.error
+
+
+ProgressCallback = Callable[[float, str], None]
+DoneCallback = Callable[[PipelineResult], None]
+ErrorCallback = Callable[[str], None]
+
+
+class PipelineRunner:
+    """Manages a single pipeline thread.
+
+    At most one pipeline run is active at a time.  Calling
+    :meth:`start_file` or :meth:`start_microphone` while a run is active
+    is a no-op.
+    """
+
+    def __init__(
+        self,
+        config: ConfigStore,
+        on_progress: ProgressCallback | None = None,
+        on_done: DoneCallback | None = None,
+        on_error: ErrorCallback | None = None,
+    ) -> None:
+        self._config = config
+        self._on_progress = on_progress or (lambda p, s: None)
+        self._on_done = on_done or (lambda r: None)
+        self._on_error = on_error or (lambda e: None)
+        self._thread: threading.Thread | None = None
+        self._stop_event = threading.Event()
+
+    # ------------------------------------------------------------------
+    # Public API
+    # ------------------------------------------------------------------
+
+    @property
+    def running(self) -> bool:
+        return self._thread is not None and self._thread.is_alive()
+
+    def start_file(self, path: str,
+                   output_dir: Path | None = None,
+                   formats: list[str] | None = None,
+                   speaker_group: str = "") -> bool:
+        """Start pipeline for a single file.  Returns False if already running."""
+        if self.running:
+            return False
+        self._stop_event.clear()
+        self._thread = threading.Thread(
+            target=self._run_file,
+            args=(path, output_dir, formats, speaker_group),
+            daemon=True,
+        )
+        self._thread.start()
+        return True
+
+    def start_microphone(self, audio, sample_rate: int,
+                         output_dir: Path | None = None,
+                         formats: list[str] | None = None,
+                         speaker_group: str = "") -> bool:
+        """Start pipeline for a microphone buffer."""
+        if self.running:
+            return False
+        self._stop_event.clear()
+        self._thread = threading.Thread(
+            target=self._run_microphone,
+            args=(audio, sample_rate, output_dir, formats, speaker_group),
+            daemon=True,
+        )
+        self._thread.start()
+        return True
+
+    def start_short_session(self, audio, sample_rate: int,
+                             speaker_group: str = "") -> bool:
+        """Start Short Session pipeline (auto-clipboard, no file output)."""
+        if self.running:
+            return False
+        self._stop_event.clear()
+        self._thread = threading.Thread(
+            target=self._run_short_session,
+            args=(audio, sample_rate, speaker_group),
+            daemon=True,
+        )
+        self._thread.start()
+        return True
+
+    def start_batch(self, paths: Sequence[str],
+                    output_dir: Path | None = None,
+                    formats: list[str] | None = None,
+                    speaker_group: str = "",
+                    on_file_done: Callable[[str, PipelineResult], None] | None = None,
+                    on_batch_done: Callable[[list[str]], None] | None = None) -> bool:
+        """Start batch processing of multiple files."""
+        if self.running:
+            return False
+        self._stop_event.clear()
+        self._thread = threading.Thread(
+            target=self._run_batch,
+            args=(list(paths), output_dir, formats, speaker_group,
+                  on_file_done, on_batch_done),
+            daemon=True,
+        )
+        self._thread.start()
+        return True
+
+    def request_stop(self) -> None:
+        """Request the running pipeline to stop after the current segment."""
+        self._stop_event.set()
+
+    # ------------------------------------------------------------------
+    # Pipeline implementations (run in background thread)
+    # ------------------------------------------------------------------
+
+    def _run_file(self, path: str, output_dir, formats, speaker_group) -> None:
+        try:
+            result = self._execute_pipeline(
+                source_type="file",
+                source_path=path,
+                audio=None,
+                sample_rate=None,
+                output_dir=output_dir,
+                formats=formats,
+                speaker_group=speaker_group,
+                short_session=False,
+            )
+            self._on_done(result)
+        except Exception as exc:
+            self._on_error(str(exc))
+
+    def _run_microphone(self, audio, sample_rate, output_dir, formats,
+                        speaker_group) -> None:
+        try:
+            result = self._execute_pipeline(
+                source_type="microphone",
+                source_path="",
+                audio=audio,
+                sample_rate=sample_rate,
+                output_dir=output_dir,
+                formats=formats,
+                speaker_group=speaker_group,
+                short_session=False,
+            )
+            self._on_done(result)
+        except Exception as exc:
+            self._on_error(str(exc))
+
+    def _run_short_session(self, audio, sample_rate, speaker_group) -> None:
+        try:
+            result = self._execute_pipeline(
+                source_type="microphone",
+                source_path="",
+                audio=audio,
+                sample_rate=sample_rate,
+                output_dir=None,
+                formats=None,
+                speaker_group=speaker_group,
+                short_session=True,
+            )
+            self._on_done(result)
+        except Exception as exc:
+            self._on_error(str(exc))
+
+    def _run_batch(self, paths, output_dir, formats, speaker_group,
+                   on_file_done, on_batch_done) -> None:
+        failed: list[str] = []
+        n = len(paths)
+        for i, path in enumerate(paths):
+            if self._stop_event.is_set():
+                break
+            self._on_progress(i / n, path)
+            try:
+                result = self._execute_pipeline(
+                    source_type="file",
+                    source_path=path,
+                    audio=None,
+                    sample_rate=None,
+                    output_dir=output_dir,
+                    formats=formats,
+                    speaker_group=speaker_group,
+                    short_session=False,
+                )
+                if on_file_done:
+                    on_file_done(path, result)
+                if not result.ok:
+                    failed.append(path)
+            except Exception as exc:
+                failed.append(path)
+                if on_file_done:
+                    r = PipelineResult(source_path=path, error=str(exc))
+                    on_file_done(path, r)
+        self._on_progress(1.0, "")
+        if on_batch_done:
+            on_batch_done(failed)
+
+    # ------------------------------------------------------------------
+    # Core pipeline logic
+    # ------------------------------------------------------------------
+
+    def _execute_pipeline(
+        self,
+        source_type: str,
+        source_path: str,
+        audio,
+        sample_rate,
+        output_dir: Path | None,
+        formats: list[str] | None,
+        speaker_group: str,
+        short_session: bool,
+    ) -> PipelineResult:
+        from pathlib import Path as _Path
+        from audio.ingest import load
+        from diarization.engine import DiarizationEngine
+        from transcription.engine import TranscriptionEngine
+        from dictionary.store import DictionaryStore
+        from dictionary.matcher import apply as dict_apply
+        from translation.engine import TranslationEngine
+        from output import txt_writer, srt_writer, json_writer, docx_writer
+        from output.clipboard_writer import write as clipboard_write
+        from output.naming import make_output_path
+        from session.manager import SessionManager
+        from session import history as sh
+
+        config = self._config
+
+        # Load audio if needed
+        if audio is None:
+            self._on_progress(0.05, "Loading audio...")
+            audio, sample_rate = load(source_path)
+
+        # Diarize
+        self._on_progress(0.15, "Diarizing...")
+        diarizer = DiarizationEngine(config)
+        segments = diarizer.diarize_or_unknown(audio, sample_rate)
+
+        if self._stop_event.is_set():
+            return PipelineResult(error="Stopped by user.")
+
+        # Transcribe
+        self._on_progress(0.40, "Transcribing...")
+        transcriber = TranscriptionEngine(config)
+        ts_segments = transcriber.transcribe(audio, segments, sample_rate)
+
+        if self._stop_event.is_set():
+            return PipelineResult(error="Stopped by user.")
+
+        # Dictionary
+        self._on_progress(0.65, "Applying dictionary...")
+        dict_path = _Path(config.get("dictionary_file", "dictionary.json"))
+        dict_store = DictionaryStore(dict_path)
+        ts_segments = dict_apply(dict_store, ts_segments)
+
+        # Translate
+        self._on_progress(0.75, "Translating...")
+        translator = TranslationEngine(config)
+        ts_segments = translator.translate(ts_segments)
+
+        # Build clipboard text
+        clipboard_text = " ".join(
+            seg.text for seg in ts_segments if seg.text and not seg.bad_audio
+        )
+        translated_text = " ".join(
+            seg.translated_text or seg.text
+            for seg in ts_segments if not seg.bad_audio
+        )
+
+        # Session
+        session = SessionManager(
+            source_type=source_type,
+            source_path=source_path,
+            speaker_group=speaker_group,
+        )
+        session.add_segments(ts_segments)
+
+        # Output
+        self._on_progress(0.85, "Writing output...")
+        written: list[Path] = []
+
+        if short_session:
+            # Short session: always write to clipboard
+            try:
+                clipboard_write(ts_segments, source_type="microphone")
+            except Exception:
+                pass
+        else:
+            eff_output_dir = _Path(
+                output_dir or config.get("output_folder") or "."
+            )
+            eff_output_dir.mkdir(parents=True, exist_ok=True)
+            eff_formats = formats or config.get("output_formats", ["txt"])
+            input_path = _Path(source_path) if source_path else _Path("output")
+
+            for fmt in eff_formats:
+                out_path = make_output_path(input_path, f".{fmt}", eff_output_dir)
+                if fmt == "txt":
+                    txt_writer.write(ts_segments, out_path)
+                elif fmt == "srt":
+                    srt_writer.write(ts_segments, out_path)
+                elif fmt == "json":
+                    json_writer.write(ts_segments, out_path)
+                elif fmt == "docx":
+                    docx_writer.write(ts_segments, out_path)
+                written.append(out_path)
+
+            if config.get("output_to_clipboard", False) and source_type == "microphone":
+                try:
+                    clipboard_write(ts_segments, source_type="microphone")
+                except Exception:
+                    pass
+
+        session.output_files = [str(p) for p in written]
+        sessions_dir = _Path(config.get("sessions_dir", "sessions"))
+        try:
+            sh.save(sessions_dir, session)
+        except Exception:
+            pass
+
+        self._on_progress(1.0, "Done.")
+
+        return PipelineResult(
+            segments=ts_segments,
+            output_paths=written,
+            clipboard_text=translated_text if config.get("translation_enabled") else clipboard_text,
+            source_path=source_path,
+        )
