@@ -63,9 +63,10 @@ models/
 data/
 datasets/
 
-# Keep committed test fixtures
+# Keep committed test fixtures and built-in app assets
 !tests/fixtures/*.wav
 !tests/fixtures/*.mp3
+!assets/sounds/*.wav
 
 # Environment variables
 .env
