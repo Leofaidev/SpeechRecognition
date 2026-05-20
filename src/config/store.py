@@ -30,8 +30,12 @@ _DEFAULTS: dict[str, Any] = {
     "completion_sound": "chime",
     "gpu_enabled": True,
     "transcript_font_size": 12,
+    "recording_mode": "regular",
+    "ui_language": "en",
     "hotkeys": {
-        "start_stop": "F9",
+        "start_stop": "ctrl+shift+r",
+        "stop_recording": "ctrl+shift+s",
+        "copy_to_clipboard": "ctrl+shift+c",
         "toggle_mode": "F10",
     },
 }
