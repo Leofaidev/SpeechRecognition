@@ -11,7 +11,6 @@ _EXCLUDE_PATTERNS = (
     "aux",
     "virtual microphone",
     "intelligo vac",
-    "splitcam",             # SplitCam virtual audio mixer
 )
 
 
