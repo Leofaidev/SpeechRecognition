@@ -8,6 +8,7 @@ from typing import Callable
 import customtkinter as ctk
 
 from gui.panels.base import BasePanel
+from gui.widgets.context_menu import bind_context_menu
 
 
 class SubstitutionDictPanel(BasePanel):
@@ -81,12 +82,15 @@ class SubstitutionDictPanel(BasePanel):
         src_var = ctk.StringVar(value=source)
         rep_var = ctk.StringVar(value=replacement)
         flg_var = ctk.StringVar(value=flags)
-        ctk.CTkEntry(frame, textvariable=src_var, width=196).grid(
-            row=0, column=0, padx=2)
-        ctk.CTkEntry(frame, textvariable=rep_var, width=196).grid(
-            row=0, column=1, padx=2)
-        ctk.CTkEntry(frame, textvariable=flg_var, width=76).grid(
-            row=0, column=2, padx=2)
+        e_src = ctk.CTkEntry(frame, textvariable=src_var, width=196)
+        e_src.grid(row=0, column=0, padx=2)
+        bind_context_menu(e_src)
+        e_rep = ctk.CTkEntry(frame, textvariable=rep_var, width=196)
+        e_rep.grid(row=0, column=1, padx=2)
+        bind_context_menu(e_rep)
+        e_flg = ctk.CTkEntry(frame, textvariable=flg_var, width=76)
+        e_flg.grid(row=0, column=2, padx=2)
+        bind_context_menu(e_flg)
         for var, field in [(src_var, "source"), (rep_var, "replacement"),
                             (flg_var, "flags")]:
             var.trace_add("write", lambda *_, s=src_var, r=rep_var, f=flg_var,
@@ -207,8 +211,9 @@ class _EntryEditDialog(ctk.CTkToplevel):
                 row=row, column=0, sticky="w", padx=12, pady=4)
             var = ctk.StringVar()
             setattr(self, attr, var)
-            ctk.CTkEntry(self, textvariable=var).grid(
-                row=row, column=1, sticky="ew", padx=8, pady=4)
+            _e = ctk.CTkEntry(self, textvariable=var)
+            _e.grid(row=row, column=1, sticky="ew", padx=8, pady=4)
+            bind_context_menu(_e)
 
         btn_frame = ctk.CTkFrame(self, fg_color="transparent")
         btn_frame.grid(row=3, column=0, columnspan=2, sticky="e",

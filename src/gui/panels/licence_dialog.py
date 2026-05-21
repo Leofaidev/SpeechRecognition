@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Callable
 
 import customtkinter as ctk
+from gui.widgets.context_menu import bind_context_menu
 
 
 _LICENCE_TEXT = """\
@@ -58,6 +59,7 @@ class LicenceDialog(ctk.CTkToplevel):
         text_box.grid(row=1, column=0, sticky="nsew", padx=12, pady=4)
         text_box.insert("1.0", _LICENCE_TEXT)
         text_box.configure(state="disabled")
+        bind_context_menu(text_box, readonly=True)
 
         btn_frame = ctk.CTkFrame(self, fg_color="transparent")
         btn_frame.grid(row=2, column=0, sticky="e", padx=12, pady=12)

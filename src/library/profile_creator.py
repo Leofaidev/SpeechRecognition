@@ -111,8 +111,6 @@ class ProfileCreator:
         )
         sample_name = "sample_001.mp3"
         self._save_sample(folder_name, sample_name, audio, sample_rate)
-        embedding = self._embed(audio, sample_rate)
-        np.save(str(self._storage.embedding_path(folder_name)), embedding)
 
         duration = len(audio) / sample_rate
         meta.samples = [sample_name]
@@ -120,6 +118,13 @@ class ProfileCreator:
         meta.low_confidence = duration < _MIN_CONFIDENCE_SECONDS
         meta.model_checksum = self._checksum
         self._storage.write_meta(folder_name, meta)
+
+        try:
+            embedding = self._embed(audio, sample_rate)
+            np.save(str(self._storage.embedding_path(folder_name)), embedding)
+        except Exception:
+            pass
+
         return folder_name, meta
 
     def _overwrite(
@@ -138,8 +143,6 @@ class ProfileCreator:
 
         sample_name = "sample_001.mp3"
         self._save_sample(folder_name, sample_name, audio, sample_rate)
-        embedding = self._embed(audio, sample_rate)
-        np.save(str(self._storage.embedding_path(folder_name)), embedding)
 
         meta = self._storage.read_meta(folder_name)
         duration = len(audio) / sample_rate
@@ -148,6 +151,13 @@ class ProfileCreator:
         meta.low_confidence = duration < _MIN_CONFIDENCE_SECONDS
         meta.model_checksum = self._checksum
         self._storage.write_meta(folder_name, meta)
+
+        try:
+            embedding = self._embed(audio, sample_rate)
+            np.save(str(self._storage.embedding_path(folder_name)), embedding)
+        except Exception:
+            pass
+
         return folder_name, meta
 
     def _merge(self, folder_name, audio, sample_rate) -> tuple[str, SpeakerMeta]:
@@ -162,13 +172,16 @@ class ProfileCreator:
         if duration < _MIN_CONFIDENCE_SECONDS:
             meta.low_confidence = True
 
-        # Regenerate embedding as average of all samples
-        embeddings = [self._embed(audio, sample_rate)]
         meta.model_checksum = self._checksum
-        embedding = np.mean(embeddings, axis=0)
-        np.save(str(self._storage.embedding_path(folder_name)), embedding)
-
         self._storage.write_meta(folder_name, meta)
+
+        try:
+            embeddings = [self._embed(audio, sample_rate)]
+            embedding = np.mean(embeddings, axis=0)
+            np.save(str(self._storage.embedding_path(folder_name)), embedding)
+        except Exception:
+            pass
+
         return folder_name, meta
 
     def _save_sample(

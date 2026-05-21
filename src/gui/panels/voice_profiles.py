@@ -9,6 +9,8 @@ import customtkinter as ctk
 
 from gui.panels.base import BasePanel
 
+_SEL_COLOR = ("#3B8ED0", "#1F6AA5")
+
 
 class VoiceProfilesPanel(BasePanel):
     """Two-column layout: speaker list on the left, group list on the right."""
@@ -71,6 +73,9 @@ class VoiceProfilesPanel(BasePanel):
                       command=self._delete_group).pack(side="left", padx=2)
 
         self._selected_profile: str | None = None
+        self._selected_group: str | None = None
+        self._speaker_rows: dict[str, tuple] = {}
+        self._group_rows: dict[str, tuple] = {}
         self.on_show()
 
     def on_show(self) -> None:
@@ -84,6 +89,7 @@ class VoiceProfilesPanel(BasePanel):
     def _refresh_speakers(self) -> None:
         for w in self._speaker_list.winfo_children():
             w.destroy()
+        self._speaker_rows = {}
         library_root = Path(self._config.get("library_root", "library"))
         try:
             from library.storage import LibraryStorage
@@ -99,13 +105,46 @@ class VoiceProfilesPanel(BasePanel):
 
         for profile_path in profiles:
             name = profile_path.name
-            frame = ctk.CTkFrame(self._speaker_list, fg_color="transparent")
+            display = name
+            row_labels: list[ctk.CTkLabel] = []
+            try:
+                meta = storage.read_meta(name)
+                parts = [meta.last_name, meta.first_name]
+                full = " ".join(p for p in parts if p).strip()
+                if not full:
+                    full = meta.nickname
+                if full:
+                    display = full
+            except Exception:
+                pass
+            frame = ctk.CTkFrame(self._speaker_list, fg_color="transparent",
+                                  corner_radius=6)
             frame.pack(fill="x", padx=4, pady=2)
-            ctk.CTkLabel(frame, text=name).pack(side="left", padx=8)
-            frame.bind("<Button-1>", lambda e, n=name: self._select_profile(n))
+            lbl = ctk.CTkLabel(frame, text=display)
+            lbl.pack(side="left", padx=8, pady=4)
+            row_labels.append(lbl)
+            if display != name:
+                lbl2 = ctk.CTkLabel(frame, text=f"  {name}",
+                                    text_color="gray60",
+                                    font=ctk.CTkFont(size=11))
+                lbl2.pack(side="left")
+                row_labels.append(lbl2)
+            self._speaker_rows[name] = (frame, row_labels)
+            for w in (frame, lbl):
+                w.bind("<Button-1>", lambda e, n=name: self._select_profile(n))
 
     def _select_profile(self, name: str) -> None:
+        if self._selected_profile and self._selected_profile in self._speaker_rows:
+            f, lbls = self._speaker_rows[self._selected_profile]
+            f.configure(fg_color="transparent")
+            for lb in lbls:
+                lb.configure(text_color=("gray10", "gray90"))
         self._selected_profile = name
+        if name in self._speaker_rows:
+            f, lbls = self._speaker_rows[name]
+            f.configure(fg_color=_SEL_COLOR)
+            for lb in lbls:
+                lb.configure(text_color="white")
 
     # ------------------------------------------------------------------
     # Group list
@@ -114,6 +153,7 @@ class VoiceProfilesPanel(BasePanel):
     def _refresh_groups(self) -> None:
         for w in self._group_list.winfo_children():
             w.destroy()
+        self._group_rows = {}
         library_root = Path(self._config.get("library_root", "library"))
         try:
             from library.storage import LibraryStorage
@@ -128,9 +168,29 @@ class VoiceProfilesPanel(BasePanel):
             ctk.CTkLabel(self._group_list,
                          text=self._t("groups_empty")).pack(padx=8, pady=8)
             return
+
         for g in group_names:
-            ctk.CTkLabel(self._group_list, text=g).pack(
-                fill="x", padx=8, pady=2, anchor="w")
+            frame = ctk.CTkFrame(self._group_list, fg_color="transparent",
+                                  corner_radius=6)
+            frame.pack(fill="x", padx=4, pady=2)
+            lbl = ctk.CTkLabel(frame, text=g)
+            lbl.pack(side="left", padx=8, pady=4)
+            self._group_rows[g] = (frame, [lbl])
+            for w in (frame, lbl):
+                w.bind("<Button-1>", lambda e, gn=g: self._select_group(gn))
+
+    def _select_group(self, name: str) -> None:
+        if self._selected_group and self._selected_group in self._group_rows:
+            f, lbls = self._group_rows[self._selected_group]
+            f.configure(fg_color="transparent")
+            for lb in lbls:
+                lb.configure(text_color=("gray10", "gray90"))
+        self._selected_group = name
+        if name in self._group_rows:
+            f, lbls = self._group_rows[name]
+            f.configure(fg_color=_SEL_COLOR)
+            for lb in lbls:
+                lb.configure(text_color="white")
 
     # ------------------------------------------------------------------
     # Button callbacks
@@ -204,8 +264,9 @@ class VoiceProfilesPanel(BasePanel):
         try:
             from library.storage import LibraryStorage
             from library.retrainer import LibraryRetrainer
+            from library.profile_creator import _pyannote_embed
             storage = LibraryStorage(library_root)
-            result = LibraryRetrainer(storage).retrain_all()
+            result = LibraryRetrainer(storage, _pyannote_embed).retrain_all()
             from tkinter import messagebox
             messagebox.showinfo(
                 "", self._t("profile_retrain_done",

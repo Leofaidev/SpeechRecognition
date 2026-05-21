@@ -32,6 +32,10 @@ class PipelineResult:
     clipboard_text: str = ""
     source_path: str = ""
     error: str = ""
+    # Set only when output is deferred for post-session speaker labelling.
+    audio: object = field(default=None, repr=False)
+    sample_rate: int = 16000
+    write_output_fn: object = field(default=None, repr=False)
 
     @property
     def ok(self) -> bool:
@@ -64,6 +68,9 @@ class PipelineRunner:
         self._on_error = on_error or (lambda e: None)
         self._thread: threading.Thread | None = None
         self._stop_event = threading.Event()
+        # Cached engine instances — models are loaded once and reused across runs.
+        self._diarizer = None
+        self._transcriber = None
 
     # ------------------------------------------------------------------
     # Public API
@@ -262,18 +269,30 @@ class PipelineRunner:
             self._on_progress(0.05, "Loading audio...")
             audio, sample_rate = load(source_path)
 
-        # Diarize
-        self._on_progress(0.15, "Diarizing...")
-        diarizer = DiarizationEngine(config)
-        segments = diarizer.diarize_or_unknown(audio, sample_rate)
+        # Diarize — reuse cached engine so model stays in memory between runs
+        if self._diarizer is None:
+            self._diarizer = DiarizationEngine(config)
+        diarizer_loaded = self._diarizer._pipeline is not None
+        self._on_progress(
+            0.15,
+            "Diarizing..." if diarizer_loaded
+            else "Loading speaker model (first run, please wait)...",
+        )
+        segments = self._diarizer.diarize_or_unknown(audio, sample_rate)
 
         if self._stop_event.is_set():
             return PipelineResult(error="Stopped by user.")
 
-        # Transcribe
-        self._on_progress(0.40, "Transcribing...")
-        transcriber = TranscriptionEngine(config)
-        ts_segments = transcriber.transcribe(audio, segments, sample_rate)
+        # Transcribe — reuse cached engine so Whisper stays in memory between runs
+        if self._transcriber is None:
+            self._transcriber = TranscriptionEngine(config)
+        transcriber_loaded = self._transcriber._model is not None
+        self._on_progress(
+            0.40,
+            "Transcribing..." if transcriber_loaded
+            else "Loading speech model (first run, please wait)...",
+        )
+        ts_segments = self._transcriber.transcribe(audio, segments, sample_rate)
 
         if self._stop_event.is_set():
             return PipelineResult(error="Stopped by user.")
@@ -306,12 +325,71 @@ class PipelineRunner:
         )
         session.add_segments(ts_segments)
 
-        # Output
+        # Detect unidentified speakers (Speaker N labels from diarization).
+        # In non-short-session mode, defer output writing until after labelling.
+        import re as _re
+        unidentified = {
+            seg.speaker_id for seg in ts_segments
+            if _re.match(r'^Speaker \d+$', seg.speaker_id)
+        }
+
+        if unidentified and not short_session:
+            # Capture everything the deferred writer needs.  ts_segments is
+            # passed by reference so relabelling mutations are visible here.
+            _segs = ts_segments
+            _cfg = config
+            _output_dir = output_dir
+            _formats = formats
+            _source_path = source_path
+            _source_type = source_type
+            _session = session
+
+            def _write_output_deferred() -> list:
+                written_d: list[_Path] = []
+                eff_dir = _Path(_output_dir or _cfg.get("output_folder") or ".")
+                eff_dir.mkdir(parents=True, exist_ok=True)
+                eff_fmts = _formats or _cfg.get("output_formats", ["txt"])
+                inp = _Path(_source_path) if _source_path else _Path("output")
+                for fmt in eff_fmts:
+                    out_path = make_output_path(inp, f".{fmt}", eff_dir)
+                    if fmt == "txt":
+                        txt_writer.write(_segs, out_path)
+                    elif fmt == "srt":
+                        srt_writer.write(_segs, out_path)
+                    elif fmt == "json":
+                        json_writer.write(_segs, out_path)
+                    elif fmt == "docx":
+                        docx_writer.write(_segs, out_path)
+                    written_d.append(out_path)
+                if _cfg.get("output_to_clipboard", False) and _source_type == "microphone":
+                    try:
+                        clipboard_write(_segs, source_type="microphone")
+                    except Exception:
+                        pass
+                _session.output_files = [str(p) for p in written_d]
+                sessions_dir_d = _Path(_cfg.get("sessions_dir", "sessions"))
+                try:
+                    sh.save(sessions_dir_d, _session)
+                except Exception:
+                    pass
+                return written_d
+
+            self._on_progress(1.0, "Done.")
+            return PipelineResult(
+                segments=ts_segments,
+                output_paths=[],
+                clipboard_text=translated_text if config.get("translation_enabled") else clipboard_text,
+                source_path=source_path,
+                audio=audio,
+                sample_rate=sample_rate,
+                write_output_fn=_write_output_deferred,
+            )
+
+        # No unidentified speakers (or short session) — write output immediately.
         self._on_progress(0.85, "Writing output...")
         written: list[Path] = []
 
         if short_session:
-            # Short session: always write to clipboard
             try:
                 clipboard_write(ts_segments, source_type="microphone")
             except Exception:

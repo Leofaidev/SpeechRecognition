@@ -29,10 +29,12 @@ from gui.panels.hotkeys_panel import HotkeysPanel
 from gui.panels.speaker_labelling import SpeakerLabellingPanel
 from gui.panels.session_history import SessionHistoryPanel
 from gui.panels.backup_restore import BackupRestorePanel
+from gui.widgets.context_menu import bind_context_menu
 
 
 # Nav item order: key in lang file → panel class
 _NAV_ITEMS = [
+    ("nav_home", "home"),
     ("nav_settings", "settings"),
     ("nav_profiles", "profiles"),
     ("nav_dictionary", "dictionary"),
@@ -46,6 +48,25 @@ _NAV_ITEMS = [
 
 _SIDEBAR_WIDTH = 170
 _MIN_WINDOW_SIZE = (980, 620)
+
+
+def _save_fragment_wav(audio, sample_rate: int,
+                        start_sec: float, end_sec: float) -> str:
+    """Slice *audio* and write to a temp WAV file. Returns the file path."""
+    import wave, tempfile, os
+    import numpy as np
+    start_s = max(0, int(start_sec * sample_rate))
+    end_s = min(len(audio), int(end_sec * sample_rate))
+    fragment = audio[start_s:end_s]
+    fragment_i16 = (fragment * 32767).clip(-32768, 32767).astype(np.int16)
+    fd, path = tempfile.mkstemp(suffix=".wav")
+    os.close(fd)
+    with wave.open(path, "wb") as wf:
+        wf.setnchannels(1)
+        wf.setsampwidth(2)
+        wf.setframerate(sample_rate)
+        wf.writeframes(fragment_i16.tobytes())
+    return path
 
 
 class App(ctk.CTk):
@@ -71,6 +92,8 @@ class App(ctk.CTk):
         self._capture_thread: threading.Thread | None = None
         self._capture_stop = threading.Event()
         self._minimized_to_tray = False
+        self._pending_result = None          # PipelineResult awaiting labelling
+        self._pending_fragment_paths: dict = {}  # speaker_id → temp WAV path
 
         self._pipeline = PipelineRunner(
             self._config,
@@ -173,7 +196,8 @@ class App(ctk.CTk):
         bar.grid(row=0, column=0, sticky="ew", padx=4, pady=4)
 
         # Device dropdown
-        ctk.CTkLabel(bar, text=t("label_device")).pack(side="left", padx=(4, 2))
+        self._lbl_device = ctk.CTkLabel(bar, text=t("label_device"))
+        self._lbl_device.pack(side="left", padx=(4, 2))
         self._devices = self._get_device_names()
         self._device_var = ctk.StringVar(
             value=self._config.get("input_device", "")
@@ -186,7 +210,8 @@ class App(ctk.CTk):
         self._device_menu.pack(side="left", padx=4)
 
         # Group selector
-        ctk.CTkLabel(bar, text=t("label_group")).pack(side="left", padx=(8, 2))
+        self._lbl_group = ctk.CTkLabel(bar, text=t("label_group"))
+        self._lbl_group.pack(side="left", padx=(8, 2))
         self._group_var = ctk.StringVar(
             value=self._config.get("active_speaker_group", ""))
         self._group_menu = ctk.CTkOptionMenu(
@@ -197,7 +222,8 @@ class App(ctk.CTk):
         self._group_menu.pack(side="left", padx=4)
 
         # Mode toggle
-        ctk.CTkLabel(bar, text=t("label_mode")).pack(side="left", padx=(12, 2))
+        self._lbl_mode = ctk.CTkLabel(bar, text=t("label_mode"))
+        self._lbl_mode.pack(side="left", padx=(12, 2))
         self._mode_var = ctk.StringVar(
             value=t("mode_regular") if self._mode == "regular"
             else t("mode_short"))
@@ -255,6 +281,7 @@ class App(ctk.CTk):
         self._output_text = ctk.CTkTextbox(self._main_view, wrap="word",
                                             state="disabled")
         self._output_text.grid(row=0, column=0, sticky="nsew")
+        bind_context_menu(self._output_text, readonly=True, t=self._lang.t)
         self._main_view.grid_columnconfigure(0, weight=1)
         self._main_view.grid_rowconfigure(0, weight=1)
 
@@ -319,7 +346,9 @@ class App(ctk.CTk):
                 self._content, self._config, t,
                 on_bindings_changed=self._hotkeys.update_bindings),
             "labelling": lambda: SpeakerLabellingPanel(
-                self._content, self._config, t),
+                self._content, self._config, t,
+                on_label_confirmed=self._on_label_confirmed,
+                on_all_done=self._finish_labelling),
             "history": lambda: SessionHistoryPanel(
                 self._content, self._config, t),
             "backup": lambda: BackupRestorePanel(
@@ -333,6 +362,10 @@ class App(ctk.CTk):
 
     def _show_panel(self, panel_id: str) -> None:
         """Show a side panel, hiding the main view."""
+        if panel_id == "home":
+            self._show_main_view()
+            return
+
         # Hide previous
         if self._active_panel is not None:
             self._panels[self._active_panel].grid_remove()
@@ -355,8 +388,8 @@ class App(ctk.CTk):
         if self._active_panel is not None:
             self._panels[self._active_panel].grid_remove()
             self._active_panel = None
-        for btn in self._nav_buttons.values():
-            btn.configure(fg_color="transparent")
+        for pid, btn in self._nav_buttons.items():
+            btn.configure(fg_color=("gray75", "gray25") if pid == "home" else "transparent")
         self._main_view.grid(row=0, column=0, sticky="nsew")
         self._apply_mode_layout()
 
@@ -474,7 +507,7 @@ class App(ctk.CTk):
 
     @staticmethod
     def _find_device_index(pa, name: str) -> int | None:
-        if not name or name == "—":
+        if not name or name in ("—", "Default"):
             return None
         for i in range(pa.get_device_count()):
             info = pa.get_device_info_by_index(i)
@@ -502,6 +535,13 @@ class App(ctk.CTk):
             self._status_label.configure(text=status)
 
     def _handle_done(self, result) -> None:
+        if result.ok and result.write_output_fn is not None:
+            # Unidentified speakers present — show labelling panel before writing
+            self._status_label.configure(
+                text=self._lang.t("status_labelling"))
+            self._start_labelling(result)
+            return
+
         t = self._lang.t
         self._file_progress.set(0)
         self._status_label.configure(text=t("status_done"))
@@ -547,6 +587,152 @@ class App(ctk.CTk):
         self._btn_stop.configure(state="disabled")
         self._show_error_dialog(error)
 
+    # ------------------------------------------------------------------
+    # Post-session speaker labelling (Spec 4.3)
+    # ------------------------------------------------------------------
+
+    def _start_labelling(self, result) -> None:
+        """Navigate to the Speaker Labelling panel for unidentified speakers."""
+        import re, os
+        self._pending_result = result
+        self._pending_fragment_paths = {}
+
+        # Collect unique Speaker N IDs, pick the best (longest non-bad) segment
+        best: dict[str, object] = {}
+        for seg in result.segments:
+            if not re.match(r'^Speaker \d+$', seg.speaker_id):
+                continue
+            sid = seg.speaker_id
+            dur = seg.end - seg.start
+            prev = best.get(sid)
+            if prev is None or (not seg.bad_audio and (prev.bad_audio or dur > prev.end - prev.start)):
+                best[sid] = seg
+
+        if not best:
+            self._finish_labelling()
+            return
+
+        sorted_ids = sorted(best, key=lambda s: int(re.search(r'\d+', s).group()))
+        pending = []
+        for sid in sorted_ids:
+            seg = best[sid]
+            fpath = None
+            if result.audio is not None:
+                try:
+                    fpath = _save_fragment_wav(
+                        result.audio, result.sample_rate, seg.start, seg.end)
+                    self._pending_fragment_paths[sid] = fpath
+                except Exception:
+                    pass
+            pending.append({"speaker_id": sid, "fragment_path": fpath})
+
+        panel = self._panels.get("labelling")
+        if panel and hasattr(panel, "load_pending"):
+            panel.load_pending(pending)
+            self._show_panel("labelling")
+        else:
+            self._finish_labelling()
+
+    def _on_label_confirmed(self, speaker_id: str, display_name: str,
+                            meta: dict) -> None:
+        """Relabel all segments and create a voice profile for the confirmed speaker."""
+        if self._pending_result is None:
+            return
+        for seg in self._pending_result.segments:
+            if seg.speaker_id == speaker_id:
+                seg.speaker_id = display_name
+        if any(v.strip() for v in meta.values()):
+            fpath = self._pending_fragment_paths.get(speaker_id)
+            try:
+                from library.storage import LibraryStorage
+                from library.profile_creator import ProfileCreator, ConflictMode
+                library_root = Path(self._config.get("library_root", "library"))
+                storage = LibraryStorage(library_root)
+                if fpath:
+                    from audio.ingest import load as _audio_load
+                    audio, sr = _audio_load(fpath)
+                    ProfileCreator(storage).create(
+                        audio, sr,
+                        last=meta.get("lastname", ""),
+                        first=meta.get("firstname", ""),
+                        middle=meta.get("middlename", ""),
+                        nickname=meta.get("nickname", ""),
+                        organisation=meta.get("organisation", ""),
+                        position=meta.get("position", ""),
+                        note=meta.get("note", ""),
+                        conflict_mode=ConflictMode.MERGE,
+                    )
+                else:
+                    storage.create_profile(
+                        last=meta.get("lastname", ""),
+                        first=meta.get("firstname", ""),
+                        middle=meta.get("middlename", ""),
+                        nickname=meta.get("nickname", ""),
+                        organisation=meta.get("organisation", ""),
+                        position=meta.get("position", ""),
+                        note=meta.get("note", ""),
+                    )
+            except Exception:
+                pass
+
+    def _finish_labelling(self) -> None:
+        """Called when all pending speakers are confirmed or skipped."""
+        result = self._pending_result
+        self._pending_result = None
+        for path in self._pending_fragment_paths.values():
+            try:
+                import os
+                os.unlink(path)
+            except Exception:
+                pass
+        self._pending_fragment_paths = {}
+
+        if result is None:
+            return
+
+        if result.write_output_fn:
+            import threading
+            def _bg():
+                try:
+                    written = result.write_output_fn()
+                    result.output_paths = written
+                    self.after(0, lambda: self._after_labelling_write(result))
+                except Exception as exc:
+                    self.after(0, lambda e=str(exc): self._handle_error(e))
+            threading.Thread(target=_bg, daemon=True).start()
+        else:
+            self._after_labelling_write(result)
+
+    def _after_labelling_write(self, result) -> None:
+        """Finish UI reset and display output after deferred write completes."""
+        t = self._lang.t
+        self._file_progress.set(0)
+        self._status_label.configure(text=t("status_done"))
+        self._btn_start.configure(state="normal")
+        self._btn_stop.configure(state="disabled")
+        self._btn_play.configure(state="normal")
+        self._show_main_view()
+
+        if result.ok and result.segments:
+            if self._mode == "short":
+                raw_text = " ".join(
+                    s.text for s in result.segments if not s.bad_audio)
+                self._short_form.set_transcription(raw_text)
+            else:
+                self._output_text.configure(state="normal")
+                self._output_text.delete("1.0", "end")
+                for seg in result.segments:
+                    self._output_text.insert(
+                        "end",
+                        f"[{seg.start:.1f}s] {seg.speaker_id}: {seg.text}\n")
+                self._output_text.configure(state="disabled")
+                if result.output_paths:
+                    self._playback_path = result.source_path
+
+        self._sound.play()
+        if self._tray and self._config.get("tray_notifications", True):
+            self._tray.notify(t("tray_notify_done"))
+
     def _show_error_dialog(self, error: str) -> None:
         t = self._lang.t
         dialog = ctk.CTkToplevel(self)
@@ -560,6 +746,7 @@ class App(ctk.CTk):
         txt.pack(fill="both", expand=True, padx=12, pady=(12, 4))
         txt.insert("end", error)
         txt.configure(state="disabled")
+        bind_context_menu(txt, readonly=True, t=t)
 
         ctk.CTkButton(dialog, text=t("btn_close"), command=dialog.destroy).pack(pady=(4, 12))
         dialog.after(100, dialog.focus_force)
@@ -698,25 +885,58 @@ class App(ctk.CTk):
         self._config.set("ui_language", lang_code)
         t = self._lang.t
         self.title(t("app_title"))
+
+        # Preserve batch queue file list across rebuild
+        batch_files: list[str] = []
+        if "batch" in self._panels and hasattr(self._panels["batch"], "_files"):
+            batch_files = list(self._panels["batch"]._files)
+
+        # Remember which panel was open
+        active_panel = self._active_panel
+
+        # Destroy all panels and recreate them with the new language
+        for panel in self._panels.values():
+            panel.destroy()
+        self._panels.clear()
+        self._active_panel = None
+        self._build_panels()
+
+        # Restore batch queue
+        if batch_files and "batch" in self._panels:
+            bp = self._panels["batch"]
+            if hasattr(bp, "_files") and hasattr(bp, "_refresh"):
+                bp._files = batch_files
+                bp._refresh()
+
+        # Restore the view that was open before the rebuild
+        if active_panel:
+            self._show_panel(active_panel)
+        else:
+            self._show_main_view()
+
         self._update_all_strings(t)
 
     def _update_all_strings(self, t: Callable) -> None:
         # Nav buttons
-        for (lang_key, panel_id), _ in zip(_NAV_ITEMS, self._nav_buttons.items()):
+        for lang_key, panel_id in _NAV_ITEMS:
             self._nav_buttons[panel_id].configure(text=t(lang_key))
-        # Control bar
-        self._mode_toggle.configure(
-            values=[t("mode_regular"), t("mode_short")])
+        # Control bar labels
+        self._lbl_device.configure(text=t("label_device"))
+        self._lbl_group.configure(text=t("label_group"))
+        self._lbl_mode.configure(text=t("label_mode"))
+        # Control bar interactive widgets
+        self._mode_toggle.configure(values=[t("mode_regular"), t("mode_short")])
         self._mode_var.set(
-            t("mode_regular") if self._mode == "regular"
-            else t("mode_short"))
-        # Panels
-        for panel in self._panels.values():
-            panel.update_strings(t)
-        # Short session form
+            t("mode_regular") if self._mode == "regular" else t("mode_short"))
+        self._btn_start.configure(text=t("btn_start"))
+        self._btn_stop.configure(text=t("btn_stop"))
+        if not (self._vlc_player and self._vlc_player.is_playing()):
+            self._btn_play.configure(text=t("btn_play"))
+        # Short session form (lives in main view, not in panels dict)
         self._short_form.update_strings(t)
-        # Status
-        self._status_label.configure(text=t("status_idle"))
+        # Status bar — only overwrite if idle
+        if not self._recording and not self._pipeline.running:
+            self._status_label.configure(text=t("status_idle"))
 
     # ------------------------------------------------------------------
     # Device / group helpers
@@ -725,9 +945,9 @@ class App(ctk.CTk):
     def _get_device_names(self) -> list[str]:
         try:
             from audio.device import list_devices
-            return [d.name for d in list_devices()]
+            return ["Default"] + [d.name for d in list_devices()]
         except Exception:
-            return []
+            return ["Default"]
 
     def _get_group_names(self) -> list[str]:
         library_root = Path(self._config.get("library_root", "library"))

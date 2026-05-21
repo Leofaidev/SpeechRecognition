@@ -8,15 +8,18 @@ from typing import Callable
 import customtkinter as ctk
 
 from gui.panels.base import BasePanel
+from gui.widgets.context_menu import bind_context_menu
 
 
 class SpeakerLabellingPanel(BasePanel):
     """Audio playback, metadata form, Skip and Confirm buttons, undo."""
 
     def __init__(self, master, config, t: Callable,
-                 on_label_confirmed: Callable[[str, str], None] | None = None,
+                 on_label_confirmed: Callable[[str, str, dict], None] | None = None,
+                 on_all_done: Callable[[], None] | None = None,
                  **kwargs) -> None:
-        self._on_label_confirmed = on_label_confirmed or (lambda sid, name: None)
+        self._on_label_confirmed = on_label_confirmed or (lambda sid, name, meta: None)
+        self._on_all_done = on_all_done or (lambda: None)
         self._pending_speakers: list[dict] = []
         self._current_index = 0
         self._undo_stack: list[tuple] = []
@@ -54,8 +57,9 @@ class SpeakerLabellingPanel(BasePanel):
                 row=row, column=0, sticky="w", padx=8, pady=3)
             var = ctk.StringVar()
             self._name_vars[field] = var
-            ctk.CTkEntry(self._form_frame, textvariable=var).grid(
-                row=row, column=1, sticky="ew", padx=8, pady=3)
+            _e = ctk.CTkEntry(self._form_frame, textvariable=var)
+            _e.grid(row=row, column=1, sticky="ew", padx=8, pady=3)
+            bind_context_menu(_e)
 
         # Buttons
         btn_frame = ctk.CTkFrame(self, fg_color="transparent")
@@ -94,6 +98,11 @@ class SpeakerLabellingPanel(BasePanel):
             self._prompt_label.configure(
                 text=self._t("labelling_no_pending"))
             self._set_form_visible(False)
+            if self._pending_speakers:
+                # All speakers processed — fire callback and clear the queue
+                # so a re-entry (e.g. undo) doesn't re-trigger.
+                self._pending_speakers = []
+                self._on_all_done()
             return
         speaker = self._pending_speakers[self._current_index]
         self._prompt_label.configure(
@@ -126,13 +135,13 @@ class SpeakerLabellingPanel(BasePanel):
         if self._current_index >= len(self._pending_speakers):
             return
         speaker = self._pending_speakers[self._current_index]
-        name_parts = [
-            self._name_vars.get("lastname", ctk.StringVar()).get(),
-            self._name_vars.get("firstname", ctk.StringVar()).get(),
-        ]
+        _fields = ("lastname", "firstname", "middlename",
+                   "nickname", "organisation", "position", "note")
+        meta = {f: self._name_vars.get(f, ctk.StringVar()).get() for f in _fields}
+        name_parts = [meta["lastname"], meta["firstname"]]
         display_name = " ".join(p for p in name_parts if p).strip() or "Unknown"
         self._undo_stack.append((self._current_index, speaker, {}))
-        self._on_label_confirmed(speaker["speaker_id"], display_name)
+        self._on_label_confirmed(speaker["speaker_id"], display_name, meta)
         self._current_index += 1
         self._show_current()
 

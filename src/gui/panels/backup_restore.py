@@ -8,6 +8,7 @@ from typing import Callable
 import customtkinter as ctk
 
 from gui.panels.base import BasePanel
+from gui.widgets.context_menu import bind_context_menu
 
 
 class BackupRestorePanel(BasePanel):
@@ -29,8 +30,9 @@ class BackupRestorePanel(BasePanel):
             row=0, column=0, sticky="w", padx=4)
         self._folder_var = ctk.StringVar(
             value=self._config.get("backup_folder", ""))
-        ctk.CTkEntry(folder_frame, textvariable=self._folder_var).grid(
-            row=0, column=1, sticky="ew", padx=4)
+        _e = ctk.CTkEntry(folder_frame, textvariable=self._folder_var)
+        _e.grid(row=0, column=1, sticky="ew", padx=4)
+        bind_context_menu(_e)
         ctk.CTkButton(folder_frame, text=t("btn_browse"), width=80,
                       command=self._browse_folder).grid(row=0, column=2, padx=4)
 

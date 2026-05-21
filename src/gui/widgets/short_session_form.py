@@ -22,6 +22,7 @@ from __future__ import annotations
 from typing import Callable
 
 import customtkinter as ctk
+from gui.widgets.context_menu import bind_context_menu
 
 
 class ShortSessionForm(ctk.CTkFrame):
@@ -122,6 +123,7 @@ class ShortSessionForm(ctk.CTkFrame):
                           padx=4, pady=4)
         self._field1.insert("1.0", t("field_placeholder_transcription"))
         self._field1.bind("<FocusIn>", self._clear_placeholder1)
+        bind_context_menu(self._field1)
 
         self._btn1 = ctk.CTkButton(
             frame1,
@@ -141,6 +143,7 @@ class ShortSessionForm(ctk.CTkFrame):
                           padx=4, pady=4)
         self._field2.insert("1.0", t("field_placeholder_translation"))
         self._field2.bind("<FocusIn>", self._clear_placeholder2)
+        bind_context_menu(self._field2)
 
         self._btn2 = ctk.CTkButton(
             self._frame2,

@@ -8,6 +8,7 @@ from typing import Callable
 import customtkinter as ctk
 
 from gui.panels.base import BasePanel
+from gui.widgets.context_menu import bind_context_menu
 
 
 _FIELDS = ["timestamp", "speaker", "language", "confidence", "text", "translation"]
@@ -92,8 +93,9 @@ class OutputConfigPanel(BasePanel):
         folder_frame.grid_columnconfigure(0, weight=1)
         self._folder_var = ctk.StringVar(
             value=self._config.get("output_folder", ""))
-        ctk.CTkEntry(folder_frame, textvariable=self._folder_var).grid(
-            row=0, column=0, sticky="ew", padx=(0, 4))
+        _e = ctk.CTkEntry(folder_frame, textvariable=self._folder_var)
+        _e.grid(row=0, column=0, sticky="ew", padx=(0, 4))
+        bind_context_menu(_e)
         ctk.CTkButton(folder_frame, text=t("btn_browse"), width=80,
                       command=self._browse_folder).grid(row=0, column=1)
 

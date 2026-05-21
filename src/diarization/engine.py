@@ -159,8 +159,26 @@ class DiarizationEngine:
         from pyannote.audio import Pipeline
 
         token = self._config.get("huggingface_token", None)
-        kwargs = {"use_auth_token": token} if token else {}
-        pipeline = Pipeline.from_pretrained(_DEFAULT_MODEL, **kwargs)
+        kwargs = {"token": token} if token else {}
+        try:
+            pipeline = Pipeline.from_pretrained(_DEFAULT_MODEL, **kwargs)
+        except Exception as exc:
+            msg = str(exc)
+            # Extract a gated-repo model name from the error message so the
+            # user knows exactly which HuggingFace page to visit.
+            import re
+            m = re.search(r"pyannote/[\w.-]+", msg)
+            blocked = m.group(0) if m else "a required model"
+            raise RuntimeError(
+                f"Speaker diarization model could not be loaded.\n\n"
+                f"Access was denied for: {blocked}\n\n"
+                f"Steps to fix:\n"
+                f"  1. Log in at huggingface.co\n"
+                f"  2. Visit huggingface.co/{blocked} and click "
+                f"'Agree and access repository'\n"
+                f"  3. Restart the application\n\n"
+                f"(All pyannote models must be approved separately.)"
+            ) from exc
 
         import torch
         if self._config.get("gpu_enabled", True) and torch.cuda.is_available():
@@ -174,7 +192,10 @@ class DiarizationEngine:
         waveform = torch.tensor(audio).unsqueeze(0)  # (1, samples)
         input_dict = {"waveform": waveform, "sample_rate": sample_rate}
 
-        diarization = pipeline(input_dict)
+        output = pipeline(input_dict)
+        # pyannote ≥ 3.3 returns DiarizeOutput; extract the Annotation from it.
+        diarization = getattr(output, "speaker_diarization",
+                              getattr(output, "diarization", output))
 
         segments: list[Segment] = []
         for turn, _, speaker in diarization.itertracks(yield_label=True):

@@ -7,6 +7,7 @@ from typing import Callable
 import customtkinter as ctk
 
 from gui.panels.base import BasePanel
+from gui.widgets.context_menu import bind_context_menu
 from config.hotkeys import check_hotkey
 
 
@@ -60,6 +61,7 @@ class HotkeysPanel(BasePanel):
             entry = ctk.CTkEntry(self, textvariable=var, width=200)
             entry.grid(row=row, column=1, sticky="ew", padx=8, pady=4)
             entry.bind("<Key>", lambda e, a=action: self._capture_key(e, a))
+            bind_context_menu(entry)
 
             warn = ctk.CTkLabel(self, text="", text_color="#ff9800")
             warn.grid(row=row, column=2, sticky="w", padx=4, pady=4)
