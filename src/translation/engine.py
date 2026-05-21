@@ -62,7 +62,7 @@ class TranslationEngine:
             if seg.bad_audio:
                 result.append(seg)
             else:
-                result.append(replace(seg, text=next(translated_iter)))
+                result.append(replace(seg, translated_text=next(translated_iter)))
         return result
 
     # ------------------------------------------------------------------

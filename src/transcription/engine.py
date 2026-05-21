@@ -56,6 +56,7 @@ class TranscribedSegment:
     language_code: str      # ISO 639-1, e.g. "en"
     confidence: float       # average log-prob → probability, 0..1
     no_speech_prob: float
+    translated_text: str | None = None
     bad_audio: bool = False
     low_confidence: bool = False  # inherited from diarization
 

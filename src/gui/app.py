@@ -542,9 +542,27 @@ class App(ctk.CTk):
 
     def _handle_error(self, error: str) -> None:
         t = self._lang.t
-        self._status_label.configure(text=f"{t('error_title')}: {error}")
+        self._status_label.configure(text=t("error_title"))
         self._btn_start.configure(state="normal")
         self._btn_stop.configure(state="disabled")
+        self._show_error_dialog(error)
+
+    def _show_error_dialog(self, error: str) -> None:
+        t = self._lang.t
+        dialog = ctk.CTkToplevel(self)
+        dialog.title(t("error_title"))
+        dialog.geometry("640x220")
+        dialog.resizable(True, True)
+        dialog.transient(self)
+        dialog.grab_set()
+
+        txt = ctk.CTkTextbox(dialog, wrap="word")
+        txt.pack(fill="both", expand=True, padx=12, pady=(12, 4))
+        txt.insert("end", error)
+        txt.configure(state="disabled")
+
+        ctk.CTkButton(dialog, text=t("btn_close"), command=dialog.destroy).pack(pady=(4, 12))
+        dialog.after(100, dialog.focus_force)
 
     # ------------------------------------------------------------------
     # Short Session form button callbacks (T-130, T-131)

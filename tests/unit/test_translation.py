@@ -162,6 +162,8 @@ def test_bad_audio_segments_not_translated():
     ]
     result = engine.translate(segs)
 
-    assert result[0].text == "XXXXX"   # bad_audio unchanged
-    assert result[1].text == "Hello_translated"
+    assert result[0].text == "XXXXX"           # bad_audio unchanged
+    assert result[0].translated_text is None
+    assert result[1].text == "Hello"           # original text preserved
+    assert result[1].translated_text == "Hello_translated"
     assert "XXXXX" not in translated_texts
