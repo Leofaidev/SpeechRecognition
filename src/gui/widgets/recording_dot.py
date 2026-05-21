@@ -59,8 +59,8 @@ class RecordingDot(ctk.CTkCanvas):
 
     def _get_bg(self) -> str:
         try:
-            return self.winfo_rgb(
-                self.tk.call("ttk::style", "lookup", "TFrame", "-background")
-            )
+            raw = self.tk.call("ttk::style", "lookup", "TFrame", "-background")
+            r, g, b = self.winfo_rgb(raw)
+            return f"#{r // 256:02x}{g // 256:02x}{b // 256:02x}"
         except Exception:
             return "#2b2b2b"

@@ -706,8 +706,8 @@ class App(ctk.CTk):
 
     def _get_device_names(self) -> list[str]:
         try:
-            from audio.device import enumerate_devices
-            return [d.name for d in enumerate_devices()]
+            from audio.device import list_devices
+            return [d.name for d in list_devices()]
         except Exception:
             return []
 
