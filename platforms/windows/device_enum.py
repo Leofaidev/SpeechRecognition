@@ -8,9 +8,6 @@ _EXCLUDE_PATTERNS = (
     "primary sound capture",
     "stereo mix",
     "стерео микшер",        # Stereo Mix (Russian)
-    "line in",
-    "лин. вход",            # Line In (Russian)
-    "линейный вход",        # Line Input (Russian)
     "aux",
     "virtual microphone",
     "intelligo vac",
