@@ -107,7 +107,7 @@
   "btn_rename_group": "重命名",
   "btn_delete_group": "删除组",
   "btn_retrain_all": "重新训练全部",
-  "profiles_empty": "暂无档案。点击"添加档案"创建。",
+  "profiles_empty": "暂无档案。点击「添加档案」创建。",
   "groups_empty": "暂无组。",
   "profile_retrain_done": "重新训练：{retrained}个档案，{failed}个失败。",
   "profile_retrain_prompt": "模型已更改。立即重新训练？",
@@ -127,7 +127,7 @@
   "profile_note": "备注",
 
   "conflict_title": "档案冲突",
-  "conflict_message": "名为"{name}"的档案已存在。",
+  "conflict_message": "名为「{name}」的档案已存在。",
   "conflict_overwrite": "覆盖",
   "conflict_merge": "合并",
   "conflict_reject": "跳过",
