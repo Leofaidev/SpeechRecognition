@@ -29,6 +29,7 @@ from gui.panels.hotkeys_panel import HotkeysPanel
 from gui.panels.speaker_labelling import SpeakerLabellingPanel
 from gui.panels.session_history import SessionHistoryPanel
 from gui.panels.backup_restore import BackupRestorePanel
+from gui.panels.about import AboutPanel
 from gui.widgets.context_menu import bind_context_menu
 
 
@@ -44,6 +45,7 @@ _NAV_ITEMS = [
     ("nav_labelling", "labelling"),
     ("nav_history", "history"),
     ("nav_backup", "backup"),
+    ("nav_about", "about"),
 ]
 
 _SIDEBAR_WIDTH = 170
@@ -352,6 +354,8 @@ class App(ctk.CTk):
             "history": lambda: SessionHistoryPanel(
                 self._content, self._config, t),
             "backup": lambda: BackupRestorePanel(
+                self._content, self._config, t),
+            "about": lambda: AboutPanel(
                 self._content, self._config, t),
         }
         for panel_id, factory in panels_config.items():
@@ -1048,3 +1052,7 @@ def run(config: ConfigStore | None = None) -> None:
         app.after(100, app._minimize_to_tray)
 
     app.mainloop()
+
+
+if __name__ == "__main__":
+    run()

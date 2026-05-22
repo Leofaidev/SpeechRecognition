@@ -11,6 +11,7 @@
   "nav_labelling": "Etiquetado de Hablantes",
   "nav_history": "Historial de Sesiones",
   "nav_backup": "Copia de Seguridad",
+  "nav_about": "Acerca de",
 
   "label_device": "Dispositivo de Entrada",
   "label_group": "Grupo de Hablantes",
@@ -254,6 +255,11 @@
   "error_no_device": "No se encontró dispositivo de entrada de audio.",
   "error_vlc_not_found": "VLC no encontrado. Reproducción de audio no disponible.",
   "error_generic": "Ocurrió un error: {error}",
+
+  "about_title": "Acerca de",
+  "about_version_label": "Versión",
+  "about_author_label": "Autor",
+  "about_build_label": "Fecha de compilación",
 
   "lang_code": "es",
   "lang_name": "Español"

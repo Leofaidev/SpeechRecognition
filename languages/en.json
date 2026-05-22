@@ -11,6 +11,7 @@
   "nav_labelling": "Speaker Labelling",
   "nav_history": "Session History",
   "nav_backup": "Backup & Restore",
+  "nav_about": "About",
 
   "label_device": "Input Device",
   "label_group": "Speaker Group",
@@ -254,6 +255,11 @@
   "error_no_device": "No audio input device found.",
   "error_vlc_not_found": "VLC not found. Audio playback is unavailable.",
   "error_generic": "An error occurred: {error}",
+
+  "about_title": "About",
+  "about_version_label": "Version",
+  "about_author_label": "Author",
+  "about_build_label": "Build date",
 
   "lang_code": "en",
   "lang_name": "English"
