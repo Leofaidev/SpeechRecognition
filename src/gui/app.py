@@ -298,6 +298,14 @@ class App(ctk.CTk):
         self._short_form.grid(row=0, column=0, sticky="nsew")
         self._short_form.grid_remove()
 
+        # Speaker profile cards row (hidden until a session completes)
+        self._speaker_cards_frame = ctk.CTkScrollableFrame(
+            self._main_view, height=110, fg_color="transparent",
+            orientation="horizontal")
+        self._speaker_cards_frame.grid(row=1, column=0, sticky="ew",
+                                       padx=4, pady=(4, 0))
+        self._speaker_cards_frame.grid_remove()
+
         # Apply initial mode layout
         self._apply_mode_layout()
 
@@ -579,6 +587,12 @@ class App(ctk.CTk):
                 if result.output_paths:
                     self._playback_path = result.source_path
 
+        if result.ok and result.segments:
+            self._update_speaker_cards(result.segments)
+
+        # Navigate home so the user sees the output
+        self._show_main_view()
+
         # Completion sound + tray notify
         self._sound.play()
         if self._tray and self._config.get("tray_notifications", True):
@@ -733,9 +747,76 @@ class App(ctk.CTk):
                 if result.output_paths:
                     self._playback_path = result.source_path
 
+        if result.ok and result.segments:
+            self._update_speaker_cards(result.segments)
+
         self._sound.play()
         if self._tray and self._config.get("tray_notifications", True):
             self._tray.notify(t("tray_notify_done"))
+
+    def _update_speaker_cards(self, segments) -> None:
+        """Rebuild the speaker profile cards row from session segments."""
+        frame = self._speaker_cards_frame
+        for w in frame.winfo_children():
+            w.destroy()
+
+        # Collect unique named speakers (exclude generic "Speaker N")
+        import re
+        from pathlib import Path
+        seen: list[str] = []
+        for seg in segments:
+            sid = seg.speaker_id
+            if sid and sid not in seen and not re.match(r'^Speaker \d+$', sid):
+                seen.append(sid)
+
+        if not seen:
+            frame.grid_remove()
+            return
+
+        # Look up each speaker in the library
+        library_root = Path(self._config.get("library_root", "library"))
+        profiles: dict[str, object] = {}
+        if library_root.exists():
+            try:
+                from library.storage import LibraryStorage
+                storage = LibraryStorage(library_root)
+                for folder in library_root.iterdir():
+                    if not (folder / "speaker.json").exists():
+                        continue
+                    meta = storage.read_meta(folder.name)
+                    full = f"{meta.last_name} {meta.first_name}".strip()
+                    nick = meta.nickname or ""
+                    for sid in seen:
+                        if sid in (full, nick, folder.name):
+                            profiles[sid] = meta
+            except Exception:
+                pass
+
+        # Build one card per speaker
+        for sid in seen:
+            meta = profiles.get(sid)
+            card = ctk.CTkFrame(frame, corner_radius=8,
+                                border_width=1, border_color=("gray70", "gray30"))
+            card.pack(side="left", padx=6, pady=4, ipadx=8, ipady=6)
+
+            name_text = sid
+            if meta and (meta.last_name or meta.first_name):
+                parts = [p for p in (meta.last_name, meta.first_name,
+                                     meta.middle_name) if p]
+                name_text = " ".join(parts)
+            ctk.CTkLabel(card, text=name_text,
+                         font=ctk.CTkFont(weight="bold"),
+                         anchor="w").pack(anchor="w")
+
+            if meta:
+                for val in (meta.organisation, meta.position, meta.note):
+                    if val:
+                        ctk.CTkLabel(card, text=val,
+                                     text_color=("gray40", "gray70"),
+                                     font=ctk.CTkFont(size=11),
+                                     anchor="w").pack(anchor="w")
+
+        frame.grid()
 
     def _show_error_dialog(self, error: str) -> None:
         t = self._lang.t
@@ -1055,4 +1136,9 @@ def run(config: ConfigStore | None = None) -> None:
 
 
 if __name__ == "__main__":
+    import sys, os
+    if sys.stdout is None:
+        sys.stdout = open(os.devnull, "w")
+    if sys.stderr is None:
+        sys.stderr = open(os.devnull, "w")
     run()
