@@ -327,7 +327,13 @@ class SettingsPanel(BasePanel):
         self._hf_test_btn.configure(state="normal")
         if ok:
             self._config.set("huggingface_token", token)
+            # Token valid + model access confirmed → licence implicitly accepted
+            self._config.set("licence_accepted", True)
             self._hf_token_status.configure(text=msg, text_color="#4caf50")
+            self._licence_status.configure(
+                text=self._t("settings_licence_accepted"),
+                text_color="#4caf50",
+            )
         else:
             self._hf_token_status.configure(text=msg, text_color="#f44336")
 
