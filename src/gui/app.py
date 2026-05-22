@@ -1125,11 +1125,15 @@ class App(ctk.CTk):
 
 def run(config: ConfigStore | None = None) -> None:
     """Launch the GUI application."""
+    if config is None:
+        import os
+        local_app_data = os.environ.get("LOCALAPPDATA", os.path.expanduser("~"))
+        config_path = Path(local_app_data) / "SpeechRecognition" / "config.json"
+        config = ConfigStore(config_path)
+
     app = App(config=config)
 
-    # Auto-start to tray if both flags set
-    if (config or ConfigStore()).get("auto_start", False) and \
-       (config or ConfigStore()).get("minimize_to_tray", False):
+    if config.get("auto_start", False) and config.get("minimize_to_tray", False):
         app.after(100, app._minimize_to_tray)
 
     app.mainloop()
