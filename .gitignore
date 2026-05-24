@@ -86,3 +86,15 @@ desktop.ini
 # Logs
 *.log
 logs/
+
+# Runtime user data (output transcriptions, sessions, voice profiles)
+output_WSP*.txt
+output_WSP*.docx
+output_WSP*.srt
+output_WSP*.json
+output_txt/
+sessions/
+library/
+src/output_WSP*/
+src/sessions/
+src/library/[А-ЯA-Z]*/
