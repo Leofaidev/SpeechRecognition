@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import threading
 from pathlib import Path
 from typing import Callable
 
@@ -139,6 +140,10 @@ class SettingsPanel(BasePanel):
             value=self._config.get("output_folder", ""))
         output_entry = ctk.CTkEntry(scroll, textvariable=self._output_folder_var)
         output_entry.grid(row=row, column=1, sticky="ew", padx=4, pady=4)
+        output_entry.bind("<FocusOut>", lambda e: self._config.set(
+            "output_folder", self._output_folder_var.get()))
+        output_entry.bind("<Return>", lambda e: self._config.set(
+            "output_folder", self._output_folder_var.get()))
         bind_context_menu(output_entry, t=t)
         ctk.CTkButton(scroll, text=t("btn_browse"), width=80,
                       command=self._browse_output).grid(
@@ -205,6 +210,7 @@ class SettingsPanel(BasePanel):
                                 width=300)
         hf_entry.grid(row=row, column=1, sticky="ew", padx=4, pady=4)
         hf_entry.bind("<Return>", lambda _: self._test_and_save_token())
+        hf_entry.bind("<FocusOut>", lambda _: self._autosave_token())
         bind_context_menu(hf_entry, t=t)
         self._hf_test_btn = ctk.CTkButton(
             scroll, text=t("settings_hf_token_test_btn"),
@@ -235,6 +241,57 @@ class SettingsPanel(BasePanel):
         row += 1
 
     # ------------------------------------------------------------------
+    # Mic monitor (live signal meter while Settings panel is visible)
+    # ------------------------------------------------------------------
+
+    def on_show(self) -> None:
+        self._monitor_stop = threading.Event()
+        threading.Thread(target=self._mic_monitor, daemon=True).start()
+
+    def on_hide(self) -> None:
+        if hasattr(self, "_monitor_stop"):
+            self._monitor_stop.set()
+        self.signal_meter.reset()
+
+    def _mic_monitor(self) -> None:
+        import numpy as np
+        stop = self._monitor_stop
+        try:
+            import pyaudio
+            pa = pyaudio.PyAudio()
+            device_name = self._device_var.get()
+            device_index = self._find_device_index(pa, device_name)
+            chunk = 1024
+            stream = pa.open(
+                format=pyaudio.paInt16,
+                channels=1,
+                rate=16000,
+                input=True,
+                input_device_index=device_index,
+                frames_per_buffer=chunk,
+            )
+            while not stop.is_set():
+                data = stream.read(chunk, exception_on_overflow=False)
+                arr = np.frombuffer(data, dtype=np.int16).astype(np.float32)
+                rms = float(np.sqrt(np.mean(arr ** 2))) / 32768.0
+                self.after(0, lambda r=rms: self.signal_meter.set_level(r))
+            stream.stop_stream()
+            stream.close()
+            pa.terminate()
+        except Exception:
+            pass
+
+    @staticmethod
+    def _find_device_index(pa, name: str):
+        if not name or name in ("—", "Default"):
+            return None
+        for i in range(pa.get_device_count()):
+            info = pa.get_device_info_by_index(i)
+            if name.lower() in info["name"].lower():
+                return i
+        return None
+
+    # ------------------------------------------------------------------
     # Helpers
     # ------------------------------------------------------------------
 
@@ -249,6 +306,9 @@ class SettingsPanel(BasePanel):
 
     def _on_device_change(self, value: str) -> None:
         self._config.set("input_device", value)
+        # Restart mic monitor so the new device is sampled immediately
+        self.on_hide()
+        self.on_show()
 
     def _on_trans_enabled(self) -> None:
         self._config.set("translation_enabled", self._trans_enabled.get())
@@ -302,6 +362,11 @@ class SettingsPanel(BasePanel):
         from gui.panels.licence_dialog import LicenceDialog
         LicenceDialog(self, config=self._config, t=self._t,
                       on_accepted=self._on_licence_accepted)
+
+    def _autosave_token(self) -> None:
+        token = self._hf_token_var.get().strip()
+        if token:
+            self._config.set("huggingface_token", token)
 
     def _test_and_save_token(self) -> None:
         import threading

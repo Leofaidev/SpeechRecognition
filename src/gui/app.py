@@ -5,10 +5,17 @@ Entry point: call ``run()`` to launch the GUI.
 
 from __future__ import annotations
 
+import sys
 import threading
 import time
 from pathlib import Path
 from typing import Callable
+
+# platforms/ lives at the repo root (parent of src/); add it to sys.path so
+# that "from platforms.xxx import ..." works when running via -m gui.app.
+_repo_root = str(Path(__file__).resolve().parent.parent.parent)
+if _repo_root not in sys.path:
+    sys.path.insert(0, _repo_root)
 
 import customtkinter as ctk
 
@@ -197,19 +204,7 @@ class App(ctk.CTk):
         bar = ctk.CTkFrame(parent, fg_color="transparent")
         bar.grid(row=0, column=0, sticky="ew", padx=4, pady=4)
 
-        # Device dropdown
-        self._lbl_device = ctk.CTkLabel(bar, text=t("label_device"))
-        self._lbl_device.pack(side="left", padx=(4, 2))
         self._devices = self._get_device_names()
-        self._device_var = ctk.StringVar(
-            value=self._config.get("input_device", "")
-            or (self._devices[0] if self._devices else ""))
-        self._device_menu = ctk.CTkOptionMenu(
-            bar, variable=self._device_var,
-            values=self._devices or ["—"],
-            width=180,
-            command=self._on_device_change)
-        self._device_menu.pack(side="left", padx=4)
 
         # Group selector
         self._lbl_group = ctk.CTkLabel(bar, text=t("label_group"))
@@ -237,14 +232,10 @@ class App(ctk.CTk):
         )
         self._mode_toggle.pack(side="left", padx=8)
 
-        # Start / Stop buttons
-        self._btn_start = ctk.CTkButton(
+        # Single Start/Stop toggle button
+        self._btn_record = ctk.CTkButton(
             bar, text=t("btn_start"), width=80, command=self._start_recording)
-        self._btn_start.pack(side="left", padx=4)
-        self._btn_stop = ctk.CTkButton(
-            bar, text=t("btn_stop"), width=80,
-            state="disabled", command=self._stop_recording)
-        self._btn_stop.pack(side="left", padx=4)
+        self._btn_record.pack(side="left", padx=4)
 
     def _build_status_bar(self, parent) -> None:
         t = self._lang.t
@@ -344,7 +335,8 @@ class App(ctk.CTk):
                 available_devices=avail_devices,
             ),
             "profiles": lambda: VoiceProfilesPanel(
-                self._content, self._config, t),
+                self._content, self._config, t,
+                on_groups_changed=self._refresh_group_menu),
             "dictionary": lambda: SubstitutionDictPanel(
                 self._content, self._config, t),
             "batch": lambda: BatchQueuePanel(
@@ -380,6 +372,7 @@ class App(ctk.CTk):
 
         # Hide previous
         if self._active_panel is not None:
+            self._panels[self._active_panel].on_hide()
             self._panels[self._active_panel].grid_remove()
         else:
             self._main_view.grid_remove()
@@ -398,6 +391,7 @@ class App(ctk.CTk):
 
     def _show_main_view(self) -> None:
         if self._active_panel is not None:
+            self._panels[self._active_panel].on_hide()
             self._panels[self._active_panel].grid_remove()
             self._active_panel = None
         for pid, btn in self._nav_buttons.items():
@@ -447,13 +441,12 @@ class App(ctk.CTk):
         t = self._lang.t
         if recording:
             self._status_label.configure(text=t("status_recording"))
-            self._btn_start.configure(state="disabled")
-            self._btn_stop.configure(state="normal")
+            self._btn_record.configure(
+                text=t("btn_stop"), state="normal", command=self._stop_recording)
             self._btn_play.configure(state="disabled")
         else:
             self._status_label.configure(text=t("status_processing"))
-            self._btn_start.configure(state="disabled")
-            self._btn_stop.configure(state="disabled")
+            self._btn_record.configure(state="disabled")
         if self._tray:
             self._tray.set_recording(recording)
 
@@ -467,7 +460,7 @@ class App(ctk.CTk):
             try:
                 import pyaudio
                 pa = pyaudio.PyAudio()
-                device_name = self._device_var.get()
+                device_name = self._config.get("input_device", "") or ""
                 device_index = self._find_device_index(pa, device_name)
                 chunk = 1024
                 stream = pa.open(
@@ -557,8 +550,8 @@ class App(ctk.CTk):
         t = self._lang.t
         self._file_progress.set(0)
         self._status_label.configure(text=t("status_done"))
-        self._btn_start.configure(state="normal")
-        self._btn_stop.configure(state="disabled")
+        self._btn_record.configure(
+            text=t("btn_start"), state="normal", command=self._start_recording)
         self._btn_play.configure(state="normal")
 
         if result.ok and result.segments:
@@ -601,8 +594,8 @@ class App(ctk.CTk):
     def _handle_error(self, error: str) -> None:
         t = self._lang.t
         self._status_label.configure(text=t("error_title"))
-        self._btn_start.configure(state="normal")
-        self._btn_stop.configure(state="disabled")
+        self._btn_record.configure(
+            text=t("btn_start"), state="normal", command=self._start_recording)
         self._show_error_dialog(error)
 
     # ------------------------------------------------------------------
@@ -726,8 +719,8 @@ class App(ctk.CTk):
         t = self._lang.t
         self._file_progress.set(0)
         self._status_label.configure(text=t("status_done"))
-        self._btn_start.configure(state="normal")
-        self._btn_stop.configure(state="disabled")
+        self._btn_record.configure(
+            text=t("btn_start"), state="normal", command=self._start_recording)
         self._btn_play.configure(state="normal")
         self._show_main_view()
 
@@ -1006,15 +999,16 @@ class App(ctk.CTk):
         for lang_key, panel_id in _NAV_ITEMS:
             self._nav_buttons[panel_id].configure(text=t(lang_key))
         # Control bar labels
-        self._lbl_device.configure(text=t("label_device"))
         self._lbl_group.configure(text=t("label_group"))
         self._lbl_mode.configure(text=t("label_mode"))
         # Control bar interactive widgets
         self._mode_toggle.configure(values=[t("mode_regular"), t("mode_short")])
         self._mode_var.set(
             t("mode_regular") if self._mode == "regular" else t("mode_short"))
-        self._btn_start.configure(text=t("btn_start"))
-        self._btn_stop.configure(text=t("btn_stop"))
+        if self._recording:
+            self._btn_record.configure(text=t("btn_stop"))
+        else:
+            self._btn_record.configure(text=t("btn_start"))
         if not (self._vlc_player and self._vlc_player.is_playing()):
             self._btn_play.configure(text=t("btn_play"))
         # Short session form (lives in main view, not in panels dict)
@@ -1039,13 +1033,22 @@ class App(ctk.CTk):
         try:
             from library.storage import LibraryStorage
             from library.groups import LibraryGroups
-            groups = LibraryGroups(LibraryStorage(library_root))
-            return groups.list_groups()
+            names = list(LibraryGroups(LibraryStorage(library_root)).list_groups())
         except Exception:
-            return []
+            names = []
+        for name in self._config.get("known_groups", []):
+            if name not in names:
+                names.append(name)
+        return names
 
-    def _on_device_change(self, value: str) -> None:
-        self._config.set("input_device", value)
+    def _refresh_group_menu(self, names: list[str] | None = None) -> None:
+        if names is None:
+            names = self._get_group_names()
+        values = names if names else ["—"]
+        self._group_menu.configure(values=values)
+        if self._group_var.get() not in values:
+            self._group_var.set(values[0])
+            self._config.set("active_speaker_group", values[0])
 
     def _on_group_change(self, value: str) -> None:
         self._config.set("active_speaker_group", value)
