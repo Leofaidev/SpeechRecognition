@@ -339,9 +339,11 @@ class ProfileDialog(ctk.CTkToplevel):
                 storage.write_meta(self._folder_name, meta)
             else:
                 from audio.ingest import load
-                from library.profile_creator import ProfileCreator
+                from library.profile_creator import ProfileCreator, _pyannote_embed
+                _hf_token = self._config.get("huggingface_token", None)
+                _embed_fn = (lambda a, sr, _t=_hf_token: _pyannote_embed(a, sr, token=_t))
                 audio, sr = load(self._audio_var.get())
-                creator = ProfileCreator(storage)
+                creator = ProfileCreator(storage, embedding_fn=_embed_fn)
                 creator.create(audio, sr, **kwargs)
         except Exception as exc:
             from tkinter import messagebox

@@ -420,13 +420,26 @@ class VoiceProfilesPanel(BasePanel):
             from library.storage import LibraryStorage
             from library.retrainer import LibraryRetrainer
             from library.profile_creator import _pyannote_embed
+            token = self._config.get("huggingface_token", None)
+            embed_fn = (lambda a, sr, _t=token: _pyannote_embed(a, sr, token=_t))
             storage = LibraryStorage(library_root)
-            result = LibraryRetrainer(storage, _pyannote_embed).retrain_all()
+            result = LibraryRetrainer(storage, embed_fn).retrain_all()
             from tkinter import messagebox
-            messagebox.showinfo(
-                "", self._t("profile_retrain_done",
+            if result.failed:
+                detail = "\n".join(
+                    f"  {f}: {result.errors.get(f, '?')}"
+                    for f in result.failed_profiles
+                )
+                messagebox.showerror(
+                    self._t("error_title"),
+                    self._t("profile_retrain_done",
                              retrained=result.retrained,
-                             failed=result.failed))
+                             failed=result.failed) + f"\n\n{detail}")
+            else:
+                messagebox.showinfo(
+                    "", self._t("profile_retrain_done",
+                                 retrained=result.retrained,
+                                 failed=result.failed))
         except Exception as exc:
             from tkinter import messagebox
             messagebox.showerror(self._t("error_title"), str(exc))

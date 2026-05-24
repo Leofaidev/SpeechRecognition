@@ -25,6 +25,7 @@ class OutputConfigPanel(BasePanel):
         scroll = ctk.CTkScrollableFrame(self)
         scroll.grid(row=0, column=0, sticky="nsew", padx=8, pady=8)
         self.grid_rowconfigure(0, weight=1)
+        scroll.grid_columnconfigure(0, weight=1)
 
         row = 0
 
@@ -93,8 +94,13 @@ class OutputConfigPanel(BasePanel):
         folder_frame.grid_columnconfigure(0, weight=1)
         self._folder_var = ctk.StringVar(
             value=self._config.get("output_folder", ""))
-        _e = ctk.CTkEntry(folder_frame, textvariable=self._folder_var)
+        _e = ctk.CTkEntry(folder_frame, textvariable=self._folder_var,
+                          placeholder_text="(not set)")
         _e.grid(row=0, column=0, sticky="ew", padx=(0, 4))
+        _e.bind("<FocusOut>", lambda e: self._config.set(
+            "output_folder", self._folder_var.get()))
+        _e.bind("<Return>", lambda e: self._config.set(
+            "output_folder", self._folder_var.get()))
         bind_context_menu(_e)
         ctk.CTkButton(folder_frame, text=t("btn_browse"), width=80,
                       command=self._browse_folder).grid(row=0, column=1)

@@ -71,6 +71,7 @@ class PipelineRunner:
         # Cached engine instances — models are loaded once and reused across runs.
         self._diarizer = None
         self._transcriber = None
+        self._embedder = None   # pyannote embedding model for speaker matching
 
     # ------------------------------------------------------------------
     # Public API
@@ -283,6 +284,15 @@ class PipelineRunner:
         if self._stop_event.is_set():
             return PipelineResult(error="Stopped by user.")
 
+        # Match diarized speakers against voice profiles in the selected group
+        if speaker_group:
+            self._on_progress(0.28, "Matching speakers to group...")
+            segments = self._match_speakers_to_group(
+                audio, sample_rate, segments, speaker_group)
+
+        if self._stop_event.is_set():
+            return PipelineResult(error="Stopped by user.")
+
         # Transcribe — reuse cached engine so Whisper stays in memory between runs
         if self._transcriber is None:
             self._transcriber = TranscriptionEngine(config)
@@ -435,3 +445,132 @@ class PipelineRunner:
             clipboard_text=translated_text if config.get("translation_enabled") else clipboard_text,
             source_path=source_path,
         )
+
+    # ------------------------------------------------------------------
+    # Speaker matching against a voice-profile group
+    # ------------------------------------------------------------------
+
+    def _match_speakers_to_group(
+        self,
+        audio,
+        sample_rate: int,
+        segments: list,
+        speaker_group: str,
+    ) -> list:
+        """Relabel 'Speaker N' labels with profile names via embedding comparison.
+
+        For each unique unidentified speaker, concatenates all their audio,
+        computes a pyannote embedding, and compares it against every saved
+        embedding in *speaker_group*.  Speakers whose cosine similarity
+        exceeds MATCH_THRESHOLD are renamed to the matching profile name.
+        Speakers with no match keep their 'Speaker N' label and will later
+        trigger the manual labelling prompt.
+        """
+        import re
+        from pathlib import Path as _Path
+        import numpy as np
+
+        library_root = _Path(self._config.get("library_root", "library"))
+        try:
+            from library.storage import LibraryStorage
+            from library.groups import LibraryGroups
+            storage = LibraryStorage(library_root)
+            member_folders = LibraryGroups(storage).members(speaker_group)
+        except Exception:
+            return segments
+
+        if not member_folders:
+            return segments
+
+        # Load saved embeddings for each group member
+        profile_embeddings: dict[str, "np.ndarray"] = {}
+        profile_display: dict[str, str] = {}
+        for folder in member_folders:
+            emb_path = storage.embedding_path(folder)
+            if not emb_path.exists():
+                continue
+            try:
+                emb = np.load(str(emb_path))
+                meta = storage.read_meta(folder)
+                parts = [meta.last_name, meta.first_name]
+                full = " ".join(p for p in parts if p).strip()
+                profile_display[folder] = full or meta.nickname or folder
+                profile_embeddings[folder] = emb
+            except Exception:
+                continue
+
+        if not profile_embeddings:
+            return segments
+
+        unidentified = {
+            s.speaker_id for s in segments
+            if re.match(r"^Speaker \d+$", s.speaker_id)
+        }
+        if not unidentified:
+            return segments
+
+        # Lazily load the embedding model using the same sub-model that the
+        # diarization pipeline uses (already downloaded and licensed).
+        try:
+            import torch
+            if self._embedder is None:
+                from pyannote.audio.core.model import Model
+                from pyannote.audio import Inference
+                token = self._config.get("huggingface_token", None)
+                hf_kwargs: dict = {"token": token} if token else {}
+                # Derive model name from the loaded pipeline when available;
+                # fall back to the known default for speaker-diarization-3.1.
+                if (self._diarizer is not None and
+                        self._diarizer._pipeline is not None and
+                        isinstance(getattr(self._diarizer._pipeline,
+                                           "embedding", None), str)):
+                    emb_name = self._diarizer._pipeline.embedding
+                else:
+                    emb_name = "pyannote/wespeaker-voxceleb-resnet34-LM"
+                emb_model = Model.from_pretrained(emb_name, **hf_kwargs)
+                self._embedder = Inference(emb_model, window="whole")
+        except Exception:
+            return segments
+
+        MATCH_THRESHOLD = 0.75
+
+        speaker_match: dict[str, str] = {}
+        for spk in unidentified:
+            # Collect all audio segments for this speaker
+            chunks = []
+            for seg in segments:
+                if seg.speaker_id != spk:
+                    continue
+                s_i = max(0, int(seg.start * sample_rate))
+                e_i = min(len(audio), int(seg.end * sample_rate))
+                if e_i > s_i:
+                    chunks.append(audio[s_i:e_i])
+            if not chunks:
+                continue
+            combined = np.concatenate(chunks)
+            try:
+                waveform = torch.tensor(combined).unsqueeze(0)
+                q_emb = np.array(
+                    self._embedder({"waveform": waveform, "sample_rate": sample_rate}))
+            except Exception:
+                continue
+
+            best_score, best_folder = 0.0, None
+            for folder, ref_emb in profile_embeddings.items():
+                num = float(np.dot(q_emb.flatten(), ref_emb.flatten()))
+                denom = float(np.linalg.norm(q_emb) * np.linalg.norm(ref_emb))
+                sim = num / denom if denom > 0 else 0.0
+                if sim > best_score:
+                    best_score, best_folder = sim, folder
+
+            if best_score >= MATCH_THRESHOLD and best_folder:
+                speaker_match[spk] = profile_display[best_folder]
+
+        if not speaker_match:
+            return segments
+
+        from dataclasses import replace as _replace
+        return [
+            _replace(seg, speaker_id=speaker_match.get(seg.speaker_id, seg.speaker_id))
+            for seg in segments
+        ]

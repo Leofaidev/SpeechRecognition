@@ -15,6 +15,27 @@ from gui.widgets.context_menu import bind_context_menu
 
 _WHISPER_MODELS = ["tiny", "base", "small", "medium", "large-v3"]
 _TRANSLATION_ENGINES = ["opus-mt", "google"]
+
+# Display name → language code (for target-language selector)
+_TARGET_LANGUAGES: dict[str, str] = {
+    "English":    "en",
+    "Русский":    "ru",
+    "Deutsch":    "de",
+    "Français":   "fr",
+    "Español":    "es",
+    "Italiano":   "it",
+    "Português":  "pt",
+    "中文":        "zh",
+    "日本語":      "ja",
+    "한국어":      "ko",
+    "العربية":    "ar",
+    "Nederlands": "nl",
+    "Polski":     "pl",
+    "Türkçe":     "tr",
+    "Українська": "uk",
+    "Suomi":      "fi",
+}
+_CODE_TO_NAME = {v: k for k, v in _TARGET_LANGUAGES.items()}
 _PYANNOTE_MODELS = (
     "pyannote/speaker-diarization-3.1",
     "pyannote/segmentation-3.0",
@@ -130,24 +151,16 @@ class SettingsPanel(BasePanel):
                                   sticky="w", padx=12, pady=2)
         self._quality_label.grid_remove()
         row += 1
-
-        # ---- Output section ------------------------------------------
-        self._section(scroll, t("settings_output_section"), row)
-        row += 1
-        ctk.CTkLabel(scroll, text=t("settings_output_folder")).grid(
+        ctk.CTkLabel(scroll, text=t("settings_target_language")).grid(
             row=row, column=0, sticky="w", padx=12, pady=4)
-        self._output_folder_var = ctk.StringVar(
-            value=self._config.get("output_folder", ""))
-        output_entry = ctk.CTkEntry(scroll, textvariable=self._output_folder_var)
-        output_entry.grid(row=row, column=1, sticky="ew", padx=4, pady=4)
-        output_entry.bind("<FocusOut>", lambda e: self._config.set(
-            "output_folder", self._output_folder_var.get()))
-        output_entry.bind("<Return>", lambda e: self._config.set(
-            "output_folder", self._output_folder_var.get()))
-        bind_context_menu(output_entry, t=t)
-        ctk.CTkButton(scroll, text=t("btn_browse"), width=80,
-                      command=self._browse_output).grid(
-            row=row, column=2, padx=4, pady=4)
+        saved_tgt = self._config.get("target_language", "en")
+        self._target_lang_var = ctk.StringVar(
+            value=_CODE_TO_NAME.get(saved_tgt, "English"))
+        ctk.CTkOptionMenu(
+            scroll, variable=self._target_lang_var,
+            values=list(_TARGET_LANGUAGES.keys()),
+            command=self._on_target_lang_change,
+        ).grid(row=row, column=1, sticky="w", padx=12, pady=4)
         row += 1
 
         # ---- Sound section -------------------------------------------
@@ -315,10 +328,18 @@ class SettingsPanel(BasePanel):
 
     def _on_engine_change(self, value: str) -> None:
         self._config.set("translation_engine", value)
-        pairs_with_warnings = {("en", "zh"), ("en", "zh-cn")}
-        src = self._config.get("source_language", "auto")
+        self._update_quality_warning()
+
+    def _on_target_lang_change(self, display_name: str) -> None:
+        code = _TARGET_LANGUAGES.get(display_name, "en")
+        self._config.set("target_language", code)
+        self._update_quality_warning()
+
+    def _update_quality_warning(self) -> None:
         tgt = self._config.get("target_language", "en")
-        if (src, tgt) in pairs_with_warnings and value == "opus-mt":
+        engine = self._config.get("translation_engine", "opus-mt")
+        limited_targets = {"zh", "zh-cn", "ja", "ko", "ar"}
+        if tgt in limited_targets and engine == "opus-mt":
             self._quality_label.grid()
         else:
             self._quality_label.grid_remove()
@@ -345,16 +366,6 @@ class SettingsPanel(BasePanel):
         try:
             from platforms.windows.autostart import set_autostart
             set_autostart(enabled)
-        except Exception:
-            pass
-
-    def _browse_output(self) -> None:
-        try:
-            from tkinter import filedialog
-            folder = filedialog.askdirectory()
-            if folder:
-                self._output_folder_var.set(folder)
-                self._config.set("output_folder", folder)
         except Exception:
             pass
 

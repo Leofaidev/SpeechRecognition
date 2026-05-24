@@ -203,12 +203,28 @@ class ProfileCreator:
 # Default embedding function (lazy pyannote import)
 # ---------------------------------------------------------------------------
 
-def _pyannote_embed(audio: np.ndarray, sample_rate: int) -> np.ndarray:
-    """Generate a speaker embedding using pyannote.audio."""
-    import torch
-    from pyannote.audio import Inference
+_embedder_cache = None  # cached Inference object, shared across calls
 
-    inference = Inference("pyannote/embedding", window="whole")
+
+def _pyannote_embed(audio: np.ndarray, sample_rate: int,
+                    token: str | None = None) -> np.ndarray:
+    """Generate a speaker embedding using pyannote/wespeaker-voxceleb-resnet34-LM.
+
+    Uses the same sub-model that pyannote/speaker-diarization-3.1 uses
+    internally, so no separate licence acceptance is needed.
+    The model is loaded once and cached for subsequent calls.
+    """
+    global _embedder_cache
+    import torch
+
+    if _embedder_cache is None:
+        from pyannote.audio.core.model import Model
+        from pyannote.audio import Inference
+        kwargs: dict = {"token": token} if token else {}
+        emb_model = Model.from_pretrained(
+            "pyannote/wespeaker-voxceleb-resnet34-LM", **kwargs)
+        _embedder_cache = Inference(emb_model, window="whole")
+
     waveform = torch.tensor(audio).unsqueeze(0)
-    embedding = inference({"waveform": waveform, "sample_rate": sample_rate})
+    embedding = _embedder_cache({"waveform": waveform, "sample_rate": sample_rate})
     return np.array(embedding)

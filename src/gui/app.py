@@ -121,6 +121,14 @@ class App(ctk.CTk):
         ctk.set_appearance_mode("dark")
         ctk.set_default_color_theme("blue")
 
+        # App icon
+        _icon = Path(__file__).resolve().parent.parent.parent / "assets" / "WSP.ico"
+        if _icon.exists():
+            try:
+                self.iconbitmap(str(_icon))
+            except Exception:
+                pass
+
         self._build_layout()
         self._register_hotkeys()
 
@@ -570,12 +578,14 @@ class App(ctk.CTk):
                     self._restore_from_tray()
             else:
                 # Append to output text
+                use_translation = self._config.get("translation_enabled", False)
                 self._output_text.configure(state="normal")
                 self._output_text.delete("1.0", "end")
                 for seg in result.segments:
+                    text = (seg.translated_text or seg.text) if use_translation else seg.text
                     self._output_text.insert(
                         "end",
-                        f"[{seg.start:.1f}s] {seg.speaker_id}: {seg.text}\n")
+                        f"[{seg.start:.1f}s] {seg.speaker_id}: {text}\n")
                 self._output_text.configure(state="disabled")
                 if result.output_paths:
                     self._playback_path = result.source_path
@@ -656,13 +666,15 @@ class App(ctk.CTk):
             fpath = self._pending_fragment_paths.get(speaker_id)
             try:
                 from library.storage import LibraryStorage
-                from library.profile_creator import ProfileCreator, ConflictMode
+                from library.profile_creator import ProfileCreator, ConflictMode, _pyannote_embed
                 library_root = Path(self._config.get("library_root", "library"))
                 storage = LibraryStorage(library_root)
+                _hf_token = self._config.get("huggingface_token", None)
+                _embed_fn = (lambda a, sr, _t=_hf_token: _pyannote_embed(a, sr, token=_t))
                 if fpath:
                     from audio.ingest import load as _audio_load
                     audio, sr = _audio_load(fpath)
-                    ProfileCreator(storage).create(
+                    ProfileCreator(storage, embedding_fn=_embed_fn).create(
                         audio, sr,
                         last=meta.get("lastname", ""),
                         first=meta.get("firstname", ""),
@@ -730,12 +742,14 @@ class App(ctk.CTk):
                     s.text for s in result.segments if not s.bad_audio)
                 self._short_form.set_transcription(raw_text)
             else:
+                use_translation = self._config.get("translation_enabled", False)
                 self._output_text.configure(state="normal")
                 self._output_text.delete("1.0", "end")
                 for seg in result.segments:
+                    text = (seg.translated_text or seg.text) if use_translation else seg.text
                     self._output_text.insert(
                         "end",
-                        f"[{seg.start:.1f}s] {seg.speaker_id}: {seg.text}\n")
+                        f"[{seg.start:.1f}s] {seg.speaker_id}: {text}\n")
                 self._output_text.configure(state="disabled")
                 if result.output_paths:
                     self._playback_path = result.source_path
