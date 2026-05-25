@@ -20,7 +20,7 @@ class AIConfigPanel(BasePanel):
 
         scroll = ctk.CTkScrollableFrame(self)
         scroll.grid(row=0, column=0, sticky="nsew", padx=8, pady=8)
-        scroll.grid_columnconfigure(1, weight=1)
+        scroll.grid_columnconfigure(3, weight=1)  # spacer — keeps button next to field
 
         row = 0
 
@@ -79,7 +79,7 @@ class AIConfigPanel(BasePanel):
     def _section(self, parent, label: str, row: int) -> None:
         ctk.CTkLabel(parent, text=label,
                      font=ctk.CTkFont(weight="bold")).grid(
-            row=row, column=0, columnspan=3, sticky="w", padx=8, pady=(12, 2))
+            row=row, column=0, columnspan=4, sticky="w", padx=8, pady=(12, 2))
 
     def _add_dropdown(self, parent, row: int, label: str,
                       config_key: str, values: list, default: str,
