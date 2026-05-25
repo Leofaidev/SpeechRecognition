@@ -31,7 +31,7 @@ class AIConfigPanel(BasePanel):
         row = self._add_dropdown(scroll, row,
             t("ai_config_model_size_label"),
             "whisper_model", _WHISPER_MODELS, "medium",
-            "ai_config_model_size_info")
+            "ai_config_model_size_info", width=160)
 
         row = self._add_entry(scroll, row,
             t("ai_config_language_label"),
@@ -83,7 +83,7 @@ class AIConfigPanel(BasePanel):
 
     def _add_dropdown(self, parent, row: int, label: str,
                       config_key: str, values: list, default: str,
-                      info_key: str) -> int:
+                      info_key: str, width: int | None = None) -> int:
         ctk.CTkLabel(parent, text=label, anchor="w").grid(
             row=row, column=0, sticky="w", padx=12, pady=4)
         var = ctk.StringVar(value=self._config.get(config_key, default))
@@ -91,9 +91,12 @@ class AIConfigPanel(BasePanel):
         def _on_change(v, k=config_key):
             self._config.set(k, v)
 
+        kw = {"width": width} if width else {}
         ctk.CTkOptionMenu(parent, variable=var, values=values,
-                          command=_on_change).grid(
-            row=row, column=1, sticky="ew", padx=4, pady=4)
+                          command=_on_change, **kw).grid(
+            row=row, column=1,
+            sticky="w" if width else "ew",
+            padx=4, pady=4)
         self._info_btn(parent, row, info_key)
         return row + 1
 
@@ -143,10 +146,12 @@ class AIConfigPanel(BasePanel):
 
     def _info_btn(self, parent, row: int, info_key: str) -> None:
         ctk.CTkButton(
-            parent, text="i", width=28, height=28,
-            font=ctk.CTkFont(slant="italic"),
-            fg_color="transparent",
-            border_width=1,
+            parent, text="?", width=28, height=28,
+            fg_color=("#3a7ebf", "#1f6aa5"),
+            hover_color=("#2b6aaa", "#18568a"),
+            text_color="white",
+            border_width=0,
+            corner_radius=14,
             command=lambda k=info_key: self._show_info(k),
         ).grid(row=row, column=2, padx=(4, 8), pady=4)
 
