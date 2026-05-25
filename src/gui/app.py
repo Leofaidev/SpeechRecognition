@@ -27,6 +27,7 @@ from gui.pipeline import PipelineRunner
 from gui.widgets.recording_dot import RecordingDot
 from gui.widgets.signal_meter import SignalMeter
 from gui.widgets.short_session_form import ShortSessionForm
+from gui.widgets.shimmer_progress import ShimmerProgressBar
 from gui.panels.settings import SettingsPanel
 from gui.panels.voice_profiles import VoiceProfilesPanel
 from gui.panels.substitution_dict import SubstitutionDictPanel
@@ -262,12 +263,12 @@ class App(ctk.CTk):
         self._signal_meter.pack(side="left", padx=4)
 
         # File progress bar
-        self._file_progress = ctk.CTkProgressBar(bar, width=200)
+        self._file_progress = ShimmerProgressBar(bar, width=200, height=14)
         self._file_progress.set(0)
         self._file_progress.pack(side="left", padx=8)
 
         # Queue progress bar (hidden outside batch)
-        self._queue_progress = ctk.CTkProgressBar(bar, width=160)
+        self._queue_progress = ShimmerProgressBar(bar, width=160, height=14)
         self._queue_progress.set(0)
         self._queue_label = ctk.CTkLabel(bar, text="")
         # Hidden by default (T-80)

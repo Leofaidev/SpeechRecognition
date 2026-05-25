@@ -28,7 +28,7 @@ class TranslationEngine:
 
     def __init__(self, config) -> None:
         self._config = config
-        self._opus_translator = None
+        self._opus_translators: dict = {}  # keyed by (source, target)
 
     def translate(self, segments: list["TranscribedSegment"]) -> list["TranscribedSegment"]:
         """Return segments with ``text`` translated if translation is enabled.
@@ -43,17 +43,19 @@ class TranslationEngine:
         source = self._config.get("source_language", "auto")
         target = self._config.get("target_language", "en")
 
-        texts_to_translate = [
-            seg.text for seg in segments if not seg.bad_audio
-        ]
-        if not texts_to_translate:
+        active = [seg for seg in segments if not seg.bad_audio]
+        if not active:
             return segments
 
         if engine == "google":
             from translation.google import translate
-            translated = translate(texts_to_translate, source, target)
+            texts = [seg.text for seg in active]
+            translated = translate(texts, source, target)
+        elif source == "auto":
+            translated = self._translate_local_auto(active, target)
         else:
-            translated = self._translate_local(texts_to_translate, source, target)
+            texts = [seg.text for seg in active]
+            translated = self._translate_local(texts, source, target)
 
         from dataclasses import replace
         result: list["TranscribedSegment"] = []
@@ -70,7 +72,35 @@ class TranslationEngine:
     # ------------------------------------------------------------------
 
     def _translate_local(self, texts: list[str], source: str, target: str) -> list[str]:
-        if self._opus_translator is None:
+        key = (source, target)
+        if key not in self._opus_translators:
             from translation.opus_mt import OpusMTTranslator
-            self._opus_translator = OpusMTTranslator(source, target)
-        return self._opus_translator.translate(texts)
+            self._opus_translators[key] = OpusMTTranslator(source, target)
+        return self._opus_translators[key].translate(texts)
+
+    def _translate_local_auto(self, active_segments: list, target: str) -> list[str]:
+        """Translate each segment using its detected language_code.
+
+        Falls back to a two-step path through English when no direct model exists
+        for the detected-source → target pair (e.g. ru→de has no OPUS-MT model,
+        but ru→en→de works via two existing models).
+        """
+        results: list[str] = []
+        for seg in active_segments:
+            src = getattr(seg, "language_code", None) or ""
+            if not src or src == target:
+                results.append(seg.text)
+                continue
+            try:
+                results.append(self._translate_local([seg.text], src, target)[0])
+            except Exception:
+                # Direct model unavailable; try two-step via English
+                translated = seg.text
+                if src != "en" and target != "en":
+                    try:
+                        en_text = self._translate_local([seg.text], src, "en")[0]
+                        translated = self._translate_local([en_text], "en", target)[0]
+                    except Exception:
+                        pass
+                results.append(translated)
+        return results

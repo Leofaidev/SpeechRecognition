@@ -88,6 +88,17 @@ class OpusMTTranslator:
         from transformers import MarianMTModel, MarianTokenizer
 
         model_name = f"Helsinki-NLP/opus-mt-{self._source}-{self._target}"
-        tokenizer = MarianTokenizer.from_pretrained(model_name)
-        model = MarianMTModel.from_pretrained(model_name)
-        return tokenizer, model
+
+        def _try_load():
+            tokenizer = MarianTokenizer.from_pretrained(model_name)
+            model = MarianMTModel.from_pretrained(model_name)
+            return tokenizer, model
+
+        try:
+            return _try_load()
+        except Exception as exc:
+            from model_integrity import is_auth_or_network_error, force_redownload
+            if not is_auth_or_network_error(exc):
+                force_redownload(model_name)
+                return _try_load()
+            raise

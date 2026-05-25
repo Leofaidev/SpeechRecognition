@@ -223,7 +223,20 @@ class TranscriptionEngine:
         device = "cuda" if (gpu_enabled and torch.cuda.is_available()) else "cpu"
         compute_type = "float16" if device == "cuda" else "int8"
 
-        model = WhisperModel(model_id, device=device, compute_type=compute_type)
+        def _try_load():
+            return WhisperModel(model_id, device=device, compute_type=compute_type)
+
+        try:
+            model = _try_load()
+        except Exception as exc:
+            from model_integrity import is_auth_or_network_error, force_redownload
+            # Only attempt re-download for HF-managed models (not local paths)
+            if not is_auth_or_network_error(exc) and not model_path:
+                repo_id = model_id if "/" in model_id else f"Systran/faster-whisper-{model_id}"
+                force_redownload(repo_id)
+                model = _try_load()
+            else:
+                raise
 
         if self._checksum_path:
             import faster_whisper

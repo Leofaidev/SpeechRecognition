@@ -160,31 +160,45 @@ class DiarizationEngine:
 
         token = self._config.get("huggingface_token", None)
         kwargs = {"token": token} if token else {}
+
+        def _try_load():
+            return Pipeline.from_pretrained(_DEFAULT_MODEL, **kwargs)
+
         try:
-            pipeline = Pipeline.from_pretrained(_DEFAULT_MODEL, **kwargs)
+            pipeline = _try_load()
         except Exception as exc:
-            msg = str(exc)
-            # Extract a gated-repo model name from the error message so the
-            # user knows exactly which HuggingFace page to visit.
-            import re
-            m = re.search(r"pyannote/[\w.-]+", msg)
-            blocked = m.group(0) if m else "a required model"
-            raise RuntimeError(
-                f"Speaker diarization model could not be loaded.\n\n"
-                f"Access was denied for: {blocked}\n\n"
-                f"Steps to fix:\n"
-                f"  1. Log in at huggingface.co\n"
-                f"  2. Visit huggingface.co/{blocked} and click "
-                f"'Agree and access repository'\n"
-                f"  3. Restart the application\n\n"
-                f"(All pyannote models must be approved separately.)"
-            ) from exc
+            from model_integrity import is_auth_or_network_error, force_redownload
+            if not is_auth_or_network_error(exc):
+                # Possibly corrupted cache — force a fresh download and retry
+                force_redownload(_DEFAULT_MODEL, token=token)
+                try:
+                    pipeline = _try_load()
+                except Exception as retry_exc:
+                    self._raise_pipeline_load_error(retry_exc)
+            else:
+                self._raise_pipeline_load_error(exc)
 
         import torch
         if self._config.get("gpu_enabled", True) and torch.cuda.is_available():
             pipeline.to(torch.device("cuda"))
 
         return pipeline
+
+    def _raise_pipeline_load_error(self, exc: Exception) -> None:
+        import re
+        msg = str(exc)
+        m = re.search(r"pyannote/[\w.-]+", msg)
+        blocked = m.group(0) if m else "a required model"
+        raise RuntimeError(
+            f"Speaker diarization model could not be loaded.\n\n"
+            f"Access was denied for: {blocked}\n\n"
+            f"Steps to fix:\n"
+            f"  1. Log in at huggingface.co\n"
+            f"  2. Visit huggingface.co/{blocked} and click "
+            f"'Agree and access repository'\n"
+            f"  3. Restart the application\n\n"
+            f"(All pyannote models must be approved separately.)"
+        ) from exc
 
     def _run_pipeline(self, pipeline, audio, sample_rate: int) -> list[Segment]:
         import torch
