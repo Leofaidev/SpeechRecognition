@@ -30,6 +30,7 @@ from gui.widgets.short_session_form import ShortSessionForm
 from gui.widgets.shimmer_progress import ShimmerProgressBar
 from gui.panels.settings import SettingsPanel
 from gui.panels.voice_profiles import VoiceProfilesPanel
+from gui.panels.ai_config import AIConfigPanel
 from gui.panels.substitution_dict import SubstitutionDictPanel
 from gui.panels.batch_queue import BatchQueuePanel
 from gui.panels.output_config import OutputConfigPanel
@@ -46,6 +47,7 @@ _NAV_ITEMS = [
     ("nav_home", "home"),
     ("nav_settings", "settings"),
     ("nav_profiles", "profiles"),
+    ("nav_ai_config", "ai_config"),
     ("nav_dictionary", "dictionary"),
     ("nav_batch", "batch"),
     ("nav_output", "output"),
@@ -346,6 +348,8 @@ class App(ctk.CTk):
             "profiles": lambda: VoiceProfilesPanel(
                 self._content, self._config, t,
                 on_groups_changed=self._refresh_group_menu),
+            "ai_config": lambda: AIConfigPanel(
+                self._content, self._config, t),
             "dictionary": lambda: SubstitutionDictPanel(
                 self._content, self._config, t),
             "batch": lambda: BatchQueuePanel(

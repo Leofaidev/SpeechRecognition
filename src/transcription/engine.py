@@ -154,6 +154,10 @@ class TranscriptionEngine:
         """
         model = self._get_model()
         threshold = self._config.get("bad_audio_threshold", _DEFAULT_BAD_AUDIO_THRESHOLD)
+        lang       = self._config.get("whisper_language", "") or None
+        beam_size  = int(self._config.get("whisper_beam_size", 5))
+        vad_filter = bool(self._config.get("whisper_vad_filter", False))
+        word_ts    = bool(self._config.get("whisper_word_timestamps", False))
         results: list[TranscribedSegment] = []
 
         for seg in segments:
@@ -163,8 +167,10 @@ class TranscriptionEngine:
 
             whisper_segs, info = model.transcribe(
                 chunk,
-                language=None,  # auto-detect
-                word_timestamps=False,
+                language=lang,
+                beam_size=beam_size,
+                vad_filter=vad_filter,
+                word_timestamps=word_ts,
             )
             whisper_segs = list(whisper_segs)
 

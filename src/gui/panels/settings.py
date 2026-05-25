@@ -13,7 +13,6 @@ from gui.widgets.signal_meter import SignalMeter
 from gui.widgets.context_menu import bind_context_menu
 
 
-_WHISPER_MODELS = ["tiny", "base", "small", "medium", "large-v3"]
 _TRANSLATION_ENGINES = ["opus-mt", "google"]
 
 # Display name → language code (for target-language selector)
@@ -172,19 +171,6 @@ class SettingsPanel(BasePanel):
                         variable=self._sound_enabled,
                         command=self._on_sound_enabled).grid(
             row=row, column=0, columnspan=2, sticky="w", padx=12, pady=4)
-        row += 1
-
-        # ---- Whisper model -------------------------------------------
-        self._section(scroll, t("settings_model_section"), row)
-        row += 1
-        ctk.CTkLabel(scroll, text=t("settings_model_label")).grid(
-            row=row, column=0, sticky="w", padx=12, pady=4)
-        self._model_var = ctk.StringVar(
-            value=self._config.get("whisper_model", "medium"))
-        ctk.CTkOptionMenu(scroll, variable=self._model_var,
-                          values=_WHISPER_MODELS,
-                          command=self._on_model_change).grid(
-            row=row, column=1, sticky="ew", padx=12, pady=4)
         row += 1
 
         # ---- Tray section -------------------------------------------
@@ -346,13 +332,6 @@ class SettingsPanel(BasePanel):
 
     def _on_sound_enabled(self) -> None:
         self._config.set("sound_enabled", self._sound_enabled.get())
-
-    def _on_model_change(self, value: str) -> None:
-        if value != self._config.get("whisper_model", "medium"):
-            if ctk.messagebox and ctk.messagebox.askyesno(
-                    "Whisper Model",
-                    self._t("model_change_confirm")):
-                self._config.set("whisper_model", value)
 
     def _on_minimize_tray(self) -> None:
         self._config.set("minimize_to_tray", self._minimize_tray.get())

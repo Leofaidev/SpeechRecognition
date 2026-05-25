@@ -200,13 +200,35 @@ class DiarizationEngine:
             f"(All pyannote models must be approved separately.)"
         ) from exc
 
+    def _apply_clustering_params(self, pipeline) -> None:
+        threshold = self._config.get("pyannote_clustering_threshold", None)
+        if threshold is None:
+            return
+        try:
+            pipeline.clustering.threshold = float(threshold)
+        except AttributeError:
+            try:
+                pipeline._clustering.threshold = float(threshold)
+            except AttributeError:
+                pass
+
     def _run_pipeline(self, pipeline, audio, sample_rate: int) -> list[Segment]:
         import torch
+
+        self._apply_clustering_params(pipeline)
 
         waveform = torch.tensor(audio).unsqueeze(0)  # (1, samples)
         input_dict = {"waveform": waveform, "sample_rate": sample_rate}
 
-        output = pipeline(input_dict)
+        max_spk = self._config.get("pyannote_max_speakers", 0)
+        call_kwargs: dict = {}
+        if max_spk and int(max_spk) > 0:
+            call_kwargs["max_speakers"] = int(max_spk)
+
+        try:
+            output = pipeline(input_dict, **call_kwargs)
+        except TypeError:
+            output = pipeline(input_dict)
         # pyannote ≥ 3.3 returns DiarizeOutput; extract the Annotation from it.
         diarization = getattr(output, "speaker_diarization",
                               getattr(output, "diarization", output))
