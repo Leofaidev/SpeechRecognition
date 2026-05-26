@@ -270,39 +270,56 @@ class PipelineRunner:
             self._on_progress(0.05, "Loading audio...")
             audio, sample_rate = load(source_path)
 
-        # Diarize — reuse cached engine so model stays in memory between runs
-        if self._diarizer is None:
-            self._diarizer = DiarizationEngine(config)
-        diarizer_loaded = self._diarizer._pipeline is not None
-        self._on_progress(
-            0.15,
-            "Diarizing..." if diarizer_loaded
-            else "Loading speaker model (first run, please wait)...",
-        )
-        segments = self._diarizer.diarize_or_unknown(audio, sample_rate)
+        # Skip diarization when speaker output is disabled (Regular mode) or in
+        # Short Session mode — Whisper segments the audio on its own.
+        output_fields = config.get("output_fields", {})
+        skip_diarization = short_session or not output_fields.get("speaker", True)
 
-        if self._stop_event.is_set():
-            return PipelineResult(error="Stopped by user.")
+        if skip_diarization:
+            if self._transcriber is None:
+                self._transcriber = TranscriptionEngine(config)
+            transcriber_loaded = self._transcriber._model is not None
+            self._on_progress(
+                0.30,
+                "Transcribing..." if transcriber_loaded
+                else "Loading speech model (first run, please wait)...",
+            )
+            ts_segments = self._transcriber.transcribe_without_diarization(
+                audio, sample_rate)
+        else:
+            # Diarize — reuse cached engine so model stays in memory between runs
+            if self._diarizer is None:
+                self._diarizer = DiarizationEngine(config)
+            diarizer_loaded = self._diarizer._pipeline is not None
+            self._on_progress(
+                0.15,
+                "Diarizing..." if diarizer_loaded
+                else "Loading speaker model (first run, please wait)...",
+            )
+            segments = self._diarizer.diarize_or_unknown(audio, sample_rate)
 
-        # Match diarized speakers against voice profiles in the selected group
-        if speaker_group:
-            self._on_progress(0.28, "Matching speakers to group...")
-            segments = self._match_speakers_to_group(
-                audio, sample_rate, segments, speaker_group)
+            if self._stop_event.is_set():
+                return PipelineResult(error="Stopped by user.")
 
-        if self._stop_event.is_set():
-            return PipelineResult(error="Stopped by user.")
+            # Match diarized speakers against voice profiles in the selected group
+            if speaker_group:
+                self._on_progress(0.28, "Matching speakers to group...")
+                segments = self._match_speakers_to_group(
+                    audio, sample_rate, segments, speaker_group)
 
-        # Transcribe — reuse cached engine so Whisper stays in memory between runs
-        if self._transcriber is None:
-            self._transcriber = TranscriptionEngine(config)
-        transcriber_loaded = self._transcriber._model is not None
-        self._on_progress(
-            0.40,
-            "Transcribing..." if transcriber_loaded
-            else "Loading speech model (first run, please wait)...",
-        )
-        ts_segments = self._transcriber.transcribe(audio, segments, sample_rate)
+            if self._stop_event.is_set():
+                return PipelineResult(error="Stopped by user.")
+
+            # Transcribe — reuse cached engine so Whisper stays in memory
+            if self._transcriber is None:
+                self._transcriber = TranscriptionEngine(config)
+            transcriber_loaded = self._transcriber._model is not None
+            self._on_progress(
+                0.40,
+                "Transcribing..." if transcriber_loaded
+                else "Loading speech model (first run, please wait)...",
+            )
+            ts_segments = self._transcriber.transcribe(audio, segments, sample_rate)
 
         if self._stop_event.is_set():
             return PipelineResult(error="Stopped by user.")
@@ -368,25 +385,26 @@ class PipelineRunner:
 
             def _write_output_deferred() -> list:
                 written_d: list[_Path] = []
-                eff_dir = _Path(_output_dir or _cfg.get("output_folder") or ".")
-                eff_dir.mkdir(parents=True, exist_ok=True)
-                eff_fmts = _formats or _cfg.get("output_formats", ["txt"])
-                inp = _Path(_source_path) if _source_path else _Path("output")
-                out_segs = _segs_for_output(_segs)
-                for fmt in eff_fmts:
-                    out_path = make_output_path(inp, f".{fmt}", eff_dir)
-                    if fmt == "txt":
-                        txt_writer.write(out_segs, out_path)
-                    elif fmt == "srt":
-                        srt_writer.write(out_segs, out_path)
-                    elif fmt == "json":
-                        json_writer.write(out_segs, out_path)
-                    elif fmt == "docx":
-                        docx_writer.write(out_segs, out_path)
-                    written_d.append(out_path)
+                if _cfg.get("output_to_file", True):
+                    eff_dir = _Path(_output_dir or _cfg.get("output_folder") or ".")
+                    eff_dir.mkdir(parents=True, exist_ok=True)
+                    eff_fmts = _formats or _cfg.get("output_formats", ["txt"])
+                    inp = _Path(_source_path) if _source_path else _Path("output")
+                    out_segs = _segs_for_output(_segs)
+                    for fmt in eff_fmts:
+                        out_path = make_output_path(inp, f".{fmt}", eff_dir)
+                        if fmt == "txt":
+                            txt_writer.write(out_segs, out_path)
+                        elif fmt == "srt":
+                            srt_writer.write(out_segs, out_path)
+                        elif fmt == "json":
+                            json_writer.write(out_segs, out_path)
+                        elif fmt == "docx":
+                            docx_writer.write(out_segs, out_path)
+                        written_d.append(out_path)
                 if _cfg.get("output_to_clipboard", False) and _source_type == "microphone":
                     try:
-                        clipboard_write(_segs, source_type="microphone")
+                        clipboard_write(_segs_for_output(_segs), source_type="microphone")
                     except Exception:
                         pass
                 _session.output_files = [str(p) for p in written_d]
@@ -412,35 +430,31 @@ class PipelineRunner:
         self._on_progress(0.85, "Writing output...")
         written: list[Path] = []
 
-        if short_session:
-            try:
-                clipboard_write(ts_segments, source_type="microphone")
-            except Exception:
-                pass
-        else:
-            eff_output_dir = _Path(
-                output_dir or config.get("output_folder") or "."
-            )
-            eff_output_dir.mkdir(parents=True, exist_ok=True)
-            eff_formats = formats or config.get("output_formats", ["txt"])
-            input_path = _Path(source_path) if source_path else _Path("output")
-            out_segs = _segs_for_output(ts_segments)
+        if not short_session:
+            if config.get("output_to_file", True):
+                eff_output_dir = _Path(
+                    output_dir or config.get("output_folder") or "."
+                )
+                eff_output_dir.mkdir(parents=True, exist_ok=True)
+                eff_formats = formats or config.get("output_formats", ["txt"])
+                input_path = _Path(source_path) if source_path else _Path("output")
+                out_segs = _segs_for_output(ts_segments)
 
-            for fmt in eff_formats:
-                out_path = make_output_path(input_path, f".{fmt}", eff_output_dir)
-                if fmt == "txt":
-                    txt_writer.write(out_segs, out_path)
-                elif fmt == "srt":
-                    srt_writer.write(out_segs, out_path)
-                elif fmt == "json":
-                    json_writer.write(out_segs, out_path)
-                elif fmt == "docx":
-                    docx_writer.write(out_segs, out_path)
-                written.append(out_path)
+                for fmt in eff_formats:
+                    out_path = make_output_path(input_path, f".{fmt}", eff_output_dir)
+                    if fmt == "txt":
+                        txt_writer.write(out_segs, out_path)
+                    elif fmt == "srt":
+                        srt_writer.write(out_segs, out_path)
+                    elif fmt == "json":
+                        json_writer.write(out_segs, out_path)
+                    elif fmt == "docx":
+                        docx_writer.write(out_segs, out_path)
+                    written.append(out_path)
 
             if config.get("output_to_clipboard", False) and source_type == "microphone":
                 try:
-                    clipboard_write(ts_segments, source_type="microphone")
+                    clipboard_write(_segs_for_output(ts_segments), source_type="microphone")
                 except Exception:
                     pass
 

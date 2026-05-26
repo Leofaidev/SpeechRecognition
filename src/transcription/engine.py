@@ -209,6 +209,67 @@ class TranscriptionEngine:
 
         return results
 
+    def transcribe_without_diarization(
+        self,
+        audio: "np.ndarray",
+        sample_rate: int = 16_000,
+    ) -> list[TranscribedSegment]:
+        """Transcribe full audio without prior diarization.
+
+        Returns one TranscribedSegment per Whisper segment, all labeled 'Unknown'.
+        Used when the speaker output field is disabled or in Short Session mode.
+        """
+        model = self._get_model()
+        threshold = self._config.get("bad_audio_threshold", _DEFAULT_BAD_AUDIO_THRESHOLD)
+        lang       = self._config.get("whisper_language", "") or None
+        beam_size  = int(self._config.get("whisper_beam_size", 5))
+        vad_filter = bool(self._config.get("whisper_vad_filter", False))
+        word_ts    = bool(self._config.get("whisper_word_timestamps", False))
+
+        whisper_segs, info = model.transcribe(
+            audio,
+            language=lang,
+            beam_size=beam_size,
+            vad_filter=vad_filter,
+            word_timestamps=word_ts,
+        )
+        whisper_segs = list(whisper_segs)
+
+        lang_code = info.language or "en"
+        lang_name = _LANGUAGE_MAP.get(lang_code, lang_code.capitalize())
+
+        results: list[TranscribedSegment] = []
+        for ws in whisper_segs:
+            no_speech_prob = float(ws.no_speech_prob)
+            confidence = float(min(1.0, max(0.0, 2 ** float(ws.avg_logprob))))
+            bad_audio = no_speech_prob > threshold
+            text = _BAD_AUDIO_PLACEHOLDER if bad_audio else ws.text.strip()
+            results.append(TranscribedSegment(
+                speaker_id="Unknown",
+                start=float(ws.start),
+                end=float(ws.end),
+                text=text,
+                language=lang_name,
+                language_code=lang_code,
+                confidence=confidence,
+                no_speech_prob=no_speech_prob,
+                bad_audio=bad_audio,
+                low_confidence=False,
+            ))
+
+        if not results:
+            duration = len(audio) / sample_rate
+            results.append(TranscribedSegment(
+                speaker_id="Unknown",
+                start=0.0, end=duration,
+                text=_BAD_AUDIO_PLACEHOLDER,
+                language=lang_name, language_code=lang_code,
+                confidence=0.0, no_speech_prob=1.0,
+                bad_audio=True, low_confidence=False,
+            ))
+
+        return results
+
     # ------------------------------------------------------------------
     # internal
     # ------------------------------------------------------------------

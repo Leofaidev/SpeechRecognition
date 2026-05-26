@@ -283,6 +283,7 @@
   "ai_config_word_ts_info": "When True, generates a timestamp for each individual word in addition to the segment-level timestamps.\n\nUseful for precise text-audio alignment.\n\nNote: Enabling this increases processing time.\n\nDefault: False",
   "ai_config_clustering_info": "Distance threshold used by the speaker clustering algorithm.\n\nControls how aggressively speakers are merged:\n  Lower value  → more distinct speakers identified\n  Higher value → fewer speakers (more merging)\n\nDefault: 0.715\nRecommended range: 0.5–0.9\n\nChanges take effect on the next session.",
   "ai_config_max_speakers_info": "Maximum number of speakers allowed in the output.\n\nSet to 0 for no limit (automatic detection).\n\nSetting an explicit value constrains the diarization and can improve accuracy when the number of speakers is known in advance.",
+  "ai_config_reset_btn": "Reset to defaults",
 
   "about_title": "About",
   "about_version_label": "Version",

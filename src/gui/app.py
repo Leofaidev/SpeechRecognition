@@ -359,7 +359,9 @@ class App(ctk.CTk):
                 self._content, self._config, t),
             "hotkeys": lambda: HotkeysPanel(
                 self._content, self._config, t,
-                on_bindings_changed=self._hotkeys.update_bindings),
+                on_bindings_changed=self._hotkeys.update_bindings,
+                on_panel_show=self._hotkeys.suspend_callbacks,
+                on_panel_hide=self._hotkeys.resume_callbacks),
             "labelling": lambda: SpeakerLabellingPanel(
                 self._content, self._config, t,
                 on_label_confirmed=self._on_label_confirmed,
@@ -419,6 +421,7 @@ class App(ctk.CTk):
     def _apply_mode_layout(self) -> None:
         if self._mode == "short":
             self._output_text.grid_remove()
+            self._speaker_cards_frame.grid_remove()
             self._short_form.grid()
         else:
             self._short_form.grid_remove()
@@ -472,6 +475,13 @@ class App(ctk.CTk):
         def capture_thread():
             try:
                 import pyaudio
+                import queue as _q
+                audio_queue: _q.Queue = _q.Queue()
+
+                def _audio_cb(in_data, frame_count, time_info, status):
+                    audio_queue.put(in_data)
+                    return (None, pyaudio.paContinue)
+
                 pa = pyaudio.PyAudio()
                 device_name = self._config.get("input_device", "") or ""
                 device_index = self._find_device_index(pa, device_name)
@@ -483,9 +493,14 @@ class App(ctk.CTk):
                     input=True,
                     input_device_index=device_index,
                     frames_per_buffer=chunk,
+                    stream_callback=_audio_cb,
                 )
+                stream.start_stream()
                 while not self._capture_stop.is_set():
-                    data = stream.read(chunk, exception_on_overflow=False)
+                    try:
+                        data = audio_queue.get(timeout=0.1)
+                    except _q.Empty:
+                        continue
                     arr = np.frombuffer(data, dtype=np.int16).astype(np.float32)
                     self._capture_buffer.extend(arr.tolist())
                     rms = float(np.sqrt(np.mean(arr ** 2))) / 32768.0
@@ -493,8 +508,8 @@ class App(ctk.CTk):
                 stream.stop_stream()
                 stream.close()
                 pa.terminate()
-            except Exception:
-                pass
+            except Exception as exc:
+                self.after(0, lambda e=str(exc): self._on_capture_error(e))
 
         self._capture_thread = threading.Thread(
             target=capture_thread, daemon=True)
@@ -563,13 +578,13 @@ class App(ctk.CTk):
         t = self._lang.t
         self._file_progress.set(0)
         self._status_label.configure(text=t("status_done"))
+        self.after(3000, self._reset_status_if_idle)
         self._btn_record.configure(
             text=t("btn_start"), state="normal", command=self._start_recording)
-        self._btn_play.configure(state="normal")
+        self._btn_play.configure(state="disabled")
 
         if result.ok and result.segments:
             if self._mode == "short":
-                # Populate both fields (T-127 / spec step 10)
                 raw_text = " ".join(
                     s.text for s in result.segments if not s.bad_audio)
                 trans_text = " ".join(
@@ -578,24 +593,37 @@ class App(ctk.CTk):
                 self._short_form.set_transcription(raw_text)
                 if self._config.get("translation_enabled", False):
                     self._short_form.set_translation(trans_text)
-                # Show the main view if minimised
+                clip = trans_text if self._config.get("translation_enabled", False) else raw_text
+                self._copy_to_clipboard(clip)
+                non_bad = [s for s in result.segments if not s.bad_audio]
+                self._last_detected_language = non_bad[0].language_code if non_bad else ""
                 if self._minimized_to_tray:
                     self._restore_from_tray()
             else:
-                # Append to output text
                 use_translation = self._config.get("translation_enabled", False)
-                self._output_text.configure(state="normal")
-                self._output_text.delete("1.0", "end")
-                for seg in result.segments:
-                    text = (seg.translated_text or seg.text) if use_translation else seg.text
-                    self._output_text.insert(
-                        "end",
-                        f"[{seg.start:.1f}s] {seg.speaker_id}: {text}\n")
-                self._output_text.configure(state="disabled")
-                if result.output_paths:
+                fields = self._config.get("output_fields", {})
+                show_ts  = fields.get("timestamp", True)
+                show_spk = fields.get("speaker", True)
+                show_txt = fields.get("text", True)
+                if self._config.get("output_to_display", True):
+                    self._output_text.configure(state="normal")
+                    self._output_text.delete("1.0", "end")
+                    for seg in result.segments:
+                        text = (seg.translated_text or seg.text) if use_translation else seg.text
+                        parts = []
+                        if show_ts:
+                            parts.append(f"[{seg.start:.1f}s]")
+                        if show_spk:
+                            parts.append(f"{seg.speaker_id}:")
+                        if show_txt:
+                            parts.append(text)
+                        self._output_text.insert("end", " ".join(parts) + "\n")
+                    self._output_text.configure(state="disabled")
+                if result.output_paths and result.source_path:
                     self._playback_path = result.source_path
+                    self._btn_play.configure(state="normal")
 
-        if result.ok and result.segments:
+        if result.ok and result.segments and self._mode != "short":
             self._update_speaker_cards(result.segments)
 
         # Navigate home so the user sees the output
@@ -605,6 +633,19 @@ class App(ctk.CTk):
         self._sound.play()
         if self._tray and self._config.get("tray_notifications", True):
             self._tray.notify(t("tray_notify_done"))
+
+    def _on_capture_error(self, error: str) -> None:
+        self._recording = False
+        self._rec_dot.set_recording(False)
+        t = self._lang.t
+        self._btn_record.configure(
+            text=t("btn_start"), state="normal", command=self._start_recording)
+        self._status_label.configure(text=t("error_title"))
+        self._show_error_dialog(error)
+
+    def _reset_status_if_idle(self) -> None:
+        if not self._recording and not self._pipeline.running:
+            self._status_label.configure(text=self._lang.t("status_idle"))
 
     def _handle_error(self, error: str) -> None:
         t = self._lang.t
@@ -736,9 +777,10 @@ class App(ctk.CTk):
         t = self._lang.t
         self._file_progress.set(0)
         self._status_label.configure(text=t("status_done"))
+        self.after(3000, self._reset_status_if_idle)
         self._btn_record.configure(
             text=t("btn_start"), state="normal", command=self._start_recording)
-        self._btn_play.configure(state="normal")
+        self._btn_play.configure(state="disabled")
         self._show_main_view()
 
         if result.ok and result.segments:
@@ -748,18 +790,29 @@ class App(ctk.CTk):
                 self._short_form.set_transcription(raw_text)
             else:
                 use_translation = self._config.get("translation_enabled", False)
-                self._output_text.configure(state="normal")
-                self._output_text.delete("1.0", "end")
-                for seg in result.segments:
-                    text = (seg.translated_text or seg.text) if use_translation else seg.text
-                    self._output_text.insert(
-                        "end",
-                        f"[{seg.start:.1f}s] {seg.speaker_id}: {text}\n")
-                self._output_text.configure(state="disabled")
-                if result.output_paths:
+                fields = self._config.get("output_fields", {})
+                show_ts  = fields.get("timestamp", True)
+                show_spk = fields.get("speaker", True)
+                show_txt = fields.get("text", True)
+                if self._config.get("output_to_display", True):
+                    self._output_text.configure(state="normal")
+                    self._output_text.delete("1.0", "end")
+                    for seg in result.segments:
+                        text = (seg.translated_text or seg.text) if use_translation else seg.text
+                        parts = []
+                        if show_ts:
+                            parts.append(f"[{seg.start:.1f}s]")
+                        if show_spk:
+                            parts.append(f"{seg.speaker_id}:")
+                        if show_txt:
+                            parts.append(text)
+                        self._output_text.insert("end", " ".join(parts) + "\n")
+                    self._output_text.configure(state="disabled")
+                if result.output_paths and result.source_path:
                     self._playback_path = result.source_path
+                    self._btn_play.configure(state="normal")
 
-        if result.ok and result.segments:
+        if result.ok and result.segments and self._mode != "short":
             self._update_speaker_cards(result.segments)
 
         self._sound.play()
@@ -857,11 +910,13 @@ class App(ctk.CTk):
             try:
                 from translation.engine import TranslationEngine
                 translator = TranslationEngine(self._config)
-                # Build a fake segment for translation
+                # Build a fake segment for translation; use the language Whisper
+                # detected during the last recording so OPUS-MT auto-mode works.
                 from transcription.engine import TranscribedSegment
                 seg = TranscribedSegment(
                     speaker_id="Unknown", start=0, end=0,
-                    text=text, language="auto", language_code="auto",
+                    text=text, language="auto",
+                    language_code=getattr(self, "_last_detected_language", "") or "auto",
                     confidence=1.0, no_speech_prob=0.0,
                 )
                 result = translator.translate([seg])
@@ -1045,6 +1100,18 @@ class App(ctk.CTk):
             from audio.device import list_devices
             return ["Default"] + [d.name for d in list_devices()]
         except Exception:
+            pass
+        try:
+            import pyaudio
+            pa = pyaudio.PyAudio()
+            names = []
+            for i in range(pa.get_device_count()):
+                info = pa.get_device_info_by_index(i)
+                if info.get("maxInputChannels", 0) > 0:
+                    names.append(info["name"])
+            pa.terminate()
+            return ["Default"] + names
+        except Exception:
             return ["Default"]
 
     def _get_group_names(self) -> list[str]:
@@ -1077,10 +1144,22 @@ class App(ctk.CTk):
     # ------------------------------------------------------------------
 
     def _register_hotkeys(self) -> None:
-        self._hotkeys.register("start_recording",
-                                lambda: self.after(0, self._start_recording))
-        self._hotkeys.register("stop_recording",
-                                lambda: self.after(0, self._stop_recording))
+        self._hk_pending = False
+        _cb = lambda: self.after(0, self._hotkey_press_button)
+        self._hotkeys.register("start_recording", _cb)
+        self._hotkeys.register("stop_recording", _cb)
+
+    def _hotkey_press_button(self) -> None:
+        if self._hk_pending:
+            return
+        if str(self._btn_record.cget("state")) == "disabled":
+            return
+        self._hk_pending = True
+        self.after(100, self._clear_hk_pending)
+        self._btn_record.invoke()
+
+    def _clear_hk_pending(self) -> None:
+        self._hk_pending = False
 
     # ------------------------------------------------------------------
     # Tray (T-108 to T-112)

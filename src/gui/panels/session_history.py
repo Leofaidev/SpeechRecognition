@@ -43,14 +43,22 @@ class SessionHistoryPanel(BasePanel):
         self.grid_rowconfigure(2, weight=1)
 
         self._selected_id: str | None = None
+        self._row_frames: dict[str, ctk.CTkFrame] = {}
         self.on_show()
 
     def on_show(self) -> None:
         self._refresh()
 
+    def _select_row(self, sid: str) -> None:
+        self._selected_id = sid
+        for s_id, frame in self._row_frames.items():
+            frame.configure(
+                fg_color=("gray75", "gray25") if s_id == sid else "transparent")
+
     def _refresh(self) -> None:
         for w in self._list_frame.winfo_children():
             w.destroy()
+        self._row_frames.clear()
         sessions_dir = Path(self._config.get("sessions_dir", "sessions"))
         try:
             from session.history import list_sessions
@@ -72,23 +80,26 @@ class SessionHistoryPanel(BasePanel):
             speakers = ", ".join(s.get("speakers", []))
             outdated = s.get("output_outdated", False)
 
-            row_frame = ctk.CTkFrame(self._list_frame, fg_color="transparent")
+            row_frame = ctk.CTkFrame(self._list_frame, fg_color="transparent",
+                                     corner_radius=4)
             row_frame.pack(fill="x", pady=1)
+            self._row_frames[sid] = row_frame
             for col, text, width in [
                 (0, date, 156),
                 (1, Path(source).name if source else "", 216),
                 (2, dur_str, 76),
                 (3, speakers[:20], 76),
             ]:
-                ctk.CTkLabel(row_frame, text=text, width=width).grid(
-                    row=0, column=col, padx=4)
+                lbl = ctk.CTkLabel(row_frame, text=text, width=width)
+                lbl.grid(row=0, column=col, padx=4)
+                lbl.bind("<Button-1>", lambda e, i=sid: self._select_row(i))
             if outdated:
-                ctk.CTkLabel(row_frame,
+                lbl_out = ctk.CTkLabel(row_frame,
                               text=self._t("history_outdated_indicator"),
-                              text_color="#ff9800").grid(
-                    row=0, column=4, padx=4)
-            row_frame.bind("<Button-1>",
-                            lambda e, i=sid: setattr(self, "_selected_id", i))
+                              text_color="#ff9800")
+                lbl_out.grid(row=0, column=4, padx=4)
+                lbl_out.bind("<Button-1>", lambda e, i=sid: self._select_row(i))
+            row_frame.bind("<Button-1>", lambda e, i=sid: self._select_row(i))
 
     def _regenerate(self) -> None:
         if not self._selected_id:

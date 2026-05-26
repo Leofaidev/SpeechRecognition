@@ -283,6 +283,7 @@
   "ai_config_word_ts_info": "Bei «Wahr» wird für jedes einzelne Wort ein Zeitstempel erzeugt, zusätzlich zu den Zeitstempeln auf Segmentebene.\n\nNützlich für genaue Text-Audio-Ausrichtung.\n\nHinweis: Die Aktivierung erhöht die Verarbeitungszeit.\n\nStandard: Falsch",
   "ai_config_clustering_info": "Abstandsschwelle des Sprecher-Clustering-Algorithmus.\n\nSteuert, wie aggressiv Sprecher zusammengeführt werden:\n  Niedrigerer Wert  → mehr unterschiedliche Sprecher\n  Höherer Wert → weniger Sprecher (mehr Zusammenführung)\n\nStandard: 0.715\nEmpfohlener Bereich: 0.5–0.9\n\nÄnderungen wirken ab der nächsten Sitzung.",
   "ai_config_max_speakers_info": "Maximale Anzahl von Sprechern in der Ausgabe.\n\nAuf 0 setzen für kein Limit (automatische Erkennung).\n\nEin expliziter Wert schränkt die Diarisierung ein und kann die Genauigkeit verbessern, wenn die Sprecheranzahl im Voraus bekannt ist.",
+  "ai_config_reset_btn": "Auf Standardwerte zurücksetzen",
 
   "about_title": "Über",
   "about_version_label": "Version",

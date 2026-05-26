@@ -17,7 +17,6 @@ from typing import Callable
 _DEFAULT_BINDINGS: dict[str, str] = {
     "start_recording": "ctrl+shift+r",
     "stop_recording": "ctrl+shift+s",
-    "copy_to_clipboard": "ctrl+shift+c",
 }
 
 
@@ -37,6 +36,9 @@ class HotkeyManager:
         )
         self._callbacks: dict[str, Callable[[], None]] = {}
         self._registered: set[str] = set()
+        # handler objects returned by keyboard.add_hotkey, keyed by key string
+        self._handlers: dict[str, list] = {}
+        self._suspended: bool = False
         self._lock = threading.Lock()
         self._keyboard_available = self._check_keyboard()
 
@@ -52,6 +54,8 @@ class HotkeyManager:
         """
         with self._lock:
             self._callbacks[action] = callback
+            if self._suspended:
+                return
             key = self._bindings.get(action)
             if key and self._keyboard_available:
                 self._register_key(key, callback)
@@ -65,12 +69,33 @@ class HotkeyManager:
             self._callbacks.pop(action, None)
 
     def update_bindings(self, new_bindings: dict[str, str]) -> None:
-        """Replace bindings with *new_bindings*, re-registering all callbacks."""
+        """Replace bindings with *new_bindings*, re-registering all callbacks.
+
+        When the manager is suspended (hotkeys panel open), only the binding
+        table is updated; actual re-registration is deferred to resume_callbacks.
+        """
         with self._lock:
-            for action, key in self._bindings.items():
-                if self._keyboard_available:
+            if not self._suspended:
+                for key in list(self._registered):
                     self._unregister_key(key)
             self._bindings = dict(new_bindings)
+            if not self._suspended:
+                for action, cb in self._callbacks.items():
+                    key = self._bindings.get(action)
+                    if key and self._keyboard_available:
+                        self._register_key(key, cb)
+
+    def suspend_callbacks(self) -> None:
+        """Unregister all hotkeys (called when hotkeys panel opens)."""
+        with self._lock:
+            self._suspended = True
+            for key in list(self._registered):
+                self._unregister_key(key)
+
+    def resume_callbacks(self) -> None:
+        """Re-register all hotkeys (called when hotkeys panel closes)."""
+        with self._lock:
+            self._suspended = False
             for action, cb in self._callbacks.items():
                 key = self._bindings.get(action)
                 if key and self._keyboard_available:
@@ -85,6 +110,7 @@ class HotkeyManager:
                     keyboard.unhook_all_hotkeys()
                 except Exception:
                     pass
+            self._handlers.clear()
             self._registered.clear()
             self._callbacks.clear()
 
@@ -107,7 +133,8 @@ class HotkeyManager:
     def _register_key(self, key: str, callback: Callable[[], None]) -> None:
         try:
             import keyboard
-            keyboard.add_hotkey(key, callback, suppress=False)
+            handler = keyboard.add_hotkey(key, callback, suppress=False)
+            self._handlers.setdefault(key, []).append(handler)
             self._registered.add(key)
         except Exception:
             pass
@@ -115,7 +142,17 @@ class HotkeyManager:
     def _unregister_key(self, key: str) -> None:
         try:
             import keyboard
-            keyboard.remove_hotkey(key)
+            handlers = self._handlers.pop(key, [])
+            for h in handlers:
+                try:
+                    keyboard.remove_hotkey(h)
+                except Exception:
+                    pass
+            if not handlers:
+                try:
+                    keyboard.remove_hotkey(key)
+                except Exception:
+                    pass
             self._registered.discard(key)
         except Exception:
             pass

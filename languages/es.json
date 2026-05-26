@@ -283,6 +283,7 @@
   "ai_config_word_ts_info": "Cuando es Verdadero, genera una marca de tiempo para cada palabra individual además de las marcas de nivel de segmento.\n\nÚtil para la alineación precisa texto-audio.\n\nNota: Activar esto aumenta el tiempo de procesamiento.\n\nPredeterminado: Falso",
   "ai_config_clustering_info": "Umbral de distancia utilizado por el algoritmo de agrupación de hablantes.\n\nControla con qué agresividad se fusionan los hablantes:\n  Valor menor  → más hablantes distintos identificados\n  Valor mayor → menos hablantes (más fusión)\n\nPredeterminado: 0.715\nRango recomendado: 0.5–0.9\n\nLos cambios se aplican en la siguiente sesión.",
   "ai_config_max_speakers_info": "Número máximo de hablantes permitidos en la salida.\n\nEstablezca 0 para sin límite (detección automática).\n\nEstablecer un valor explícito limita la diarización y puede mejorar la precisión cuando se conoce de antemano el número de hablantes.",
+  "ai_config_reset_btn": "Restablecer valores predeterminados",
 
   "about_title": "Acerca de",
   "about_version_label": "Versión",

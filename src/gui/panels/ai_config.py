@@ -72,6 +72,11 @@ class AIConfigPanel(BasePanel):
             "pyannote_max_speakers", 0, int,
             "ai_config_max_speakers_info")
 
+        ctk.CTkButton(
+            scroll, text=t("ai_config_reset_btn"),
+            command=self._reset_defaults,
+        ).grid(row=row, column=0, columnspan=4, sticky="w", padx=8, pady=(16, 8))
+
     # ------------------------------------------------------------------
     # Row builders
     # ------------------------------------------------------------------
@@ -172,6 +177,22 @@ class AIConfigPanel(BasePanel):
 
         ctk.CTkButton(win, text=t("btn_close"), command=win.destroy).pack(pady=(4, 12))
         win.after(100, win.focus_force)
+
+    _DEFAULTS = {
+        "whisper_model":                "medium",
+        "whisper_language":             "",
+        "whisper_beam_size":            5,
+        "bad_audio_threshold":          0.6,
+        "whisper_vad_filter":           False,
+        "whisper_word_timestamps":      False,
+        "pyannote_clustering_threshold": 0.715,
+        "pyannote_max_speakers":        0,
+    }
+
+    def _reset_defaults(self) -> None:
+        for key, val in self._DEFAULTS.items():
+            self._config.set(key, val)
+        self.update_strings(self._t)
 
     def update_strings(self, t) -> None:
         super().update_strings(t)

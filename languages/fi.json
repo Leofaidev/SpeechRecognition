@@ -283,6 +283,7 @@
   "ai_config_word_ts_info": "Kun arvo on Totta, jokaiselle yksittäiselle sanalle luodaan aikaleima segmenttitason aikaleiman lisäksi.\n\nHyödyllinen tarkkaan teksti-ääniliitokseen.\n\nHuomio: Tämän käyttöönotto lisää käsittelyaikaa.\n\nOletus: Epätotta",
   "ai_config_clustering_info": "Puhujien klusterointialgoritmin käyttämä etäisyyskynnys.\n\nMäärittää, kuinka aggressiivisesti puhujat yhdistetään:\n  Pienempi arvo  → enemmän erillisiä puhujia tunnistettu\n  Suurempi arvo → vähemmän puhujia (enemmän yhdistämistä)\n\nOletus: 0.715\nSuositeltu alue: 0.5–0.9\n\nMuutokset tulevat voimaan seuraavassa istunnossa.",
   "ai_config_max_speakers_info": "Tulostuksen sallittu enimmäispuhujamäärä.\n\nAseta 0 rajattomuudelle (automaattinen tunnistus).\n\nEksplisiittinen arvo rajoittaa diarisointia ja voi parantaa tarkkuutta, kun puhujamäärä on etukäteen tiedossa.",
+  "ai_config_reset_btn": "Palauta oletusasetukset",
 
   "about_title": "Tietoja",
   "about_version_label": "Versio",
