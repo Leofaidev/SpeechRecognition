@@ -10,6 +10,7 @@ All UI updates must be dispatched back to the Tk main thread.
 from __future__ import annotations
 
 import threading
+from pathlib import Path
 from typing import Callable
 
 try:
@@ -19,9 +20,21 @@ try:
 except ImportError:
     _PYSTRAY_AVAILABLE = False
 
+_ASSETS_DIR = Path(__file__).resolve().parent.parent.parent / "assets"
+
 
 def _make_icon_image(recording: bool = False) -> "Image.Image":
-    """Create a simple 64×64 icon image.  Red when recording, grey otherwise."""
+    """Load the 64×64 tray icon from the assets ICO file."""
+    name = "WSP_recording.ico" if recording else "WSP.ico"
+    path = _ASSETS_DIR / name
+    if path.exists():
+        try:
+            img = Image.open(str(path))
+            img.load()
+            return img.resize((64, 64), Image.LANCZOS).convert("RGBA")
+        except Exception:
+            pass
+    # Fallback: simple coloured circle
     size = 64
     img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img)

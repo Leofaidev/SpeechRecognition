@@ -183,6 +183,13 @@ class SettingsPanel(BasePanel):
                         command=self._on_minimize_tray).grid(
             row=row, column=0, columnspan=2, sticky="w", padx=12, pady=4)
         row += 1
+        self._expand_after_session = ctk.BooleanVar(
+            value=self._config.get("expand_after_session", False))
+        ctk.CTkCheckBox(scroll, text=t("settings_expand_after_session"),
+                        variable=self._expand_after_session,
+                        command=self._on_expand_after_session).grid(
+            row=row, column=0, columnspan=2, sticky="w", padx=12, pady=4)
+        row += 1
         self._tray_notify = ctk.BooleanVar(
             value=self._config.get("tray_notifications", True))
         ctk.CTkCheckBox(scroll, text=t("settings_tray_notify"),
@@ -335,6 +342,9 @@ class SettingsPanel(BasePanel):
 
     def _on_minimize_tray(self) -> None:
         self._config.set("minimize_to_tray", self._minimize_tray.get())
+
+    def _on_expand_after_session(self) -> None:
+        self._config.set("expand_after_session", self._expand_after_session.get())
 
     def _on_tray_notify(self) -> None:
         self._config.set("tray_notifications", self._tray_notify.get())

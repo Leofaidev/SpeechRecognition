@@ -67,6 +67,7 @@
   "settings_sound_builtin": "Integrado",
   "settings_tray_section": "Bandeja del Sistema",
   "settings_minimize_tray": "Minimizar a la Bandeja",
+  "settings_expand_after_session": "Expandir después de la sesión",
   "settings_tray_notify": "Notificaciones de Bandeja",
   "settings_auto_start": "Inicio Automático con Windows",
   "settings_model_section": "Modelo Whisper",

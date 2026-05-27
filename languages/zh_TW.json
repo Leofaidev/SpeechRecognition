@@ -68,6 +68,7 @@
   "settings_sound_builtin": "內建",
   "settings_tray_section": "系統匣",
   "settings_minimize_tray": "最小化至系統匣",
+  "settings_expand_after_session": "工作階段結束後展開",
   "settings_tray_notify": "系統匣通知",
   "settings_auto_start": "隨Windows自動啟動",
   "settings_model_section": "Whisper模型",

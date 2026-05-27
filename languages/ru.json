@@ -68,6 +68,7 @@
   "settings_sound_builtin": "Встроенный",
   "settings_tray_section": "Системный трей",
   "settings_minimize_tray": "Свернуть в трей",
+  "settings_expand_after_session": "Развернуть после сессии",
   "settings_tray_notify": "Уведомления трея",
   "settings_auto_start": "Автозапуск с Windows",
   "settings_model_section": "Модель Whisper",

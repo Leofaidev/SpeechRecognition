@@ -67,6 +67,7 @@
   "settings_sound_builtin": "Built-in",
   "settings_tray_section": "System Tray",
   "settings_minimize_tray": "Minimize to Tray",
+  "settings_expand_after_session": "Expand after session",
   "settings_tray_notify": "Tray Notifications",
   "settings_auto_start": "Auto-Start with Windows",
   "settings_model_section": "Whisper Model",

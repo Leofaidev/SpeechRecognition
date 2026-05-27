@@ -124,11 +124,13 @@ class App(ctk.CTk):
         ctk.set_appearance_mode("dark")
         ctk.set_default_color_theme("blue")
 
-        # App icon
-        _icon = Path(__file__).resolve().parent.parent.parent / "assets" / "WSP.ico"
-        if _icon.exists():
+        # App icon — store both paths for idle/recording swap
+        _assets = Path(__file__).resolve().parent.parent.parent / "assets"
+        self._icon_idle = str(_assets / "WSP.ico")
+        self._icon_recording = str(_assets / "WSP_recording.ico")
+        if Path(self._icon_idle).exists():
             try:
-                self.iconbitmap(str(_icon))
+                self.iconbitmap(self._icon_idle)
             except Exception:
                 pass
 
@@ -463,6 +465,12 @@ class App(ctk.CTk):
         else:
             self._status_label.configure(text=t("status_processing"))
             self._btn_record.configure(state="disabled")
+        icon_path = self._icon_recording if recording else self._icon_idle
+        if Path(icon_path).exists():
+            try:
+                self.iconbitmap(icon_path)
+            except Exception:
+                pass
         if self._tray:
             self._tray.set_recording(recording)
 
@@ -597,8 +605,6 @@ class App(ctk.CTk):
                 self._copy_to_clipboard(clip)
                 non_bad = [s for s in result.segments if not s.bad_audio]
                 self._last_detected_language = non_bad[0].language_code if non_bad else ""
-                if self._minimized_to_tray:
-                    self._restore_from_tray()
             else:
                 use_translation = self._config.get("translation_enabled", False)
                 fields = self._config.get("output_fields", {})
@@ -633,6 +639,7 @@ class App(ctk.CTk):
         self._sound.play()
         if self._tray and self._config.get("tray_notifications", True):
             self._tray.notify(t("tray_notify_done"))
+        self._maybe_expand_after_session()
 
     def _on_capture_error(self, error: str) -> None:
         self._recording = False
@@ -818,6 +825,7 @@ class App(ctk.CTk):
         self._sound.play()
         if self._tray and self._config.get("tray_notifications", True):
             self._tray.notify(t("tray_notify_done"))
+        self._maybe_expand_after_session()
 
     def _update_speaker_cards(self, segments) -> None:
         """Rebuild the speaker profile cards row from session segments."""
@@ -1218,6 +1226,19 @@ class App(ctk.CTk):
         self.deiconify()
         self.lift()
         self.focus_force()
+
+    def _expand_window(self) -> None:
+        """Restore from tray or taskbar minimise."""
+        if self._minimized_to_tray:
+            self._restore_from_tray()
+        elif self.state() in ("iconic", "withdrawn"):
+            self.deiconify()
+            self.lift()
+            self.focus_force()
+
+    def _maybe_expand_after_session(self) -> None:
+        if self._config.get("expand_after_session", False):
+            self._expand_window()
 
     def _on_exit_from_tray(self) -> None:
         if self._recording or self._pipeline.running:

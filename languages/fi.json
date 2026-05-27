@@ -67,6 +67,7 @@
   "settings_sound_builtin": "Sisäänrakennettu",
   "settings_tray_section": "Järjestelmäpalkki",
   "settings_minimize_tray": "Pienennä järjestelmäpalkkiin",
+  "settings_expand_after_session": "Laajenna istunnon jälkeen",
   "settings_tray_notify": "Järjestelmäpalkin ilmoitukset",
   "settings_auto_start": "Käynnistä automaattisesti Windowsin kanssa",
   "settings_model_section": "Whisper-malli",

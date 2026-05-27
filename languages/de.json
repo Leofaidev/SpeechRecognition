@@ -67,6 +67,7 @@
   "settings_sound_builtin": "Integriert",
   "settings_tray_section": "Infobereich",
   "settings_minimize_tray": "In Infobereich minimieren",
+  "settings_expand_after_session": "Nach Sitzung einblenden",
   "settings_tray_notify": "Infobereichsbenachrichtigungen",
   "settings_auto_start": "Autostart mit Windows",
   "settings_model_section": "Whisper-Modell",
