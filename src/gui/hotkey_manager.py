@@ -89,13 +89,13 @@ class HotkeyManager:
         """Unregister all hotkeys (called when hotkeys panel opens)."""
         with self._lock:
             self._suspended = True
-            for key in list(self._registered):
-                self._unregister_key(key)
+            self._clear_all_keyboard_hooks()
 
     def resume_callbacks(self) -> None:
         """Re-register all hotkeys (called when hotkeys panel closes)."""
         with self._lock:
             self._suspended = False
+            self._clear_all_keyboard_hooks()
             for action, cb in self._callbacks.items():
                 key = self._bindings.get(action)
                 if key and self._keyboard_available:
@@ -104,14 +104,7 @@ class HotkeyManager:
     def shutdown(self) -> None:
         """Unregister all hotkeys."""
         with self._lock:
-            if self._keyboard_available:
-                try:
-                    import keyboard
-                    keyboard.unhook_all_hotkeys()
-                except Exception:
-                    pass
-            self._handlers.clear()
-            self._registered.clear()
+            self._clear_all_keyboard_hooks()
             self._callbacks.clear()
 
     @property
@@ -130,6 +123,17 @@ class HotkeyManager:
         except ImportError:
             return False
 
+    def _clear_all_keyboard_hooks(self) -> None:
+        """Remove every hotkey from the keyboard library and reset tracking."""
+        if self._keyboard_available:
+            try:
+                import keyboard
+                keyboard.unhook_all_hotkeys()
+            except Exception:
+                pass
+        self._handlers.clear()
+        self._registered.clear()
+
     def _register_key(self, key: str, callback: Callable[[], None]) -> None:
         try:
             import keyboard
@@ -142,15 +146,9 @@ class HotkeyManager:
     def _unregister_key(self, key: str) -> None:
         try:
             import keyboard
-            handlers = self._handlers.pop(key, [])
-            for h in handlers:
+            for h in self._handlers.pop(key, []):
                 try:
                     keyboard.remove_hotkey(h)
-                except Exception:
-                    pass
-            if not handlers:
-                try:
-                    keyboard.remove_hotkey(key)
                 except Exception:
                     pass
             self._registered.discard(key)
