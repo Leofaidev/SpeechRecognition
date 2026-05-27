@@ -209,6 +209,8 @@
   "hotkey_copy_label": "Copy to Clipboard",
   "hotkey_press_prompt": "Press a key combination...",
   "hotkey_conflict_warning": "{key} conflicts with: {reason}",
+  "hotkey_ctrl_alt_blocked": "Ctrl+Alt (AltGr) is not allowed — conflicts with keyboard layouts",
+  "hotkey_system_conflict": "{key} is already in use by another application",
   "btn_save_hotkeys": "Save",
   "btn_reset_hotkeys": "Reset to Defaults",
 

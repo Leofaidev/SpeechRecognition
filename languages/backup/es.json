@@ -209,6 +209,8 @@
   "hotkey_copy_label": "Copiar al Portapapeles",
   "hotkey_press_prompt": "Presione una combinación de teclas...",
   "hotkey_conflict_warning": "{key} conflicto con: {reason}",
+  "hotkey_ctrl_alt_blocked": "Ctrl+Alt (AltGr) no está permitido — conflicto con la distribución del teclado",
+  "hotkey_system_conflict": "{key} ya está en uso por otra aplicación",
   "btn_save_hotkeys": "Guardar",
   "btn_reset_hotkeys": "Restablecer Predeterminados",
 

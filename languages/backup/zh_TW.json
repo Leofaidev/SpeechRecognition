@@ -210,6 +210,8 @@
   "hotkey_copy_label": "複製至剪貼簿",
   "hotkey_press_prompt": "按下快捷鍵組合...",
   "hotkey_conflict_warning": "{key}與以下衝突：{reason}",
+  "hotkey_ctrl_alt_blocked": "不允許 Ctrl+Alt (AltGr) — 與鍵盤配置衝突",
+  "hotkey_system_conflict": "{key} 已被其他應用程式使用",
   "btn_save_hotkeys": "儲存",
   "btn_reset_hotkeys": "恢復預設",
 

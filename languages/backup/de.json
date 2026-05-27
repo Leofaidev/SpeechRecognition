@@ -209,6 +209,8 @@
   "hotkey_copy_label": "In Zwischenablage kopieren",
   "hotkey_press_prompt": "Tastenkombination drücken...",
   "hotkey_conflict_warning": "{key} konfliktiert mit: {reason}",
+  "hotkey_ctrl_alt_blocked": "Strg+Alt (AltGr) ist nicht erlaubt — Konflikt mit Tastaturlayout",
+  "hotkey_system_conflict": "{key} wird bereits von einer anderen Anwendung verwendet",
   "btn_save_hotkeys": "Speichern",
   "btn_reset_hotkeys": "Auf Standard zurücksetzen",
 

@@ -133,7 +133,7 @@ class HotkeyManager:
     def _register_key(self, key: str, callback: Callable[[], None]) -> None:
         try:
             import keyboard
-            handler = keyboard.add_hotkey(key, callback, suppress=False)
+            handler = keyboard.add_hotkey(key, callback, suppress=True)
             self._handlers.setdefault(key, []).append(handler)
             self._registered.add(key)
         except Exception:

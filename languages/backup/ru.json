@@ -210,6 +210,8 @@
   "hotkey_copy_label": "Копировать в буфер",
   "hotkey_press_prompt": "Нажмите комбинацию клавиш...",
   "hotkey_conflict_warning": "{key} конфликтует с: {reason}",
+  "hotkey_ctrl_alt_blocked": "Ctrl+Alt (AltGr) запрещён — конфликтует с раскладкой клавиатуры",
+  "hotkey_system_conflict": "{key} уже используется другим приложением",
   "btn_save_hotkeys": "Сохранить",
   "btn_reset_hotkeys": "Сбросить по умолчанию",
 

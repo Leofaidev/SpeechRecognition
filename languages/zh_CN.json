@@ -210,6 +210,8 @@
   "hotkey_copy_label": "复制到剪贴板",
   "hotkey_press_prompt": "按下快捷键组合...",
   "hotkey_conflict_warning": "{key}与以下冲突：{reason}",
+  "hotkey_ctrl_alt_blocked": "不允许 Ctrl+Alt (AltGr) — 与键盘布局冲突",
+  "hotkey_system_conflict": "{key} 已被其他应用程序使用",
   "btn_save_hotkeys": "保存",
   "btn_reset_hotkeys": "恢复默认",
 

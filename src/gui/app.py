@@ -359,7 +359,7 @@ class App(ctk.CTk):
                 self._content, self._config, t),
             "hotkeys": lambda: HotkeysPanel(
                 self._content, self._config, t,
-                on_bindings_changed=self._hotkeys.update_bindings,
+                on_bindings_changed=self._on_hotkeys_changed,
                 on_panel_show=self._hotkeys.suspend_callbacks,
                 on_panel_hide=self._hotkeys.resume_callbacks),
             "labelling": lambda: SpeakerLabellingPanel(
@@ -1143,13 +1143,28 @@ class App(ctk.CTk):
     # Hotkeys (T-86)
     # ------------------------------------------------------------------
 
-    def _register_hotkeys(self) -> None:
-        self._hk_pending = False
-        _cb = lambda: self.after(0, self._hotkey_press_button)
-        self._hotkeys.register("start_recording", _cb)
-        self._hotkeys.register("stop_recording", _cb)
+    def _on_hotkeys_changed(self, new_bindings: dict[str, str]) -> None:
+        self._hotkeys.update_bindings(new_bindings)
+        self._register_hotkeys()
 
-    def _hotkey_press_button(self) -> None:
+    def _register_hotkeys(self) -> None:
+        self._hotkeys.unregister("start_recording")
+        self._hotkeys.unregister("stop_recording")
+        self._hk_pending = False
+        bindings = self._hotkeys.bindings
+        start_key = bindings.get("start_recording", "").strip()
+        stop_key = bindings.get("stop_recording", "").strip()
+        if start_key and start_key == stop_key:
+            _cb = lambda: self.after(0, self._hotkey_toggle)
+            self._hotkeys.register("start_recording", _cb)
+            self._hotkeys.register("stop_recording", _cb)
+        else:
+            self._hotkeys.register("start_recording",
+                lambda: self.after(0, self._hotkey_start_only))
+            self._hotkeys.register("stop_recording",
+                lambda: self.after(0, self._hotkey_stop_only))
+
+    def _hotkey_toggle(self) -> None:
         if self._hk_pending:
             return
         if str(self._btn_record.cget("state")) == "disabled":
@@ -1157,6 +1172,18 @@ class App(ctk.CTk):
         self._hk_pending = True
         self.after(100, self._clear_hk_pending)
         self._btn_record.invoke()
+
+    def _hotkey_start_only(self) -> None:
+        if str(self._btn_record.cget("state")) == "disabled":
+            return
+        if not self._recording:
+            self._btn_record.invoke()
+
+    def _hotkey_stop_only(self) -> None:
+        if str(self._btn_record.cget("state")) == "disabled":
+            return
+        if self._recording:
+            self._btn_record.invoke()
 
     def _clear_hk_pending(self) -> None:
         self._hk_pending = False

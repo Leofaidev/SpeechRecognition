@@ -2,13 +2,26 @@
 
 from __future__ import annotations
 
+import sys
 from typing import Callable
 
 import customtkinter as ctk
 
 from gui.panels.base import BasePanel
-from config.hotkeys import check_hotkey
+from config.hotkeys import check_hotkey, check_system_hotkey
 
+
+# Windows VK code → keyboard-library key name (layout-independent)
+_VK_TO_KEY: dict[int, str] = {
+    **{65 + i: chr(97 + i) for i in range(26)},   # a–z (VK 65–90)
+    **{48 + i: str(i) for i in range(10)},          # 0–9 (VK 48–57)
+    **{112 + i: f'f{i + 1}' for i in range(12)},   # f1–f12 (VK 112–123)
+    8: 'backspace', 9: 'tab', 13: 'enter', 27: 'escape', 32: 'space',
+    33: 'page up', 34: 'page down', 35: 'end', 36: 'home',
+    37: 'left', 38: 'up', 39: 'right', 40: 'down',
+    45: 'insert', 46: 'delete',
+}
+_MODIFIER_VK = {16, 17, 18, 160, 161, 162, 163, 164, 165}
 
 _ACTIONS = ["start_recording", "stop_recording"]
 _DEFAULT_KEYS = {
@@ -37,6 +50,7 @@ class HotkeysPanel(BasePanel):
 
     def on_show(self) -> None:
         self._on_panel_show()
+        self.after(50, self._save_btn.focus_set)
 
     def on_hide(self) -> None:
         self._on_panel_hide()
@@ -91,8 +105,9 @@ class HotkeysPanel(BasePanel):
         ctk.CTkButton(btn_frame, text=t("btn_reset_hotkeys"),
                       fg_color="#555555",
                       command=self._reset_defaults).pack(side="left", padx=8)
-        ctk.CTkButton(btn_frame, text=t("btn_save_hotkeys"),
-                      command=self._save).pack(side="left")
+        self._save_btn = ctk.CTkButton(btn_frame, text=t("btn_save_hotkeys"),
+                                       command=self._save)
+        self._save_btn.pack(side="left")
 
     # ------------------------------------------------------------------
     # Key capture
@@ -108,23 +123,49 @@ class HotkeysPanel(BasePanel):
         if not var.get().strip():
             var.set(self._prev_key_val.get(action, _DEFAULT_KEYS.get(action, "")))
 
+    @staticmethod
+    def _modifier_state() -> tuple[bool, bool, bool]:
+        """Return (ctrl, shift, alt) using GetAsyncKeyState on Windows for
+        reliability across keyboard layouts and system-key events."""
+        if sys.platform == "win32":
+            import ctypes
+            _gaks = ctypes.windll.user32.GetAsyncKeyState
+            ctrl  = bool(_gaks(0x11) & 0x8000)  # VK_CONTROL
+            shift = bool(_gaks(0x10) & 0x8000)  # VK_SHIFT
+            alt   = bool(_gaks(0x12) & 0x8000)  # VK_MENU (any Alt)
+            return ctrl, shift, alt
+        return False, False, False  # non-Windows: caller falls back to event.state
+
     def _capture_key(self, event, action: str) -> str:
+        ctrl, shift, alt = self._modifier_state()
+        # Fall back to Tkinter state bits on non-Windows
+        if not sys.platform == "win32":
+            ctrl  = bool(event.state & 0x4)
+            shift = bool(event.state & 0x1)
+            alt   = bool(event.state & 0x20000)
+        # Ctrl+Alt = AltGr: conflicts with keyboard layouts and causes stuck-modifier glitches
+        if ctrl and alt:
+            self._warn_labels[action].configure(
+                text_color="#ff4444",
+                text=self._t("hotkey_ctrl_alt_blocked"))
+            return "break"
         parts = []
-        if event.state & 0x4:
+        if ctrl:
             parts.append("ctrl")
-        if event.state & 0x1:
+        if shift:
             parts.append("shift")
-        if event.state & 0x20000:
+        if alt:
             parts.append("alt")
-        key_name = event.keysym.lower()
-        if key_name not in ("control_l", "control_r", "shift_l", "shift_r",
-                             "alt_l", "alt_r"):
+        keycode = event.keycode
+        if keycode not in _MODIFIER_VK:
+            key_name = _VK_TO_KEY.get(keycode) or event.keysym.lower()
             parts.append(key_name)
         combo = "+".join(parts)
-        if combo:
+        if combo and parts and parts[-1] not in ("ctrl", "shift", "alt"):
             self._key_vars[action].set(combo)
             self._prev_key_val[action] = combo
             self._check_conflict(action, combo)
+            self.after(10, self._save_btn.focus_set)
         return "break"
 
     _TOGGLE_PAIR = {"start_recording", "stop_recording"}
@@ -139,10 +180,17 @@ class HotkeysPanel(BasePanel):
         warning = check_hotkey(key, existing_bindings=other_bindings)
         if warning:
             self._warn_labels[action].configure(
+                text_color="#ff9800",
                 text=self._t("hotkey_conflict_warning",
                               key=key, reason=warning.reason))
-        else:
-            self._warn_labels[action].configure(text="")
+            return
+        sys_warning = check_system_hotkey(key)
+        if sys_warning:
+            self._warn_labels[action].configure(
+                text_color="#ff4444",
+                text=self._t("hotkey_system_conflict", key=key))
+            return
+        self._warn_labels[action].configure(text_color="#ff9800", text="")
 
     def _reset_defaults(self) -> None:
         for action, key in _DEFAULT_KEYS.items():
@@ -152,5 +200,11 @@ class HotkeysPanel(BasePanel):
 
     def _save(self) -> None:
         bindings = {a: v.get() for a, v in self._key_vars.items()}
+        for action, key in bindings.items():
+            if check_system_hotkey(key):
+                self._warn_labels[action].configure(
+                    text_color="#ff4444",
+                    text=self._t("hotkey_system_conflict", key=key))
+                return
         self._config.set("hotkeys", bindings)
         self._on_bindings_changed(bindings)
