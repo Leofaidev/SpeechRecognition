@@ -4,6 +4,8 @@ A locally executed, GPU-accelerated speech recognition desktop application for W
 
 **Version 1.0** — released 2026-05-21
 
+[Deutsch](README.de.md) | [Español](README.es.md) | [Suomi](README.fi.md) | [Русский](README.ru.md) | [简体中文](README.zh_CN.md) | [繁體中文](README.zh_TW.md)
+
 ---
 
 ## Features
