@@ -211,6 +211,7 @@
   "hotkey_conflict_warning": "{key} ristiriidassa: {reason}",
   "hotkey_ctrl_alt_blocked": "Ctrl+Alt (AltGr) ei ole sallittu — ristiriita näppäimistöasettelun kanssa",
   "hotkey_system_conflict": "{key} on jo toisen sovelluksen käytössä",
+  "hotkey_system_check_note": "Huomio: Vain ristiriidat sovellusten kanssa, jotka käyttävät Windowsin tavallista pikanäppäinrekisteröintiä, havaitaan. Matalan tason näppäimistökoukuilla toimivia sovelluksia (esim. Copilot, Teams) ei voida havaita.",
   "btn_save_hotkeys": "Tallenna",
   "btn_reset_hotkeys": "Palauta oletukset",
 

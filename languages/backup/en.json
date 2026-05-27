@@ -211,6 +211,7 @@
   "hotkey_conflict_warning": "{key} conflicts with: {reason}",
   "hotkey_ctrl_alt_blocked": "Ctrl+Alt (AltGr) is not allowed — conflicts with keyboard layouts",
   "hotkey_system_conflict": "{key} is already in use by another application",
+  "hotkey_system_check_note": "Note: Only conflicts with applications using the standard Windows hotkey API are detected. Apps that use low-level keyboard hooks (e.g. Copilot, Teams) cannot be detected.",
   "btn_save_hotkeys": "Save",
   "btn_reset_hotkeys": "Reset to Defaults",
 

@@ -109,6 +109,15 @@ class HotkeysPanel(BasePanel):
                                        command=self._save)
         self._save_btn.pack(side="left")
 
+        # Limitation note
+        ctk.CTkLabel(self, text=t("hotkey_system_check_note"),
+                     text_color="gray60",
+                     font=ctk.CTkFont(size=11),
+                     wraplength=460,
+                     justify="left").grid(
+            row=len(_ACTIONS) + 2, column=0, columnspan=3,
+            sticky="w", padx=12, pady=(0, 12))
+
     # ------------------------------------------------------------------
     # Key capture
     # ------------------------------------------------------------------

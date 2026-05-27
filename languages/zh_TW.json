@@ -212,6 +212,7 @@
   "hotkey_conflict_warning": "{key}與以下衝突：{reason}",
   "hotkey_ctrl_alt_blocked": "不允許 Ctrl+Alt (AltGr) — 與鍵盤配置衝突",
   "hotkey_system_conflict": "{key} 已被其他應用程式使用",
+  "hotkey_system_check_note": "注意：僅能偵測使用標準 Windows 快捷鍵 API 的應用程式衝突。使用低階鍵盤掛鉤的應用程式（如 Copilot、Teams）無法被偵測到。",
   "btn_save_hotkeys": "儲存",
   "btn_reset_hotkeys": "恢復預設",
 

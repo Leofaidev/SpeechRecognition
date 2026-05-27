@@ -211,6 +211,7 @@
   "hotkey_conflict_warning": "{key} conflicto con: {reason}",
   "hotkey_ctrl_alt_blocked": "Ctrl+Alt (AltGr) no está permitido — conflicto con la distribución del teclado",
   "hotkey_system_conflict": "{key} ya está en uso por otra aplicación",
+  "hotkey_system_check_note": "Nota: Solo se detectan conflictos con aplicaciones que usan el registro estándar de atajos de Windows. Las aplicaciones con ganchos de teclado de bajo nivel (p. ej. Copilot, Teams) no pueden detectarse.",
   "btn_save_hotkeys": "Guardar",
   "btn_reset_hotkeys": "Restablecer Predeterminados",
 
