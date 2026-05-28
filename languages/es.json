@@ -232,6 +232,8 @@
   "history_outdated_indicator": "Salida desactualizada",
   "btn_regenerate": "Regenerar Salida",
   "btn_delete_session": "Eliminar Sesión",
+  "btn_clear_history": "Borrar historial",
+  "history_clear_confirm": "¿Eliminar todas las sesiones grabadas? Esta acción no se puede deshacer.",
   "history_empty": "Sin sesiones grabadas todavía.",
   "history_regenerated": "Salida escrita en: {path}",
 

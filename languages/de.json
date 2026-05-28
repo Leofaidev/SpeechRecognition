@@ -232,6 +232,8 @@
   "history_outdated_indicator": "Ausgabe veraltet",
   "btn_regenerate": "Ausgabe neu generieren",
   "btn_delete_session": "Sitzung löschen",
+  "btn_clear_history": "Verlauf löschen",
+  "history_clear_confirm": "Alle aufgezeichneten Sitzungen löschen? Dies kann nicht rückgängig gemacht werden.",
   "history_empty": "Noch keine aufgezeichneten Sitzungen.",
   "history_regenerated": "Ausgabe geschrieben nach: {path}",
 

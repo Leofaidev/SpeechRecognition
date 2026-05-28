@@ -391,20 +391,27 @@ class PipelineRunner:
                     eff_fmts = _formats or _cfg.get("output_formats", ["txt"])
                     inp = _Path(_source_path) if _source_path else _Path("output")
                     out_segs = _segs_for_output(_segs)
+                    _output_fields = _cfg.get("output_fields", None)
                     for fmt in eff_fmts:
                         out_path = make_output_path(inp, f".{fmt}", eff_dir)
                         if fmt == "txt":
-                            txt_writer.write(out_segs, out_path)
+                            txt_writer.write(out_segs, out_path, fields=_output_fields)
                         elif fmt == "srt":
                             srt_writer.write(out_segs, out_path)
                         elif fmt == "json":
                             json_writer.write(out_segs, out_path)
                         elif fmt == "docx":
-                            docx_writer.write(out_segs, out_path)
+                            docx_writer.write(out_segs, out_path, fields=_output_fields)
                         written_d.append(out_path)
-                if _cfg.get("output_to_clipboard", False) and _source_type == "microphone":
+                if _cfg.get("output_to_clipboard", False):
                     try:
-                        clipboard_write(_segs_for_output(_segs), source_type="microphone")
+                        from output.clipboard_writer import _copy_to_clipboard
+                        _use_trans = _cfg.get("translation_enabled", False)
+                        _clip = " ".join(
+                            (s.translated_text or s.text) if _use_trans else s.text
+                            for s in _segs if not s.bad_audio
+                        )
+                        _copy_to_clipboard(_clip)
                     except Exception:
                         pass
                 _session.output_files = [str(p) for p in written_d]
@@ -439,22 +446,25 @@ class PipelineRunner:
                 eff_formats = formats or config.get("output_formats", ["txt"])
                 input_path = _Path(source_path) if source_path else _Path("output")
                 out_segs = _segs_for_output(ts_segments)
+                output_fields = config.get("output_fields", None)
 
                 for fmt in eff_formats:
                     out_path = make_output_path(input_path, f".{fmt}", eff_output_dir)
                     if fmt == "txt":
-                        txt_writer.write(out_segs, out_path)
+                        txt_writer.write(out_segs, out_path, fields=output_fields)
                     elif fmt == "srt":
                         srt_writer.write(out_segs, out_path)
                     elif fmt == "json":
                         json_writer.write(out_segs, out_path)
                     elif fmt == "docx":
-                        docx_writer.write(out_segs, out_path)
+                        docx_writer.write(out_segs, out_path, fields=output_fields)
                     written.append(out_path)
 
-            if config.get("output_to_clipboard", False) and source_type == "microphone":
+            if config.get("output_to_clipboard", False):
                 try:
-                    clipboard_write(_segs_for_output(ts_segments), source_type="microphone")
+                    from output.clipboard_writer import _copy_to_clipboard
+                    _clip = translated_text if config.get("translation_enabled") else clipboard_text
+                    _copy_to_clipboard(_clip)
                 except Exception:
                     pass
 

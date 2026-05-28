@@ -356,7 +356,9 @@ class App(ctk.CTk):
                 self._content, self._config, t),
             "batch": lambda: BatchQueuePanel(
                 self._content, self._config, t,
-                pipeline_runner=self._pipeline),
+                pipeline_runner=self._pipeline,
+                sound_player=self._sound,
+                on_display_result=self._on_batch_file_display),
             "output": lambda: OutputConfigPanel(
                 self._content, self._config, t),
             "hotkeys": lambda: HotkeysPanel(
@@ -826,6 +828,33 @@ class App(ctk.CTk):
         if self._tray and self._config.get("tray_notifications", True):
             self._tray.notify(t("tray_notify_done"))
         self._maybe_expand_after_session()
+
+    def _on_batch_file_display(self, result) -> None:
+        """Update the Home output widget after each batch file (main thread)."""
+        if not result.ok or not result.segments:
+            return
+        if not self._config.get("output_to_display", True):
+            return
+        use_translation = self._config.get("translation_enabled", False)
+        fields = self._config.get("output_fields", {})
+        show_ts  = fields.get("timestamp", True)
+        show_spk = fields.get("speaker", True)
+        show_txt = fields.get("text", True)
+        self._output_text.configure(state="normal")
+        self._output_text.delete("1.0", "end")
+        for seg in result.segments:
+            if seg.bad_audio:
+                continue
+            text = (seg.translated_text or seg.text) if use_translation else seg.text
+            parts = []
+            if show_ts:
+                parts.append(f"[{seg.start:.1f}s]")
+            if show_spk:
+                parts.append(f"{seg.speaker_id}:")
+            if show_txt:
+                parts.append(text)
+            self._output_text.insert("end", " ".join(parts) + "\n")
+        self._output_text.configure(state="disabled")
 
     def _update_speaker_cards(self, segments) -> None:
         """Rebuild the speaker profile cards row from session segments."""

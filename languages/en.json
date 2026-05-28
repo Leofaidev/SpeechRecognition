@@ -232,6 +232,8 @@
   "history_outdated_indicator": "Output outdated",
   "btn_regenerate": "Regenerate Output",
   "btn_delete_session": "Delete Session",
+  "btn_clear_history": "Clear History",
+  "history_clear_confirm": "Delete all recorded sessions? This cannot be undone.",
   "history_empty": "No recorded sessions yet.",
   "history_regenerated": "Output written to: {path}",
 

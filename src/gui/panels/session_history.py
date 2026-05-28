@@ -24,6 +24,8 @@ class SessionHistoryPanel(BasePanel):
                       command=self._regenerate).pack(side="left", padx=4)
         ctk.CTkButton(toolbar, text=t("btn_delete_session"),
                       command=self._delete_session).pack(side="left", padx=4)
+        ctk.CTkButton(toolbar, text=t("btn_clear_history"),
+                      command=self._clear_history).pack(side="left", padx=4)
 
         # Header
         hdr = ctk.CTkFrame(self)
@@ -126,6 +128,25 @@ class SessionHistoryPanel(BasePanel):
         try:
             from session.history import delete
             delete(sessions_dir, self._selected_id)
+        except Exception:
+            pass
+        self._selected_id = None
+        self._refresh()
+
+    def _clear_history(self) -> None:
+        from tkinter import messagebox
+        if not messagebox.askyesno(
+                self._t("btn_clear_history"),
+                self._t("history_clear_confirm")):
+            return
+        sessions_dir = Path(self._config.get("sessions_dir", "sessions"))
+        try:
+            from session.history import list_sessions, delete
+            for s in list_sessions(sessions_dir):
+                try:
+                    delete(sessions_dir, s["session_id"])
+                except Exception:
+                    pass
         except Exception:
             pass
         self._selected_id = None

@@ -14,8 +14,11 @@ class BatchQueuePanel(BasePanel):
     """File list with add/remove, start button, and error pop-up on completion."""
 
     def __init__(self, master, config, t: Callable,
-                 pipeline_runner=None, **kwargs) -> None:
+                 pipeline_runner=None, sound_player=None,
+                 on_display_result=None, **kwargs) -> None:
         self._runner = pipeline_runner
+        self._sound = sound_player
+        self._on_display_result = on_display_result
         super().__init__(master, config, t, **kwargs)
 
     def build(self) -> None:
@@ -101,12 +104,18 @@ class BatchQueuePanel(BasePanel):
         def on_file_done(path, result):
             if not result.ok:
                 failed.append(path)
+            if self._on_display_result:
+                self.after(0, lambda r=result: self._on_display_result(r))
 
         def on_batch_done(failed_files):
             self.after(0, lambda: self._on_batch_complete(failed_files))
 
+        output_dir = Path(self._config.get("output_folder") or ".")
+        formats = self._config.get("output_formats", ["txt"])
         self._runner.start_batch(
             self._files,
+            output_dir=output_dir,
+            formats=formats,
             on_file_done=on_file_done,
             on_batch_done=on_batch_done,
         )
@@ -117,6 +126,8 @@ class BatchQueuePanel(BasePanel):
         self._btn_remove.configure(state="normal")
         self._btn_start.configure(state="normal")
         self._status_label.configure(text=self._t("batch_done"))
+        if self._sound:
+            self._sound.play()
         if failed:
             from tkinter import messagebox
             messagebox.showerror(

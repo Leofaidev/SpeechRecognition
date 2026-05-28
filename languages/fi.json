@@ -232,6 +232,8 @@
   "history_outdated_indicator": "Tuloste vanhentunut",
   "btn_regenerate": "Luo tuloste uudelleen",
   "btn_delete_session": "Poista istunto",
+  "btn_clear_history": "Tyhjennä historia",
+  "history_clear_confirm": "Poistetaanko kaikki tallennetut istunnot? Tätä toimintoa ei voi kumota.",
   "history_empty": "Ei tallennettuja istuntoja.",
   "history_regenerated": "Tuloste kirjoitettu: {path}",
 

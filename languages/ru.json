@@ -233,6 +233,8 @@
   "history_outdated_indicator": "Вывод устарел",
   "btn_regenerate": "Перегенерировать вывод",
   "btn_delete_session": "Удалить сессию",
+  "btn_clear_history": "Очистить историю",
+  "history_clear_confirm": "Удалить все записанные сессии? Это действие нельзя отменить.",
   "history_empty": "Записанных сессий нет.",
   "history_regenerated": "Вывод записан: {path}",
 
