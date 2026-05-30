@@ -64,7 +64,7 @@ def write(
         if _fields.get("confidence", True):
             lines.append(f"Confidence: {seg.confidence:.2f}")
         if _fields.get("text", True):
-            lines.append(seg.text)
+            lines.append(f"Text: {seg.text}")
         if _fields.get("translation", False) and seg.translated_text:
             lines.append(f"Translation: {seg.translated_text}")
         blocks.append("\n".join(lines))

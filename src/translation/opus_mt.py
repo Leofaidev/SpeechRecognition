@@ -66,14 +66,52 @@ class OpusMTTranslator:
     def pair_info(self) -> LanguagePairInfo:
         return get_language_pair_info(self._source, self._target)
 
+    # OPUS-MT models have a 512-token hard limit on input length.
+    _CHUNK_TOKENS = 400  # headroom below the 512-token model limit
+
     def translate(self, texts: list[str]) -> list[str]:
-        """Translate a list of strings.  Returns translated strings in order."""
+        """Translate a list of strings.  Returns translated strings in order.
+
+        Long texts are split into sentence-level chunks so that no chunk
+        exceeds the model's token limit.  Translated chunks are rejoined
+        with a space.  This prevents silent input truncation and avoids
+        output being cut short by the model's default max-length cap.
+        """
         if not texts:
             return []
         tokenizer, model = self._get_model()
-        inputs = tokenizer(texts, return_tensors="pt", padding=True, truncation=True)
-        translated = model.generate(**inputs)
-        return [tokenizer.decode(t, skip_special_tokens=True) for t in translated]
+        return [self._translate_one(tokenizer, model, t) for t in texts]
+
+    def _translate_one(self, tokenizer, model, text: str) -> str:
+        """Translate a single string, chunking if it exceeds the token limit."""
+        import re
+        token_ids = tokenizer.encode(text, add_special_tokens=False)
+        if len(token_ids) <= self._CHUNK_TOKENS:
+            return self._run_model(tokenizer, model, text)
+
+        # Split on sentence boundaries and pack into ≤_CHUNK_TOKENS-token chunks.
+        sentences = re.split(r'(?<=[.!?…])\s+', text)
+        chunks: list[str] = []
+        current: list[str] = []
+        current_len = 0
+        for sent in sentences:
+            sent_len = len(tokenizer.encode(sent, add_special_tokens=False))
+            if current and current_len + sent_len > self._CHUNK_TOKENS:
+                chunks.append(" ".join(current))
+                current, current_len = [sent], sent_len
+            else:
+                current.append(sent)
+                current_len += sent_len
+        if current:
+            chunks.append(" ".join(current))
+
+        return " ".join(self._run_model(tokenizer, model, c) for c in chunks)
+
+    def _run_model(self, tokenizer, model, text: str) -> str:
+        inputs = tokenizer([text], return_tensors="pt", padding=True,
+                           truncation=True, max_length=512)
+        output = model.generate(**inputs, max_new_tokens=512)
+        return tokenizer.decode(output[0], skip_special_tokens=True)
 
     # ------------------------------------------------------------------
     # internal
