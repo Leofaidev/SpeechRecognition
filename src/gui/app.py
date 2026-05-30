@@ -360,7 +360,8 @@ class App(ctk.CTk):
                 pipeline_runner=self._pipeline,
                 sound_player=self._sound,
                 on_display_result=self._on_batch_file_display,
-                on_labelling_needed=self._on_batch_labelling_needed),
+                on_labelling_needed=self._on_batch_labelling_needed,
+                get_speaker_group=self._group_var.get),
             "output": lambda: OutputConfigPanel(
                 self._content, self._config, t),
             "hotkeys": lambda: HotkeysPanel(

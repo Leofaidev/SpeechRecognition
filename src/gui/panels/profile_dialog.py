@@ -26,6 +26,8 @@ class ProfileDialog(ctk.CTkToplevel):
         self._t = t
         self._folder_name = folder_name
         self._on_done = on_done or (lambda: None)
+        self._player = None
+        self._active_play_btn = None
         title_key = "dialog_edit_profile" if folder_name else "dialog_create_profile"
         self.title(t(title_key))
         self.geometry("520x740" if folder_name else "520x600")
@@ -176,21 +178,55 @@ class ProfileDialog(ctk.CTkToplevel):
             row = ctk.CTkFrame(self._samples_frame, fg_color="transparent")
             row.pack(fill="x", padx=4, pady=2)
             ctk.CTkLabel(row, text=sample_name).pack(side="left", padx=6)
-            ctk.CTkButton(row, text=self._t("btn_play"), width=60,
-                          command=lambda p=str(sample_path): self._play_sample(p)
-                          ).pack(side="right", padx=2)
+            play_btn = ctk.CTkButton(row, text=self._t("btn_play"), width=60)
+            play_btn.configure(
+                command=lambda p=str(sample_path), b=play_btn:
+                    self._toggle_sample_playback(p, b))
+            play_btn.pack(side="right", padx=2)
             ctk.CTkButton(row, text=self._t("btn_remove_sample"), width=70,
                           fg_color="#8B1A1A", hover_color="#6B1010",
                           command=lambda sn=sample_name: self._remove_sample(sn)
                           ).pack(side="right", padx=2)
 
-    def _play_sample(self, path: str) -> None:
+    def _toggle_sample_playback(self, path: str, btn) -> None:
+        prev_btn = self._active_play_btn
+        self._stop_sample_playback()
+        if prev_btn is btn:
+            return
         try:
             import vlc
-            player = vlc.MediaPlayer(path)
-            player.play()
+            self._player = vlc.MediaPlayer(path)
+            em = self._player.event_manager()
+            em.event_attach(vlc.EventType.MediaPlayerEndReached,
+                            lambda e: self.after(0, self._on_sample_playback_ended))
+            em.event_attach(vlc.EventType.MediaPlayerEncounteredError,
+                            lambda e: self.after(0, self._on_sample_playback_ended))
+            self._player.play()
+            self._active_play_btn = btn
+            btn.configure(text=self._t("btn_stop"))
         except Exception:
-            pass
+            self._player = None
+            self._active_play_btn = None
+
+    def _stop_sample_playback(self) -> None:
+        if self._player is not None:
+            self._player.stop()
+            self._player = None
+        if self._active_play_btn is not None:
+            try:
+                self._active_play_btn.configure(text=self._t("btn_play"))
+            except Exception:
+                pass
+            self._active_play_btn = None
+
+    def _on_sample_playback_ended(self) -> None:
+        self._player = None
+        if self._active_play_btn is not None:
+            try:
+                self._active_play_btn.configure(text=self._t("btn_play"))
+            except Exception:
+                pass
+            self._active_play_btn = None
 
     def _remove_sample(self, sample_name: str) -> None:
         from tkinter import messagebox

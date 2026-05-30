@@ -15,11 +15,13 @@ class BatchQueuePanel(BasePanel):
 
     def __init__(self, master, config, t: Callable,
                  pipeline_runner=None, sound_player=None,
-                 on_display_result=None, on_labelling_needed=None, **kwargs) -> None:
+                 on_display_result=None, on_labelling_needed=None,
+                 get_speaker_group: Callable | None = None, **kwargs) -> None:
         self._runner = pipeline_runner
         self._sound = sound_player
         self._on_display_result = on_display_result
         self._on_labelling_needed = on_labelling_needed
+        self._get_speaker_group = get_speaker_group or (lambda: "")
         super().__init__(master, config, t, **kwargs)
 
     def build(self) -> None:
@@ -127,6 +129,7 @@ class BatchQueuePanel(BasePanel):
             self._files,
             output_dir=output_dir,
             formats=formats,
+            speaker_group=self._get_speaker_group(),
             on_file_done=on_file_done,
             on_batch_done=on_batch_done,
             on_labelling_needed=labelling_needed,
