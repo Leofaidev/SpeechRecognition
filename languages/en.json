@@ -220,6 +220,7 @@
   "labelling_prompt": "Who is this speaker?",
   "labelling_no_pending": "No speakers awaiting identification.",
   "btn_play_fragment": "Play Fragment",
+  "btn_stop_fragment": "Stop Fragment",
   "btn_skip_speaker": "Skip",
   "btn_confirm_label": "Confirm",
   "btn_undo_label": "Undo",

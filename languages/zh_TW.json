@@ -221,6 +221,7 @@
   "labelling_prompt": "這是誰在說話？",
   "labelling_no_pending": "沒有等待識別的說話者。",
   "btn_play_fragment": "播放片段",
+  "btn_stop_fragment": "停止片段",
   "btn_skip_speaker": "跳過",
   "btn_confirm_label": "確認",
   "btn_undo_label": "復原",

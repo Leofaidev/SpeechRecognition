@@ -220,6 +220,7 @@
   "labelling_prompt": "Wer spricht hier?",
   "labelling_no_pending": "Keine Sprecher warten auf Identifikation.",
   "btn_play_fragment": "Fragment abspielen",
+  "btn_stop_fragment": "Fragment stoppen",
   "btn_skip_speaker": "Überspringen",
   "btn_confirm_label": "Bestätigen",
   "btn_undo_label": "Rückgängig",

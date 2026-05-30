@@ -23,6 +23,7 @@ class SpeakerLabellingPanel(BasePanel):
         self._pending_speakers: list[dict] = []
         self._current_index = 0
         self._undo_stack: list[tuple] = []
+        self._player = None   # active VLC MediaPlayer, or None
         super().__init__(master, config, t, **kwargs)
 
     def build(self) -> None:
@@ -65,8 +66,9 @@ class SpeakerLabellingPanel(BasePanel):
         btn_frame = ctk.CTkFrame(self, fg_color="transparent")
         btn_frame.grid(row=3, column=0, columnspan=3, sticky="e",
                        padx=12, pady=12)
-        ctk.CTkButton(btn_frame, text=t("btn_play_fragment"),
-                      command=self._play_fragment).pack(side="left", padx=4)
+        self._play_btn = ctk.CTkButton(btn_frame, text=t("btn_play_fragment"),
+                                       command=self._toggle_playback)
+        self._play_btn.pack(side="left", padx=4)
         ctk.CTkButton(btn_frame, text=t("btn_undo_label"),
                       command=self._undo).pack(side="left", padx=4)
         ctk.CTkButton(btn_frame, text=t("btn_skip_speaker"),
@@ -118,22 +120,45 @@ class SpeakerLabellingPanel(BasePanel):
         else:
             self._form_frame.grid_remove()
 
-    def _play_fragment(self) -> None:
+    def _toggle_playback(self) -> None:
+        if self._player is not None:
+            self._stop_playback()
+            return
         if self._current_index >= len(self._pending_speakers):
             return
         fragment_path = self._pending_speakers[self._current_index].get(
             "fragment_path")
-        if fragment_path:
-            try:
-                import vlc
-                player = vlc.MediaPlayer(fragment_path)
-                player.play()
-            except Exception:
-                pass
+        if not fragment_path:
+            return
+        try:
+            import vlc
+            self._player = vlc.MediaPlayer(fragment_path)
+            self._player.play()
+            self._play_btn.configure(text=self._t("btn_stop_fragment"))
+            self._poll_playback()
+        except Exception:
+            self._player = None
+
+    def _stop_playback(self) -> None:
+        if self._player is not None:
+            self._player.stop()
+            self._player = None
+        self._play_btn.configure(text=self._t("btn_play_fragment"))
+
+    def _poll_playback(self) -> None:
+        if self._player is None:
+            return
+        # VLC state 6 = Ended, state 7 = Error; anything not playing → reset
+        if not self._player.is_playing():
+            self._player = None
+            self._play_btn.configure(text=self._t("btn_play_fragment"))
+            return
+        self.after(300, self._poll_playback)
 
     def _confirm(self) -> None:
         if self._current_index >= len(self._pending_speakers):
             return
+        self._stop_playback()
         speaker = self._pending_speakers[self._current_index]
         _fields = ("lastname", "firstname", "middlename",
                    "nickname", "organisation", "position", "note")
@@ -147,6 +172,7 @@ class SpeakerLabellingPanel(BasePanel):
 
     def _skip(self) -> None:
         if self._current_index < len(self._pending_speakers):
+            self._stop_playback()
             self._current_index += 1
             self._show_current()
 

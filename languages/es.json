@@ -220,6 +220,7 @@
   "labelling_prompt": "¿Quién está hablando?",
   "labelling_no_pending": "No hay hablantes esperando identificación.",
   "btn_play_fragment": "Reproducir Fragmento",
+  "btn_stop_fragment": "Detener Fragmento",
   "btn_skip_speaker": "Omitir",
   "btn_confirm_label": "Confirmar",
   "btn_undo_label": "Deshacer",

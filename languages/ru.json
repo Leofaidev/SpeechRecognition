@@ -221,6 +221,7 @@
   "labelling_prompt": "Кто говорит?",
   "labelling_no_pending": "Нет докладчиков, ожидающих идентификации.",
   "btn_play_fragment": "Воспроизвести фрагмент",
+  "btn_stop_fragment": "Остановить фрагмент",
   "btn_skip_speaker": "Пропустить",
   "btn_confirm_label": "Подтвердить",
   "btn_undo_label": "Отменить",

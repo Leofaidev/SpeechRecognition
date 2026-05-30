@@ -220,6 +220,7 @@
   "labelling_prompt": "Kuka puhuu?",
   "labelling_no_pending": "Ei odottavia puhujia.",
   "btn_play_fragment": "Toista katkelma",
+  "btn_stop_fragment": "Pysäytä katkelma",
   "btn_skip_speaker": "Ohita",
   "btn_confirm_label": "Vahvista",
   "btn_undo_label": "Kumoa",
