@@ -132,12 +132,14 @@ class SpeakerLabellingPanel(BasePanel):
             return
         try:
             import vlc
-            self._player = vlc.MediaPlayer(fragment_path)
+            self._player = vlc.MediaPlayer(str(fragment_path))
+            em = self._player.event_manager()
+            em.event_attach(vlc.EventType.MediaPlayerEndReached,
+                            lambda e: self.after(0, self._on_playback_ended))
+            em.event_attach(vlc.EventType.MediaPlayerEncounteredError,
+                            lambda e: self.after(0, self._on_playback_ended))
             self._player.play()
             self._play_btn.configure(text=self._t("btn_stop_fragment"))
-            # Delay first poll: VLC is in Opening state immediately after play()
-            # and is_playing() would return False, so we wait for it to start.
-            self.after(800, self._poll_playback)
         except Exception:
             self._player = None
 
@@ -147,21 +149,9 @@ class SpeakerLabellingPanel(BasePanel):
             self._player = None
         self._play_btn.configure(text=self._t("btn_play_fragment"))
 
-    def _poll_playback(self) -> None:
-        if self._player is None:
-            return
-        try:
-            # Check VLC state directly: Stopped=5, Ended=6, Error=7 mean done.
-            state = int(self._player.get_state())
-            if state in (5, 6, 7):
-                self._player = None
-                self._play_btn.configure(text=self._t("btn_play_fragment"))
-                return
-        except Exception:
-            self._player = None
-            self._play_btn.configure(text=self._t("btn_play_fragment"))
-            return
-        self.after(300, self._poll_playback)
+    def _on_playback_ended(self) -> None:
+        self._player = None
+        self._play_btn.configure(text=self._t("btn_play_fragment"))
 
     def _confirm(self) -> None:
         if self._current_index >= len(self._pending_speakers):
