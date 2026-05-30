@@ -15,10 +15,11 @@ class BatchQueuePanel(BasePanel):
 
     def __init__(self, master, config, t: Callable,
                  pipeline_runner=None, sound_player=None,
-                 on_display_result=None, **kwargs) -> None:
+                 on_display_result=None, on_labelling_needed=None, **kwargs) -> None:
         self._runner = pipeline_runner
         self._sound = sound_player
         self._on_display_result = on_display_result
+        self._on_labelling_needed = on_labelling_needed
         super().__init__(master, config, t, **kwargs)
 
     def build(self) -> None:
@@ -112,12 +113,23 @@ class BatchQueuePanel(BasePanel):
 
         output_dir = Path(self._config.get("output_folder") or ".")
         formats = self._config.get("output_formats", ["txt"])
+
+        def labelling_needed(result, done_event):
+            if self._on_labelling_needed:
+                self.after(0, lambda r=result, e=done_event:
+                           self._on_labelling_needed(r, e))
+            else:
+                if result.write_output_fn:
+                    result.write_output_fn()
+                done_event.set()
+
         self._runner.start_batch(
             self._files,
             output_dir=output_dir,
             formats=formats,
             on_file_done=on_file_done,
             on_batch_done=on_batch_done,
+            on_labelling_needed=labelling_needed,
         )
 
     def _on_batch_complete(self, failed: list[str]) -> None:

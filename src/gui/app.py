@@ -106,6 +106,7 @@ class App(ctk.CTk):
         self._minimized_to_tray = False
         self._pending_result = None          # PipelineResult awaiting labelling
         self._pending_fragment_paths: dict = {}  # speaker_id → temp WAV path
+        self._batch_done_event = None        # set when batch labelling finishes
 
         self._pipeline = PipelineRunner(
             self._config,
@@ -358,7 +359,8 @@ class App(ctk.CTk):
                 self._content, self._config, t,
                 pipeline_runner=self._pipeline,
                 sound_player=self._sound,
-                on_display_result=self._on_batch_file_display),
+                on_display_result=self._on_batch_file_display,
+                on_labelling_needed=self._on_batch_labelling_needed),
             "output": lambda: OutputConfigPanel(
                 self._content, self._config, t),
             "hotkeys": lambda: HotkeysPanel(
@@ -722,14 +724,16 @@ class App(ctk.CTk):
             try:
                 from library.storage import LibraryStorage
                 from library.profile_creator import ProfileCreator, ConflictMode, _pyannote_embed
+                from library.groups import LibraryGroups
                 library_root = Path(self._config.get("library_root", "library"))
                 storage = LibraryStorage(library_root)
                 _hf_token = self._config.get("huggingface_token", None)
                 _embed_fn = (lambda a, sr, _t=_hf_token: _pyannote_embed(a, sr, token=_t))
+                folder_name = None
                 if fpath:
                     from audio.ingest import load as _audio_load
                     audio, sr = _audio_load(fpath)
-                    ProfileCreator(storage, embedding_fn=_embed_fn).create(
+                    folder_name, _ = ProfileCreator(storage, embedding_fn=_embed_fn).create(
                         audio, sr,
                         last=meta.get("lastname", ""),
                         first=meta.get("firstname", ""),
@@ -741,7 +745,7 @@ class App(ctk.CTk):
                         conflict_mode=ConflictMode.MERGE,
                     )
                 else:
-                    storage.create_profile(
+                    folder_name = storage.create_profile(
                         last=meta.get("lastname", ""),
                         first=meta.get("firstname", ""),
                         middle=meta.get("middlename", ""),
@@ -750,8 +754,17 @@ class App(ctk.CTk):
                         position=meta.get("position", ""),
                         note=meta.get("note", ""),
                     )
+                # Add the new profile to the currently active speaker group
+                current_group = self._group_var.get()
+                if folder_name and current_group and current_group not in ("", "—"):
+                    LibraryGroups(storage).add_to_group(folder_name, current_group)
             except Exception:
                 pass
+
+    def _on_batch_labelling_needed(self, result, done_event) -> None:
+        """Called on the main thread when a batch file has unidentified speakers."""
+        self._batch_done_event = done_event
+        self._start_labelling(result)
 
     def _finish_labelling(self) -> None:
         """Called when all pending speakers are confirmed or skipped."""
@@ -765,24 +778,37 @@ class App(ctk.CTk):
                 pass
         self._pending_fragment_paths = {}
 
+        batch_done = self._batch_done_event
+        self._batch_done_event = None
+
         if result is None:
+            if batch_done:
+                batch_done.set()
             return
 
         if result.write_output_fn:
-            import threading
             def _bg():
                 try:
                     written = result.write_output_fn()
                     result.output_paths = written
-                    self.after(0, lambda: self._after_labelling_write(result))
+                    self.after(0, lambda: self._after_labelling_write(
+                        result, batch_done=batch_done))
                 except Exception as exc:
+                    if batch_done:
+                        batch_done.set()
                     self.after(0, lambda e=str(exc): self._handle_error(e))
             threading.Thread(target=_bg, daemon=True).start()
         else:
-            self._after_labelling_write(result)
+            self._after_labelling_write(result, batch_done=batch_done)
 
-    def _after_labelling_write(self, result) -> None:
+    def _after_labelling_write(self, result, batch_done=None) -> None:
         """Finish UI reset and display output after deferred write completes."""
+        if batch_done is not None:
+            # Batch mode: unblock the batch thread and return to batch queue view.
+            batch_done.set()
+            self._show_panel("batch")
+            return
+
         t = self._lang.t
         self._file_progress.set(0)
         self._status_label.configure(text=t("status_done"))

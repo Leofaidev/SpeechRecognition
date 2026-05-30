@@ -132,7 +132,8 @@ class PipelineRunner:
                     formats: list[str] | None = None,
                     speaker_group: str = "",
                     on_file_done: Callable[[str, PipelineResult], None] | None = None,
-                    on_batch_done: Callable[[list[str]], None] | None = None) -> bool:
+                    on_batch_done: Callable[[list[str]], None] | None = None,
+                    on_labelling_needed: Callable | None = None) -> bool:
         """Start batch processing of multiple files."""
         if self.running:
             return False
@@ -140,7 +141,7 @@ class PipelineRunner:
         self._thread = threading.Thread(
             target=self._run_batch,
             args=(list(paths), output_dir, formats, speaker_group,
-                  on_file_done, on_batch_done),
+                  on_file_done, on_batch_done, on_labelling_needed),
             daemon=True,
         )
         self._thread.start()
@@ -204,7 +205,7 @@ class PipelineRunner:
             self._on_error(str(exc))
 
     def _run_batch(self, paths, output_dir, formats, speaker_group,
-                   on_file_done, on_batch_done) -> None:
+                   on_file_done, on_batch_done, on_labelling_needed=None) -> None:
         failed: list[str] = []
         n = len(paths)
         for i, path in enumerate(paths):
@@ -223,9 +224,19 @@ class PipelineRunner:
                     short_session=False,
                     force_file_output=True,
                 )
-                # In batch mode there is no interactive speaker-labelling step,
-                # so call the deferred writer immediately if one was returned.
-                if result.ok and result.write_output_fn:
+                needs_labelling = (
+                    result.ok and
+                    result.write_output_fn is not None and
+                    on_labelling_needed is not None and
+                    self._config.get("output_fields", {}).get("speaker", True)
+                )
+                if needs_labelling:
+                    # Block this thread while the user labels speakers in the UI.
+                    done_event = threading.Event()
+                    on_labelling_needed(result, done_event)
+                    done_event.wait()
+                    # write_output_fn was called by the labelling flow in app.py
+                elif result.ok and result.write_output_fn:
                     result.write_output_fn()
                 if on_file_done:
                     on_file_done(path, result)
