@@ -393,7 +393,7 @@ class PipelineRunner:
                         if fmt == "txt":
                             txt_writer.write(out_segs, out_path, fields=_output_fields)
                         elif fmt == "srt":
-                            srt_writer.write(out_segs, out_path)
+                            srt_writer.write(out_segs, out_path, fields=_output_fields)
                         elif fmt == "json":
                             json_writer.write(out_segs, out_path)
                         elif fmt == "docx":
@@ -449,7 +449,7 @@ class PipelineRunner:
                     if fmt == "txt":
                         txt_writer.write(out_segs, out_path, fields=output_fields)
                     elif fmt == "srt":
-                        srt_writer.write(out_segs, out_path)
+                        srt_writer.write(out_segs, out_path, fields=output_fields)
                     elif fmt == "json":
                         json_writer.write(out_segs, out_path)
                     elif fmt == "docx":
