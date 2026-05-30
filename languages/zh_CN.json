@@ -192,7 +192,7 @@
   "output_field_speaker": "说话人",
   "output_field_language": "语言",
   "output_field_confidence": "置信度",
-  "output_field_text": "文本",
+  "output_field_text": "原文",
   "output_field_translation": "翻译",
   "output_formats_section": "文件格式",
   "output_dest_section": "输出目标",

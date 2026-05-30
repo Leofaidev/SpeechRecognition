@@ -49,6 +49,7 @@ def write(
         "language": True,
         "confidence": True,
         "text": True,
+        "translation": False,
     }
 
     blocks: list[str] = []
@@ -64,6 +65,8 @@ def write(
             lines.append(f"Confidence: {seg.confidence:.2f}")
         if _fields.get("text", True):
             lines.append(seg.text)
+        if _fields.get("translation", False) and seg.translated_text:
+            lines.append(f"Translation: {seg.translated_text}")
         blocks.append("\n".join(lines))
 
     with path.open("w", encoding="utf-8") as fh:

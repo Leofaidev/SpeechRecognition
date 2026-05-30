@@ -46,6 +46,7 @@ def write(
         "language": True,
         "confidence": True,
         "text": True,
+        "translation": False,
     }
 
     doc = Document()
@@ -61,6 +62,8 @@ def write(
             doc.add_paragraph(f"Confidence: {seg.confidence:.2f}")
         if _fields.get("text", True):
             doc.add_paragraph(seg.text)
+        if _fields.get("translation", False) and seg.translated_text:
+            doc.add_paragraph(f"Translation: {seg.translated_text}")
         if i < len(segments) - 1:
             doc.add_paragraph("")  # blank separator
 

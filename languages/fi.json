@@ -191,7 +191,7 @@
   "output_field_speaker": "Puhuja",
   "output_field_language": "Kieli",
   "output_field_confidence": "Luottamus",
-  "output_field_text": "Teksti",
+  "output_field_text": "Alkuperäinen teksti",
   "output_field_translation": "Käännös",
   "output_formats_section": "Tiedostomuodot",
   "output_dest_section": "Tulostekohteet",

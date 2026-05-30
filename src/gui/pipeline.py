@@ -221,7 +221,12 @@ class PipelineRunner:
                     formats=formats,
                     speaker_group=speaker_group,
                     short_session=False,
+                    force_file_output=True,
                 )
+                # In batch mode there is no interactive speaker-labelling step,
+                # so call the deferred writer immediately if one was returned.
+                if result.ok and result.write_output_fn:
+                    result.write_output_fn()
                 if on_file_done:
                     on_file_done(path, result)
                 if not result.ok:
@@ -249,6 +254,7 @@ class PipelineRunner:
         formats: list[str] | None,
         speaker_group: str,
         short_session: bool,
+        force_file_output: bool = False,
     ) -> PipelineResult:
         from pathlib import Path as _Path
         from audio.ingest import load
@@ -335,18 +341,6 @@ class PipelineRunner:
         translator = TranslationEngine(config)
         ts_segments = translator.translate(ts_segments)
 
-        use_translation = bool(config.get("translation_enabled", False))
-
-        def _segs_for_output(segs):
-            """Replace seg.text with translated_text for output writers when translation is on."""
-            if not use_translation:
-                return segs
-            from dataclasses import replace as _dc_replace
-            return [
-                _dc_replace(s, text=s.translated_text or s.text) if not s.bad_audio else s
-                for s in segs
-            ]
-
         # Build clipboard text
         clipboard_text = " ".join(
             seg.text for seg in ts_segments if seg.text and not seg.bad_audio
@@ -383,14 +377,16 @@ class PipelineRunner:
             _source_type = source_type
             _session = session
 
+            _force = force_file_output
+
             def _write_output_deferred() -> list:
                 written_d: list[_Path] = []
-                if _cfg.get("output_to_file", True):
+                if _force or _cfg.get("output_to_file", True):
                     eff_dir = _Path(_output_dir or _cfg.get("output_folder") or ".")
                     eff_dir.mkdir(parents=True, exist_ok=True)
                     eff_fmts = _formats or _cfg.get("output_formats", ["txt"])
                     inp = _Path(_source_path) if _source_path else _Path("output")
-                    out_segs = _segs_for_output(_segs)
+                    out_segs = _segs
                     _output_fields = _cfg.get("output_fields", None)
                     for fmt in eff_fmts:
                         out_path = make_output_path(inp, f".{fmt}", eff_dir)
@@ -438,14 +434,14 @@ class PipelineRunner:
         written: list[Path] = []
 
         if not short_session:
-            if config.get("output_to_file", True):
+            if force_file_output or config.get("output_to_file", True):
                 eff_output_dir = _Path(
                     output_dir or config.get("output_folder") or "."
                 )
                 eff_output_dir.mkdir(parents=True, exist_ok=True)
                 eff_formats = formats or config.get("output_formats", ["txt"])
                 input_path = _Path(source_path) if source_path else _Path("output")
-                out_segs = _segs_for_output(ts_segments)
+                out_segs = ts_segments
                 output_fields = config.get("output_fields", None)
 
                 for fmt in eff_formats:

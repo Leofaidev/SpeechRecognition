@@ -191,7 +191,7 @@
   "output_field_speaker": "Speaker",
   "output_field_language": "Language",
   "output_field_confidence": "Confidence",
-  "output_field_text": "Text",
+  "output_field_text": "Untranslated Text",
   "output_field_translation": "Translation",
   "output_formats_section": "File Formats",
   "output_dest_section": "Destinations",

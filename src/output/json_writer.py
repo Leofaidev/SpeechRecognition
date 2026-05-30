@@ -36,6 +36,7 @@ def write(segments: list["TranscribedSegment"], path: Path | str) -> Path:
             "bad_audio": seg.bad_audio,
             "low_confidence": seg.low_confidence,
             "text": seg.text,
+            "translated_text": seg.translated_text,
         }
         for seg in segments
     ]

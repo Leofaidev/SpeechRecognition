@@ -191,7 +191,7 @@
   "output_field_speaker": "Hablante",
   "output_field_language": "Idioma",
   "output_field_confidence": "Confianza",
-  "output_field_text": "Texto",
+  "output_field_text": "Texto original",
   "output_field_translation": "Traducción",
   "output_formats_section": "Formatos de Archivo",
   "output_dest_section": "Destinos de Salida",
