@@ -60,22 +60,44 @@ _SIDEBAR_WIDTH = 170
 _MIN_WINDOW_SIZE = (980, 620)
 
 
-def _save_fragment_wav(audio, sample_rate: int,
-                        start_sec: float, end_sec: float) -> str:
-    """Slice *audio* and write to a temp WAV file. Returns the file path."""
+_SHORT_SAMPLE_THRESHOLD = 10.0   # seconds — below this, gather extra fragments
+_MAX_SAMPLE_DURATION    = 180.0  # seconds — hard cap (3 minutes)
+
+
+def _build_sample_wav(audio, sample_rate: int, segments) -> str:
+    """Concatenate speaker segments into a temp WAV, capped at _MAX_SAMPLE_DURATION.
+
+    The first segment is always included.  Additional segments are appended only
+    when the first segment is shorter than _SHORT_SAMPLE_THRESHOLD, continuing
+    until the cap is reached.  Returns the temp file path.
+    """
     import wave, tempfile, os
     import numpy as np
-    start_s = max(0, int(start_sec * sample_rate))
-    end_s = min(len(audio), int(end_sec * sample_rate))
-    fragment = audio[start_s:end_s]
-    fragment_i16 = (fragment * 32767).clip(-32768, 32767).astype(np.int16)
+    chunks: list = []
+    total_dur = 0.0
+    for i, seg in enumerate(segments):
+        if i > 0 and total_dur >= _SHORT_SAMPLE_THRESHOLD:
+            break
+        remaining = _MAX_SAMPLE_DURATION - total_dur
+        if remaining <= 0:
+            break
+        actual_end = min(seg.end, seg.start + remaining)
+        s = max(0, int(seg.start * sample_rate))
+        e = min(len(audio), int(actual_end * sample_rate))
+        if s < e:
+            chunks.append(audio[s:e])
+            total_dur += actual_end - seg.start
+    if not chunks:
+        raise ValueError("no audio chunks")
+    combined = np.concatenate(chunks)
+    pcm = (combined * 32767).clip(-32768, 32767).astype(np.int16)
     fd, path = tempfile.mkstemp(suffix=".wav")
     os.close(fd)
     with wave.open(path, "wb") as wf:
         wf.setnchannels(1)
         wf.setsampwidth(2)
         wf.setframerate(sample_rate)
-        wf.writeframes(fragment_i16.tobytes())
+        wf.writeframes(pcm.tobytes())
     return path
 
 
@@ -648,33 +670,39 @@ class App(ctk.CTk):
         self._pending_fragment_paths = {}
         self._batch_done_event = batch_done
 
-        best: dict[str, object] = {}
+        # Gather all segments per unknown speaker.
+        all_segs: dict[str, list] = {}
         for seg in result.segments:
             if not re.match(r'^Speaker \d+$', seg.speaker_id):
                 continue
-            sid = seg.speaker_id
-            dur = seg.end - seg.start
-            prev = best.get(sid)
-            if prev is None or (not seg.bad_audio and (prev.bad_audio or dur > prev.end - prev.start)):
-                best[sid] = seg
+            all_segs.setdefault(seg.speaker_id, []).append(seg)
 
-        if not best:
+        if not all_segs:
             self._finish_labelling()
             return
+
+        # Identify the best segment per speaker (non-bad, longest).
+        best: dict[str, object] = {}
+        for sid, segs in all_segs.items():
+            for seg in segs:
+                prev = best.get(sid)
+                dur = seg.end - seg.start
+                if prev is None or (not seg.bad_audio and (prev.bad_audio or dur > prev.end - prev.start)):
+                    best[sid] = seg
 
         sorted_ids = sorted(best, key=lambda s: int(re.search(r'\d+', s).group()))
         self._labelling_queue = []
         for sid in sorted_ids:
-            seg = best[sid]
-            fpath = None
-            if result.audio is not None:
-                try:
-                    fpath = _save_fragment_wav(
-                        result.audio, result.sample_rate, seg.start, seg.end)
-                    self._pending_fragment_paths[sid] = fpath
-                except Exception:
-                    pass
-            self._labelling_queue.append({"speaker_id": sid, "fragment_path": fpath})
+            best_seg = best[sid]
+            # Best segment first; remaining good segments in time order.
+            extras = sorted(
+                [s for s in all_segs[sid] if s is not best_seg and not s.bad_audio],
+                key=lambda s: s.start,
+            )
+            self._labelling_queue.append({
+                "speaker_id": sid,
+                "segments": [best_seg] + extras,
+            })
 
         self._labelling_index = 0
         self._show_next_labelling_dialog()
@@ -687,7 +715,7 @@ class App(ctk.CTk):
 
         speaker = self._labelling_queue[self._labelling_index]
         sid = speaker["speaker_id"]
-        fpath = speaker.get("fragment_path")
+        segments = speaker.get("segments", [])
 
         # Create an empty profile folder; optionally pre-add the audio fragment.
         try:
@@ -700,10 +728,14 @@ class App(ctk.CTk):
             self._show_next_labelling_dialog()
             return
 
-        if fpath:
+        result = self._pending_result
+        if result is not None and result.audio is not None and segments:
+            import wave, os
+            import numpy as np
+            from audio.ingest import load as _audio_load
+            fpath = None
             try:
-                import wave, shutil, numpy as np
-                from audio.ingest import load as _audio_load
+                fpath = _build_sample_wav(result.audio, result.sample_rate, segments)
                 audio, sr = _audio_load(fpath)
                 sample_name = storage.next_sample_name(folder_name)
                 sample_path = storage.sample_path(folder_name, sample_name)
@@ -728,6 +760,12 @@ class App(ctk.CTk):
                 threading.Thread(target=_retrain, daemon=True).start()
             except Exception:
                 pass
+            finally:
+                if fpath:
+                    try:
+                        os.unlink(fpath)
+                    except Exception:
+                        pass
 
         from gui.panels.profile_dialog import ProfileDialog
 
