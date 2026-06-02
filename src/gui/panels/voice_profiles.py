@@ -352,9 +352,25 @@ class VoiceProfilesPanel(BasePanel):
     # ------------------------------------------------------------------
 
     def _add_profile(self) -> None:
+        library_root = Path(self._config.get("library_root", "library"))
+        try:
+            from library.storage import LibraryStorage
+            storage = LibraryStorage(library_root)
+            folder_name, _ = storage.create_profile()
+        except Exception:
+            return
+
+        def on_done(fn: str | None) -> None:
+            if fn is None:
+                try:
+                    storage.delete_profile(folder_name)
+                except Exception:
+                    pass
+            self._refresh_speakers()
+
         from gui.panels.profile_dialog import ProfileDialog
         ProfileDialog(self, config=self._config, t=self._t,
-                      on_done=lambda fn: self._refresh_speakers())
+                      folder_name=folder_name, on_done=on_done)
 
     def _edit_profile(self) -> None:
         if not self._selected_profile:

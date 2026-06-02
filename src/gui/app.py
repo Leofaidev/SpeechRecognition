@@ -713,20 +713,57 @@ class App(ctk.CTk):
         sid = speaker["speaker_id"]
         fpath = speaker.get("fragment_path")
 
+        # Create an empty profile folder; optionally pre-add the audio fragment.
+        try:
+            from library.storage import LibraryStorage
+            library_root = Path(self._config.get("library_root", "library"))
+            storage = LibraryStorage(library_root)
+            folder_name, _ = storage.create_profile()
+        except Exception:
+            self._labelling_index += 1
+            self._show_next_labelling_dialog()
+            return
+
+        if fpath:
+            try:
+                import wave, shutil, numpy as np
+                from audio.ingest import load as _audio_load
+                audio, sr = _audio_load(fpath)
+                sample_name = storage.next_sample_name(folder_name)
+                sample_path = storage.sample_path(folder_name, sample_name)
+                pcm = (audio * 32767).clip(-32768, 32767).astype(np.int16)
+                with wave.open(str(sample_path), "w") as wf:
+                    wf.setnchannels(1)
+                    wf.setsampwidth(2)
+                    wf.setframerate(sr)
+                    wf.writeframes(pcm.tobytes())
+                meta = storage.read_meta(folder_name)
+                meta.samples.append(sample_name)
+                meta.sample_count = len(meta.samples)
+                storage.write_meta(folder_name, meta)
+                # Kick off embedding generation in background
+                def _retrain():
+                    try:
+                        from library.retrainer import LibraryRetrainer
+                        from library.profile_creator import _pyannote_embed
+                        LibraryRetrainer(storage, _pyannote_embed)._retrain_one(folder_name)
+                    except Exception:
+                        pass
+                threading.Thread(target=_retrain, daemon=True).start()
+            except Exception:
+                pass
+
         from gui.panels.profile_dialog import ProfileDialog
 
-        def on_done(folder_name: str | None) -> None:
-            if folder_name and self._pending_result is not None:
+        def on_done(fn: str | None) -> None:
+            if fn and self._pending_result is not None:
                 # Relabel segments for this speaker
                 try:
-                    from library.storage import LibraryStorage
-                    library_root = Path(self._config.get("library_root", "library"))
-                    storage = LibraryStorage(library_root)
-                    meta = storage.read_meta(folder_name)
+                    meta = storage.read_meta(fn)
                     parts = [meta.last_name, meta.first_name]
-                    display = " ".join(p for p in parts if p).strip() or meta.nickname or folder_name
+                    display = " ".join(p for p in parts if p).strip() or meta.nickname or fn
                 except Exception:
-                    display = folder_name
+                    display = fn
                 for seg in self._pending_result.segments:
                     if seg.speaker_id == sid:
                         seg.speaker_id = display
@@ -734,22 +771,21 @@ class App(ctk.CTk):
                 current_group = self._group_var.get()
                 if current_group and current_group not in ("", "—"):
                     try:
-                        from library.storage import LibraryStorage
                         from library.groups import LibraryGroups
-                        library_root = Path(self._config.get("library_root", "library"))
-                        LibraryGroups(LibraryStorage(library_root)).add_to_group(
-                            folder_name, current_group)
+                        LibraryGroups(storage).add_to_group(fn, current_group)
                     except Exception:
                         pass
+            else:
+                # User cancelled — delete the empty profile
+                try:
+                    storage.delete_profile(folder_name)
+                except Exception:
+                    pass
             self._labelling_index += 1
             self._show_next_labelling_dialog()
 
-        ProfileDialog(
-            self, self._config, self._lang.t,
-            folder_name=None,
-            initial_sample_path=fpath,
-            on_done=on_done,
-        )
+        ProfileDialog(self, self._config, self._lang.t,
+                      folder_name=folder_name, on_done=on_done)
 
     def _on_batch_labelling_needed(self, result, done_event) -> None:
         """Called on the main thread when a batch file has unidentified speakers."""
