@@ -354,7 +354,7 @@ class VoiceProfilesPanel(BasePanel):
     def _add_profile(self) -> None:
         from gui.panels.profile_dialog import ProfileDialog
         ProfileDialog(self, config=self._config, t=self._t,
-                      on_done=self._refresh_speakers)
+                      on_done=lambda fn: self._refresh_speakers())
 
     def _edit_profile(self) -> None:
         if not self._selected_profile:
@@ -362,7 +362,7 @@ class VoiceProfilesPanel(BasePanel):
         from gui.panels.profile_dialog import ProfileDialog
         ProfileDialog(self, config=self._config, t=self._t,
                       folder_name=self._selected_profile,
-                      on_done=self._refresh_speakers)
+                      on_done=lambda fn: self._refresh_speakers())
 
     def _delete_profile(self) -> None:
         if not self._selected_profile:

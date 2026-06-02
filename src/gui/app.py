@@ -35,7 +35,6 @@ from gui.panels.substitution_dict import SubstitutionDictPanel
 from gui.panels.batch_queue import BatchQueuePanel
 from gui.panels.output_config import OutputConfigPanel
 from gui.panels.hotkeys_panel import HotkeysPanel
-from gui.panels.speaker_labelling import SpeakerLabellingPanel
 from gui.panels.session_history import SessionHistoryPanel
 from gui.panels.backup_restore import BackupRestorePanel
 from gui.panels.about import AboutPanel
@@ -52,7 +51,6 @@ _NAV_ITEMS = [
     ("nav_batch", "batch"),
     ("nav_output", "output"),
     ("nav_hotkeys", "hotkeys"),
-    ("nav_labelling", "labelling"),
     ("nav_history", "history"),
     ("nav_backup", "backup"),
     ("nav_about", "about"),
@@ -105,7 +103,9 @@ class App(ctk.CTk):
         self._capture_stop = threading.Event()
         self._minimized_to_tray = False
         self._pending_result = None          # PipelineResult awaiting labelling
-        self._pending_fragment_paths: dict = {}  # speaker_id → temp WAV path
+        self._pending_fragment_paths: dict = {}
+        self._labelling_queue: list = []
+        self._labelling_index: int = 0
         self._batch_done_event = None        # set when batch labelling finishes
 
         self._pipeline = PipelineRunner(
@@ -369,10 +369,6 @@ class App(ctk.CTk):
                 on_bindings_changed=self._on_hotkeys_changed,
                 on_panel_show=self._hotkeys.suspend_callbacks,
                 on_panel_hide=self._hotkeys.resume_callbacks),
-            "labelling": lambda: SpeakerLabellingPanel(
-                self._content, self._config, t,
-                on_label_confirmed=self._on_label_confirmed,
-                on_all_done=self._finish_labelling),
             "history": lambda: SessionHistoryPanel(
                 self._content, self._config, t),
             "backup": lambda: BackupRestorePanel(
@@ -582,10 +578,9 @@ class App(ctk.CTk):
 
     def _handle_done(self, result) -> None:
         if result.ok and result.write_output_fn is not None:
-            # Unidentified speakers present — show labelling panel before writing
             self._status_label.configure(
                 text=self._lang.t("status_labelling"))
-            self._start_labelling(result)
+            self._open_labelling_dialogs(result)
             return
 
         t = self._lang.t
@@ -670,13 +665,13 @@ class App(ctk.CTk):
     # Post-session speaker labelling (Spec 4.3)
     # ------------------------------------------------------------------
 
-    def _start_labelling(self, result) -> None:
-        """Navigate to the Speaker Labelling panel for unidentified speakers."""
-        import re, os
+    def _open_labelling_dialogs(self, result, batch_done=None) -> None:
+        """Collect unidentified speakers and open ProfileDialog for each in sequence."""
+        import re
         self._pending_result = result
         self._pending_fragment_paths = {}
+        self._batch_done_event = batch_done
 
-        # Collect unique Speaker N IDs, pick the best (longest non-bad) segment
         best: dict[str, object] = {}
         for seg in result.segments:
             if not re.match(r'^Speaker \d+$', seg.speaker_id):
@@ -692,7 +687,7 @@ class App(ctk.CTk):
             return
 
         sorted_ids = sorted(best, key=lambda s: int(re.search(r'\d+', s).group()))
-        pending = []
+        self._labelling_queue = []
         for sid in sorted_ids:
             seg = best[sid]
             fpath = None
@@ -703,69 +698,62 @@ class App(ctk.CTk):
                     self._pending_fragment_paths[sid] = fpath
                 except Exception:
                     pass
-            pending.append({"speaker_id": sid, "fragment_path": fpath})
+            self._labelling_queue.append({"speaker_id": sid, "fragment_path": fpath})
 
-        panel = self._panels.get("labelling")
-        if panel and hasattr(panel, "load_pending"):
-            panel.load_pending(pending)
-            self._show_panel("labelling")
-        else:
+        self._labelling_index = 0
+        self._show_next_labelling_dialog()
+
+    def _show_next_labelling_dialog(self) -> None:
+        """Open ProfileDialog for the next queued speaker, or finish if done."""
+        if self._labelling_index >= len(self._labelling_queue):
             self._finish_labelling()
-
-    def _on_label_confirmed(self, speaker_id: str, display_name: str,
-                            meta: dict) -> None:
-        """Relabel all segments and create a voice profile for the confirmed speaker."""
-        if self._pending_result is None:
             return
-        for seg in self._pending_result.segments:
-            if seg.speaker_id == speaker_id:
-                seg.speaker_id = display_name
-        if any(v.strip() for v in meta.values()):
-            fpath = self._pending_fragment_paths.get(speaker_id)
-            try:
-                from library.storage import LibraryStorage
-                from library.profile_creator import ProfileCreator, ConflictMode, _pyannote_embed
-                from library.groups import LibraryGroups
-                library_root = Path(self._config.get("library_root", "library"))
-                storage = LibraryStorage(library_root)
-                _hf_token = self._config.get("huggingface_token", None)
-                _embed_fn = (lambda a, sr, _t=_hf_token: _pyannote_embed(a, sr, token=_t))
-                folder_name = None
-                if fpath:
-                    from audio.ingest import load as _audio_load
-                    audio, sr = _audio_load(fpath)
-                    folder_name, _ = ProfileCreator(storage, embedding_fn=_embed_fn).create(
-                        audio, sr,
-                        last=meta.get("lastname", ""),
-                        first=meta.get("firstname", ""),
-                        middle=meta.get("middlename", ""),
-                        nickname=meta.get("nickname", ""),
-                        organisation=meta.get("organisation", ""),
-                        position=meta.get("position", ""),
-                        note=meta.get("note", ""),
-                        conflict_mode=ConflictMode.MERGE,
-                    )
-                else:
-                    folder_name = storage.create_profile(
-                        last=meta.get("lastname", ""),
-                        first=meta.get("firstname", ""),
-                        middle=meta.get("middlename", ""),
-                        nickname=meta.get("nickname", ""),
-                        organisation=meta.get("organisation", ""),
-                        position=meta.get("position", ""),
-                        note=meta.get("note", ""),
-                    )
-                # Add the new profile to the currently active speaker group
+
+        speaker = self._labelling_queue[self._labelling_index]
+        sid = speaker["speaker_id"]
+        fpath = speaker.get("fragment_path")
+
+        from gui.panels.profile_dialog import ProfileDialog
+
+        def on_done(folder_name: str | None) -> None:
+            if folder_name and self._pending_result is not None:
+                # Relabel segments for this speaker
+                try:
+                    from library.storage import LibraryStorage
+                    library_root = Path(self._config.get("library_root", "library"))
+                    storage = LibraryStorage(library_root)
+                    meta = storage.read_meta(folder_name)
+                    parts = [meta.last_name, meta.first_name]
+                    display = " ".join(p for p in parts if p).strip() or meta.nickname or folder_name
+                except Exception:
+                    display = folder_name
+                for seg in self._pending_result.segments:
+                    if seg.speaker_id == sid:
+                        seg.speaker_id = display
+                # Add to current speaker group
                 current_group = self._group_var.get()
-                if folder_name and current_group and current_group not in ("", "—"):
-                    LibraryGroups(storage).add_to_group(folder_name, current_group)
-            except Exception:
-                pass
+                if current_group and current_group not in ("", "—"):
+                    try:
+                        from library.storage import LibraryStorage
+                        from library.groups import LibraryGroups
+                        library_root = Path(self._config.get("library_root", "library"))
+                        LibraryGroups(LibraryStorage(library_root)).add_to_group(
+                            folder_name, current_group)
+                    except Exception:
+                        pass
+            self._labelling_index += 1
+            self._show_next_labelling_dialog()
+
+        ProfileDialog(
+            self, self._config, self._lang.t,
+            folder_name=None,
+            initial_sample_path=fpath,
+            on_done=on_done,
+        )
 
     def _on_batch_labelling_needed(self, result, done_event) -> None:
         """Called on the main thread when a batch file has unidentified speakers."""
-        self._batch_done_event = done_event
-        self._start_labelling(result)
+        self._open_labelling_dialogs(result, batch_done=done_event)
 
     def _finish_labelling(self) -> None:
         """Called when all pending speakers are confirmed or skipped."""

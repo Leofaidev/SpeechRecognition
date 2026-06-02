@@ -13,25 +13,32 @@ from gui.widgets.context_menu import bind_context_menu
 class ProfileDialog(ctk.CTkToplevel):
     """Create or edit a voice profile.
 
-    If *folder_name* is given, the dialog loads existing metadata for editing
-    and shows the sample management section (play / add / remove).
-    Otherwise a new profile is created from a selected audio file.
+    If *folder_name* is given the dialog loads existing metadata for editing.
+    Otherwise a new profile is created; *initial_sample_path* pre-populates
+    the first audio sample.
+
+    *on_done* is called with the folder name on success, or ``None`` on cancel.
     """
 
     def __init__(self, parent, config, t: Callable,
                  folder_name: str | None = None,
-                 on_done: Callable[[], None] | None = None) -> None:
+                 initial_sample_path: str | None = None,
+                 on_done: Callable[[str | None], None] | None = None) -> None:
         super().__init__(parent)
         self._config = config
         self._t = t
         self._folder_name = folder_name
-        self._on_done = on_done or (lambda: None)
+        self._on_done = on_done or (lambda fn: None)
         self._player = None
         self._active_play_btn = None
-        title_key = "dialog_edit_profile" if folder_name else "dialog_create_profile"
-        self.title(t(title_key))
-        self.geometry("520x740" if folder_name else "520x600")
+        # Pending sample paths for create mode (not yet written to storage)
+        self._pending_samples: list[str] = []
+        if initial_sample_path:
+            self._pending_samples.append(initial_sample_path)
+        self.title(t("dialog_edit_profile"))
+        self.geometry("520x740")
         self.grab_set()
+        self.protocol("WM_DELETE_WINDOW", self._cancel)
         self._build()
         self._load_existing()
         self.focus_force()
@@ -45,52 +52,27 @@ class ProfileDialog(ctk.CTkToplevel):
         self.grid_columnconfigure(1, weight=1)
         row = 0
 
-        # Audio file + marker (create mode only)
-        if not self._folder_name:
-            ctk.CTkLabel(self, text=t("profile_audio_label")).grid(
-                row=row, column=0, sticky="w", padx=12, pady=4)
-            self._audio_var = ctk.StringVar()
-            _e = ctk.CTkEntry(self, textvariable=self._audio_var)
-            _e.grid(row=row, column=1, sticky="ew", padx=4, pady=4)
-            bind_context_menu(_e)
-            ctk.CTkButton(self, text=t("btn_browse"), width=80,
-                          command=self._browse_audio).grid(
-                row=row, column=2, padx=4, pady=4)
-            row += 1
+        # Samples section (always shown)
+        ctk.CTkLabel(self, text=t("profile_samples_section"),
+                     font=ctk.CTkFont(weight="bold")).grid(
+            row=row, column=0, columnspan=3, sticky="w", padx=12, pady=(12, 2))
+        row += 1
 
-            ctk.CTkLabel(self, text=t("profile_marker_label")).grid(
-                row=row, column=0, sticky="w", padx=12, pady=4)
-            self._marker_var = ctk.StringVar(value="0")
-            _e2 = ctk.CTkEntry(self, textvariable=self._marker_var, width=80)
-            _e2.grid(row=row, column=1, sticky="w", padx=4, pady=4)
-            bind_context_menu(_e2)
-            ctk.CTkButton(self, text=t("profile_preview_btn"), width=120,
-                          command=self._preview).grid(
-                row=row, column=2, padx=4, pady=4)
-            row += 1
+        self._samples_frame = ctk.CTkScrollableFrame(self, height=130)
+        self._samples_frame.grid(row=row, column=0, columnspan=3,
+                                  sticky="ew", padx=12, pady=(0, 4))
+        self._samples_frame.grid_columnconfigure(0, weight=1)
+        row += 1
 
-        # Samples section (edit mode only)
-        if self._folder_name:
-            ctk.CTkLabel(self, text=t("profile_samples_section"),
-                         font=ctk.CTkFont(weight="bold")).grid(
-                row=row, column=0, columnspan=3, sticky="w", padx=12, pady=(12, 2))
-            row += 1
-
-            self._samples_frame = ctk.CTkScrollableFrame(self, height=130)
-            self._samples_frame.grid(row=row, column=0, columnspan=3,
-                                      sticky="ew", padx=12, pady=(0, 4))
-            self._samples_frame.grid_columnconfigure(0, weight=1)
-            row += 1
-
-            add_row = ctk.CTkFrame(self, fg_color="transparent")
-            add_row.grid(row=row, column=0, columnspan=3, sticky="w",
-                         padx=12, pady=(0, 6))
-            ctk.CTkButton(add_row, text=t("btn_add_sample"), width=120,
-                          command=self._add_sample).pack(side="left")
-            self._retrain_status = ctk.CTkLabel(add_row, text="",
-                                                 text_color="gray60")
-            self._retrain_status.pack(side="left", padx=12)
-            row += 1
+        add_row = ctk.CTkFrame(self, fg_color="transparent")
+        add_row.grid(row=row, column=0, columnspan=3, sticky="w",
+                     padx=12, pady=(0, 6))
+        ctk.CTkButton(add_row, text=t("btn_add_sample"), width=120,
+                      command=self._add_sample).pack(side="left")
+        self._retrain_status = ctk.CTkLabel(add_row, text="",
+                                             text_color="gray60")
+        self._retrain_status.pack(side="left", padx=12)
+        row += 1
 
         # Metadata fields
         self._name_vars: dict[str, ctk.StringVar] = {}
@@ -118,12 +100,18 @@ class ProfileDialog(ctk.CTkToplevel):
                        padx=12, pady=12)
         ctk.CTkButton(btn_frame, text=t("btn_cancel"),
                       fg_color="#555555",
-                      command=self.destroy).pack(side="left", padx=8)
-        ctk.CTkButton(btn_frame, text=t("btn_confirm"),
-                      command=self._confirm).pack(side="left")
+                      command=self._cancel).pack(side="left", padx=8)
+        self._confirm_btn = ctk.CTkButton(btn_frame, text=t("btn_confirm"),
+                                          command=self._confirm)
+        self._confirm_btn.pack(side="left")
+
+        self._build_samples_list()
+        # Disable Confirm in create mode until at least one sample is present
+        if not self._folder_name:
+            self._update_confirm_state()
 
     # ------------------------------------------------------------------
-    # Load existing data
+    # Load existing data (edit mode)
     # ------------------------------------------------------------------
 
     def _load_existing(self) -> None:
@@ -143,7 +131,6 @@ class ProfileDialog(ctk.CTkToplevel):
             self._name_vars["note"].set(meta.note)
         except Exception:
             pass
-        self._build_samples_list()
 
     # ------------------------------------------------------------------
     # Samples list
@@ -154,39 +141,161 @@ class ProfileDialog(ctk.CTkToplevel):
             return
         for w in self._samples_frame.winfo_children():
             w.destroy()
+
+        if self._folder_name:
+            # Edit mode: load samples from storage
+            library_root = Path(self._config.get("library_root", "library"))
+            samples: list[str] = []
+            try:
+                from library.storage import LibraryStorage
+                storage = LibraryStorage(library_root)
+                meta = storage.read_meta(self._folder_name)
+                samples = meta.samples or []
+            except Exception:
+                pass
+
+            if not samples:
+                ctk.CTkLabel(self._samples_frame,
+                             text=self._t("profile_no_samples"),
+                             text_color="gray60").pack(padx=8, pady=6)
+                return
+
+            library_root = Path(self._config.get("library_root", "library"))
+            from library.storage import LibraryStorage
+            storage = LibraryStorage(library_root)
+            for sample_name in samples:
+                sample_path = storage.sample_path(self._folder_name, sample_name)
+                self._add_sample_row(
+                    sample_name, str(sample_path), len(samples),
+                    on_remove=lambda sn=sample_name: self._remove_sample(sn))
+        else:
+            # Create mode: show pending file paths
+            if not self._pending_samples:
+                ctk.CTkLabel(self._samples_frame,
+                             text=self._t("profile_no_samples"),
+                             text_color="gray60").pack(padx=8, pady=6)
+                return
+            for path in self._pending_samples:
+                self._add_sample_row(
+                    Path(path).name, path, len(self._pending_samples),
+                    on_remove=lambda p=path: self._remove_pending_sample(p))
+
+    def _add_sample_row(self, label: str, path: str, total: int,
+                        on_remove: Callable) -> None:
+        row_frame = ctk.CTkFrame(self._samples_frame, fg_color="transparent")
+        row_frame.pack(fill="x", padx=4, pady=2)
+        ctk.CTkLabel(row_frame, text=label).pack(side="left", padx=6)
+
+        play_btn = ctk.CTkButton(row_frame, text=self._t("btn_play"), width=60)
+        play_btn.configure(
+            command=lambda p=path, b=play_btn: self._toggle_sample_playback(p, b))
+        play_btn.pack(side="right", padx=2)
+
+        ctk.CTkButton(
+            row_frame, text=self._t("btn_remove_sample"), width=70,
+            fg_color="#8B1A1A", hover_color="#6B1010",
+            command=on_remove,
+            state="disabled" if total <= 1 else "normal",
+        ).pack(side="right", padx=2)
+
+    def _remove_sample(self, sample_name: str) -> None:
+        from tkinter import messagebox
+        if not messagebox.askyesno(
+                self._t("delete_confirm_title"),
+                f"{sample_name}"):
+            return
         library_root = Path(self._config.get("library_root", "library"))
-        samples: list[str] = []
         try:
             from library.storage import LibraryStorage
             storage = LibraryStorage(library_root)
             meta = storage.read_meta(self._folder_name)
-            samples = meta.samples or []
-        except Exception:
-            pass
+            sample_path = storage.sample_path(self._folder_name, sample_name)
+            if sample_path.exists():
+                sample_path.unlink()
+            meta.samples = [s for s in meta.samples if s != sample_name]
+            meta.sample_count = len(meta.samples)
+            storage.write_meta(self._folder_name, meta)
+            self._set_retrain_status(self._t("profile_retraining"))
+            def _bg():
+                try:
+                    self._retrain_profile_folder(self._folder_name)
+                    self.after(0, lambda: self._set_retrain_status(
+                        self._t("profile_retrain_single_done")))
+                except Exception as exc:
+                    self.after(0, lambda e=str(exc): self._set_retrain_status(
+                        f"{self._t('error_title')}: {e}"))
+                finally:
+                    self.after(0, self._build_samples_list)
+            threading.Thread(target=_bg, daemon=True).start()
+        except Exception as exc:
+            from tkinter import messagebox
+            messagebox.showerror(self._t("error_title"), str(exc))
 
-        if not samples:
-            ctk.CTkLabel(self._samples_frame,
-                         text=self._t("profile_no_samples"),
-                         text_color="gray60").pack(padx=8, pady=6)
+    def _remove_pending_sample(self, path: str) -> None:
+        self._pending_samples = [p for p in self._pending_samples if p != path]
+        self._build_samples_list()
+        self._update_confirm_state()
+
+    def _add_sample(self) -> None:
+        from tkinter import filedialog
+        path = filedialog.askopenfilename(
+            filetypes=[("Audio", "*.mp3 *.wav *.mp4 *.avi")])
+        if not path:
             return
 
-        library_root = Path(self._config.get("library_root", "library"))
-        from library.storage import LibraryStorage
-        storage = LibraryStorage(library_root)
-        for sample_name in samples:
-            sample_path = storage.sample_path(self._folder_name, sample_name)
-            row = ctk.CTkFrame(self._samples_frame, fg_color="transparent")
-            row.pack(fill="x", padx=4, pady=2)
-            ctk.CTkLabel(row, text=sample_name).pack(side="left", padx=6)
-            play_btn = ctk.CTkButton(row, text=self._t("btn_play"), width=60)
-            play_btn.configure(
-                command=lambda p=str(sample_path), b=play_btn:
-                    self._toggle_sample_playback(p, b))
-            play_btn.pack(side="right", padx=2)
-            ctk.CTkButton(row, text=self._t("btn_remove_sample"), width=70,
-                          fg_color="#8B1A1A", hover_color="#6B1010",
-                          command=lambda sn=sample_name: self._remove_sample(sn)
-                          ).pack(side="right", padx=2)
+        if self._folder_name:
+            # Edit mode: write sample to storage and retrain
+            library_root = Path(self._config.get("library_root", "library"))
+            try:
+                import wave
+                import numpy as np
+                from audio.ingest import load
+                from library.storage import LibraryStorage
+                audio, sr = load(path)
+                storage = LibraryStorage(library_root)
+                sample_name = storage.next_sample_name(self._folder_name)
+                sample_path = storage.sample_path(self._folder_name, sample_name)
+                pcm = (audio * 32767).clip(-32768, 32767).astype(np.int16)
+                with wave.open(str(sample_path), "w") as wf:
+                    wf.setnchannels(1)
+                    wf.setsampwidth(2)
+                    wf.setframerate(sr)
+                    wf.writeframes(pcm.tobytes())
+                meta = storage.read_meta(self._folder_name)
+                meta.samples.append(sample_name)
+                meta.sample_count = len(meta.samples)
+                storage.write_meta(self._folder_name, meta)
+                self._set_retrain_status(self._t("profile_retraining"))
+                def _bg():
+                    try:
+                        self._retrain_profile_folder(self._folder_name)
+                        self.after(0, lambda: self._set_retrain_status(
+                            self._t("profile_retrain_single_done")))
+                    except Exception as exc:
+                        self.after(0, lambda e=str(exc): self._set_retrain_status(
+                            f"{self._t('error_title')}: {e}"))
+                    finally:
+                        self.after(0, self._build_samples_list)
+                threading.Thread(target=_bg, daemon=True).start()
+            except Exception as exc:
+                from tkinter import messagebox
+                messagebox.showerror(self._t("error_title"), str(exc))
+        else:
+            # Create mode: just append to pending list
+            self._pending_samples.append(path)
+            self._build_samples_list()
+            self._update_confirm_state()
+
+    def _update_confirm_state(self) -> None:
+        if not hasattr(self, "_confirm_btn"):
+            return
+        if not self._folder_name:
+            state = "normal" if self._pending_samples else "disabled"
+            self._confirm_btn.configure(state=state)
+
+    # ------------------------------------------------------------------
+    # Sample playback (toggle Play/Stop)
+    # ------------------------------------------------------------------
 
     def _toggle_sample_playback(self, path: str, btn) -> None:
         prev_btn = self._active_play_btn
@@ -228,129 +337,39 @@ class ProfileDialog(ctk.CTkToplevel):
                 pass
             self._active_play_btn = None
 
-    def _remove_sample(self, sample_name: str) -> None:
-        from tkinter import messagebox
-        if not messagebox.askyesno(
-                self._t("delete_confirm_title"),
-                f"{sample_name}"):
-            return
-        library_root = Path(self._config.get("library_root", "library"))
-        try:
-            from library.storage import LibraryStorage
-            storage = LibraryStorage(library_root)
-            meta = storage.read_meta(self._folder_name)
-            sample_path = storage.sample_path(self._folder_name, sample_name)
-            if sample_path.exists():
-                sample_path.unlink()
-            meta.samples = [s for s in meta.samples if s != sample_name]
-            meta.sample_count = len(meta.samples)
-            storage.write_meta(self._folder_name, meta)
-            self._set_retrain_status(self._t("profile_retraining"))
-            def _bg():
-                try:
-                    self._retrain_profile()
-                    self.after(0, lambda: self._set_retrain_status(
-                        self._t("profile_retrain_single_done")))
-                except Exception as exc:
-                    self.after(0, lambda e=str(exc): self._set_retrain_status(
-                        f"{self._t('error_title')}: {e}"))
-                finally:
-                    self.after(0, self._build_samples_list)
-            threading.Thread(target=_bg, daemon=True).start()
-        except Exception as exc:
-            from tkinter import messagebox
-            messagebox.showerror(self._t("error_title"), str(exc))
+    # ------------------------------------------------------------------
+    # Retrain helper
+    # ------------------------------------------------------------------
 
-    def _add_sample(self) -> None:
-        from tkinter import filedialog
-        path = filedialog.askopenfilename(
-            filetypes=[("Audio", "*.mp3 *.wav *.mp4 *.avi")])
-        if not path:
-            return
-        library_root = Path(self._config.get("library_root", "library"))
-        try:
-            import wave
-            import numpy as np
-            from audio.ingest import load
-            from library.storage import LibraryStorage
-            audio, sr = load(path)
-            storage = LibraryStorage(library_root)
-            sample_name = storage.next_sample_name(self._folder_name)
-            sample_path = storage.sample_path(self._folder_name, sample_name)
-            pcm = (audio * 32767).clip(-32768, 32767).astype(np.int16)
-            with wave.open(str(sample_path), "w") as wf:
-                wf.setnchannels(1)
-                wf.setsampwidth(2)
-                wf.setframerate(sr)
-                wf.writeframes(pcm.tobytes())
-            meta = storage.read_meta(self._folder_name)
-            meta.samples.append(sample_name)
-            meta.sample_count = len(meta.samples)
-            storage.write_meta(self._folder_name, meta)
-            self._set_retrain_status(self._t("profile_retraining"))
-            def _bg():
-                try:
-                    self._retrain_profile()
-                    self.after(0, lambda: self._set_retrain_status(
-                        self._t("profile_retrain_single_done")))
-                except Exception as exc:
-                    self.after(0, lambda e=str(exc): self._set_retrain_status(
-                        f"{self._t('error_title')}: {e}"))
-                finally:
-                    self.after(0, self._build_samples_list)
-            threading.Thread(target=_bg, daemon=True).start()
-        except Exception as exc:
-            from tkinter import messagebox
-            messagebox.showerror(self._t("error_title"), str(exc))
-
-    def _retrain_profile(self) -> None:
+    def _retrain_profile_folder(self, folder_name: str) -> None:
         library_root = Path(self._config.get("library_root", "library"))
         from library.storage import LibraryStorage
         from library.retrainer import LibraryRetrainer
         from library.profile_creator import _pyannote_embed
         storage = LibraryStorage(library_root)
-        meta = storage.read_meta(self._folder_name)
+        meta = storage.read_meta(folder_name)
         if not meta.samples:
             return
-        LibraryRetrainer(storage, _pyannote_embed)._retrain_one(self._folder_name)
+        LibraryRetrainer(storage, _pyannote_embed)._retrain_one(folder_name)
 
     def _set_retrain_status(self, msg: str) -> None:
         if hasattr(self, "_retrain_status"):
             self._retrain_status.configure(text=msg)
 
     # ------------------------------------------------------------------
-    # Create mode helpers
+    # Cancel
     # ------------------------------------------------------------------
 
-    def _browse_audio(self) -> None:
-        from tkinter import filedialog
-        path = filedialog.askopenfilename(
-            filetypes=[("Audio", "*.mp3 *.wav *.mp4 *.avi")])
-        if path:
-            self._audio_var.set(path)
-
-    def _preview(self) -> None:
-        audio_path = self._audio_var.get()
-        if not audio_path:
-            return
-        try:
-            marker = float(self._marker_var.get() or "0")
-        except ValueError:
-            marker = 0.0
-        try:
-            import vlc
-            player = vlc.MediaPlayer(audio_path)
-            player.play()
-            player.set_time(int(marker * 1000))
-        except Exception:
-            pass
+    def _cancel(self) -> None:
+        self._stop_sample_playback()
+        self._on_done(None)
+        self.destroy()
 
     # ------------------------------------------------------------------
     # Confirm (save metadata / create profile)
     # ------------------------------------------------------------------
 
     def _confirm(self) -> None:
-        library_root = Path(self._config.get("library_root", "library"))
         kwargs = {
             "last": self._name_vars["lastname"].get(),
             "first": self._name_vars["firstname"].get(),
@@ -360,10 +379,13 @@ class ProfileDialog(ctk.CTkToplevel):
             "position": self._name_vars["position"].get(),
             "note": self._name_vars["note"].get(),
         }
-        try:
-            from library.storage import LibraryStorage
-            storage = LibraryStorage(library_root)
-            if self._folder_name:
+        library_root = Path(self._config.get("library_root", "library"))
+
+        if self._folder_name:
+            # Edit mode: save metadata only
+            try:
+                from library.storage import LibraryStorage
+                storage = LibraryStorage(library_root)
                 meta = storage.read_meta(self._folder_name)
                 meta.last_name = kwargs["last"]
                 meta.first_name = kwargs["first"]
@@ -373,17 +395,77 @@ class ProfileDialog(ctk.CTkToplevel):
                 meta.position = kwargs["position"]
                 meta.note = kwargs["note"]
                 storage.write_meta(self._folder_name, meta)
-            else:
-                from audio.ingest import load
-                from library.profile_creator import ProfileCreator, _pyannote_embed
-                _hf_token = self._config.get("huggingface_token", None)
-                _embed_fn = (lambda a, sr, _t=_hf_token: _pyannote_embed(a, sr, token=_t))
-                audio, sr = load(self._audio_var.get())
-                creator = ProfileCreator(storage, embedding_fn=_embed_fn)
-                creator.create(audio, sr, **kwargs)
-        except Exception as exc:
-            from tkinter import messagebox
-            messagebox.showerror(self._t("error_title"), str(exc))
-            return
-        self._on_done()
+            except Exception as exc:
+                from tkinter import messagebox
+                messagebox.showerror(self._t("error_title"), str(exc))
+                return
+            folder_name = self._folder_name
+            self._stop_sample_playback()
+            self._on_done(folder_name)
+            self.destroy()
+        else:
+            # Create mode: build profile from pending samples in background
+            if not self._pending_samples:
+                return
+            self._confirm_btn.configure(state="disabled")
+            self._set_retrain_status(self._t("profile_retraining"))
+            pending = list(self._pending_samples)
+
+            def _bg():
+                try:
+                    import wave
+                    import numpy as np
+                    from audio.ingest import load
+                    from library.storage import LibraryStorage
+                    from library.profile_creator import ProfileCreator, _pyannote_embed
+                    storage = LibraryStorage(library_root)
+                    _hf_token = self._config.get("huggingface_token", None)
+                    _embed_fn = (
+                        lambda a, sr, _t=_hf_token: _pyannote_embed(a, sr, token=_t))
+
+                    # Create from first sample
+                    audio, sr = load(pending[0])
+                    creator = ProfileCreator(storage, embedding_fn=_embed_fn)
+                    folder_name, _ = creator.create(
+                        audio, sr,
+                        last=kwargs["last"], first=kwargs["first"],
+                        middle=kwargs["middle"], nickname=kwargs["nickname"],
+                        organisation=kwargs["organisation"],
+                        position=kwargs["position"], note=kwargs["note"],
+                    )
+
+                    # Add any remaining samples
+                    for extra_path in pending[1:]:
+                        audio2, sr2 = load(extra_path)
+                        sample_name = storage.next_sample_name(folder_name)
+                        sample_path = storage.sample_path(folder_name, sample_name)
+                        pcm = (audio2 * 32767).clip(-32768, 32767).astype(np.int16)
+                        with wave.open(str(sample_path), "w") as wf:
+                            wf.setnchannels(1)
+                            wf.setsampwidth(2)
+                            wf.setframerate(sr2)
+                            wf.writeframes(pcm.tobytes())
+                        meta = storage.read_meta(folder_name)
+                        meta.samples.append(sample_name)
+                        meta.sample_count = len(meta.samples)
+                        storage.write_meta(folder_name, meta)
+
+                    if len(pending) > 1:
+                        self._retrain_profile_folder(folder_name)
+
+                    self.after(0, lambda fn=folder_name: self._on_create_done(fn))
+                except Exception as exc:
+                    self.after(0, lambda e=str(exc): self._on_create_error(e))
+
+            threading.Thread(target=_bg, daemon=True).start()
+
+    def _on_create_done(self, folder_name: str) -> None:
+        self._stop_sample_playback()
+        self._on_done(folder_name)
         self.destroy()
+
+    def _on_create_error(self, error: str) -> None:
+        from tkinter import messagebox
+        messagebox.showerror(self._t("error_title"), error)
+        self._confirm_btn.configure(state="normal")
+        self._set_retrain_status("")
