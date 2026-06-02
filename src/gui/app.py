@@ -206,8 +206,6 @@ class App(ctk.CTk):
         # Main view (output text / short-session form)
         self._build_main_view()
 
-        # Playback bar (bottom)
-        self._build_playback_bar(right)
 
         # Show main view by default
         self._active_panel: str | None = None
@@ -314,23 +312,6 @@ class App(ctk.CTk):
         # Apply initial mode layout
         self._apply_mode_layout()
 
-    def _build_playback_bar(self, parent) -> None:
-        t = self._lang.t
-        bar = ctk.CTkFrame(parent, fg_color="transparent")
-        bar.grid(row=3, column=0, sticky="ew", padx=4, pady=4)
-
-        self._btn_play = ctk.CTkButton(
-            bar, text=t("btn_play"), width=60, command=self._toggle_playback)
-        self._btn_play.pack(side="left", padx=4)
-
-        self._seek_slider = ctk.CTkSlider(
-            bar, from_=0, to=100, command=self._on_seek)
-        self._seek_slider.pack(side="left", fill="x", expand=True, padx=8)
-        self._seek_slider.set(0)
-
-        self._vlc_player = None
-        self._vlc_instance = None
-        self._playback_path: str | None = None
 
     # ------------------------------------------------------------------
     # Panels
@@ -462,7 +443,6 @@ class App(ctk.CTk):
             self._status_label.configure(text=t("status_recording"))
             self._btn_record.configure(
                 text=t("btn_stop"), state="normal", command=self._stop_recording)
-            self._btn_play.configure(state="disabled")
         else:
             self._status_label.configure(text=t("status_processing"))
             self._btn_record.configure(state="disabled")
@@ -589,7 +569,6 @@ class App(ctk.CTk):
         self.after(3000, self._reset_status_if_idle)
         self._btn_record.configure(
             text=t("btn_start"), state="normal", command=self._start_recording)
-        self._btn_play.configure(state="disabled")
 
         if result.ok and result.segments:
             if self._mode == "short":
@@ -625,9 +604,6 @@ class App(ctk.CTk):
                             parts.append(text)
                         self._output_text.insert("end", " ".join(parts) + "\n")
                     self._output_text.configure(state="disabled")
-                if result.output_paths and result.source_path:
-                    self._playback_path = result.source_path
-                    self._btn_play.configure(state="normal")
 
         if result.ok and result.segments and self._mode != "short":
             self._update_speaker_cards(result.segments)
@@ -840,7 +816,6 @@ class App(ctk.CTk):
         self.after(3000, self._reset_status_if_idle)
         self._btn_record.configure(
             text=t("btn_start"), state="normal", command=self._start_recording)
-        self._btn_play.configure(state="disabled")
         self._show_main_view()
 
         if result.ok and result.segments:
@@ -868,9 +843,6 @@ class App(ctk.CTk):
                             parts.append(text)
                         self._output_text.insert("end", " ".join(parts) + "\n")
                     self._output_text.configure(state="disabled")
-                if result.output_paths and result.source_path:
-                    self._playback_path = result.source_path
-                    self._btn_play.configure(state="normal")
 
         if result.ok and result.segments and self._mode != "short":
             self._update_speaker_cards(result.segments)
@@ -1043,53 +1015,6 @@ class App(ctk.CTk):
     def _update_session_clipboard(self, text: str) -> None:
         pass  # Session history update: T-132 (no active session ID tracked here)
 
-    # ------------------------------------------------------------------
-    # Playback (T-87)
-    # ------------------------------------------------------------------
-
-    def _toggle_playback(self) -> None:
-        if self._recording:
-            return
-        if self._vlc_player and self._vlc_player.is_playing():
-            self._vlc_player.pause()
-            self._btn_play.configure(text=self._lang.t("btn_play"))
-        else:
-            self._start_playback()
-
-    def _start_playback(self) -> None:
-        if not self._playback_path:
-            return
-        try:
-            import vlc
-            if self._vlc_instance is None:
-                self._vlc_instance = vlc.Instance()
-            if self._vlc_player is None:
-                self._vlc_player = self._vlc_instance.media_player_new()
-            media = self._vlc_instance.media_new(self._playback_path)
-            self._vlc_player.set_media(media)
-            self._vlc_player.play()
-            self._btn_play.configure(text=self._lang.t("btn_pause"))
-            self._poll_playback()
-        except Exception:
-            pass
-
-    def _on_seek(self, value: float) -> None:
-        if self._vlc_player:
-            try:
-                self._vlc_player.set_position(value / 100.0)
-            except Exception:
-                pass
-
-    def _poll_playback(self) -> None:
-        if self._vlc_player and self._vlc_player.is_playing():
-            try:
-                pos = self._vlc_player.get_position() * 100
-                self._seek_slider.set(pos)
-            except Exception:
-                pass
-            self.after(500, self._poll_playback)
-        else:
-            self._btn_play.configure(text=self._lang.t("btn_play"))
 
     # ------------------------------------------------------------------
     # Signal meter polling
@@ -1171,8 +1096,6 @@ class App(ctk.CTk):
             self._btn_record.configure(text=t("btn_stop"))
         else:
             self._btn_record.configure(text=t("btn_start"))
-        if not (self._vlc_player and self._vlc_player.is_playing()):
-            self._btn_play.configure(text=t("btn_play"))
         # Short session form (lives in main view, not in panels dict)
         self._short_form.update_strings(t)
         # Status bar — only overwrite if idle
