@@ -1,6 +1,5 @@
 {
   "app_title": "Speech Recognition Program",
-
   "nav_home": "Home",
   "nav_settings": "Settings",
   "nav_profiles": "Voice Profiles",
@@ -13,7 +12,6 @@
   "nav_history": "Session History",
   "nav_backup": "Backup & Restore",
   "nav_about": "About",
-
   "label_device": "Input Device",
   "label_group": "Speaker Group",
   "label_mode": "Mode",
@@ -34,10 +32,8 @@
   "status_processing": "Processing...",
   "status_done": "Done",
   "status_labelling": "Speaker labelling...",
-
   "progress_file": "File progress",
   "progress_queue": "Queue: {current} of {total}",
-
   "field1_label": "Transcription",
   "field2_label": "Translation",
   "btn_translate_save": "Translate and save to clipboard",
@@ -46,11 +42,9 @@
   "field_placeholder_transcription": "Transcribed text will appear here...",
   "field_placeholder_translation": "Translated text will appear here...",
   "output_text_placeholder": "Output will appear here after processing...",
-
   "btn_play": "Play",
   "btn_pause": "Pause",
   "playback_disabled_recording": "Playback disabled during recording",
-
   "settings_title": "Settings",
   "settings_audio_section": "Audio Input",
   "settings_signal_label": "Signal Level",
@@ -86,7 +80,6 @@
   "settings_output_folder": "Output Folder",
   "settings_source_language": "Source Language",
   "settings_target_language": "Target Language",
-
   "licence_title": "HuggingFace pyannote Licence",
   "licence_intro": "Speaker identification uses pyannote.audio which requires accepting the HuggingFace licence agreement.",
   "licence_accept_btn": "I Accept the Licence",
@@ -94,7 +87,6 @@
   "licence_accepted_msg": "Licence accepted. Please restart the application for changes to take effect.",
   "licence_restart_btn": "Restart Now",
   "licence_later_btn": "Later",
-
   "model_tiny": "Tiny — fastest, lowest accuracy",
   "model_base": "Base",
   "model_small": "Small",
@@ -104,10 +96,8 @@
   "model_downloading": "Downloading model...",
   "model_download_done": "Model downloaded successfully.",
   "model_retrain_prompt": "Voice model changed. Retrain all profiles now?",
-
   "engine_opus_mt": "OPUS-MT (local, offline)",
   "engine_google": "Google Translate (online)",
-
   "profiles_title": "Voice Profile Management",
   "profiles_speakers_section": "Speakers",
   "profiles_groups_section": "Groups",
@@ -135,7 +125,6 @@
   "profile_no_samples": "No samples yet.",
   "profile_retraining": "Retraining...",
   "profile_retrain_single_done": "Done.",
-
   "dialog_create_profile": "Create Voice Profile",
   "dialog_edit_profile": "Edit Voice Profile",
   "profile_audio_label": "Audio File",
@@ -148,22 +137,18 @@
   "profile_organisation": "Organisation",
   "profile_position": "Position",
   "profile_note": "Note",
-
   "conflict_title": "Profile Conflict",
   "conflict_message": "A profile named '{name}' already exists.",
   "conflict_overwrite": "Overwrite",
   "conflict_merge": "Merge",
   "conflict_reject": "Skip",
-
   "delete_confirm_title": "Confirm Delete",
   "delete_confirm_msg": "Delete {count} profile(s)? This cannot be undone.",
   "group_name_prompt": "Enter group name:",
   "group_new_name_prompt": "Enter new group name:",
-
   "dict_title": "Substitution Dictionary",
   "dict_col_source": "Source",
   "dict_col_replacement": "Replacement",
-  "dict_col_flags": "Flags",
   "btn_add_entry": "Add Row",
   "btn_delete_entry": "Delete",
   "btn_undo": "Undo",
@@ -172,7 +157,6 @@
   "dict_empty": "Dictionary is empty.",
   "dict_import_result": "Imported: {added} added, {rejected} rejected.",
   "dict_export_result": "Exported {count} entries.",
-
   "batch_title": "Batch Queue",
   "btn_add_files": "Add Files",
   "btn_remove_file": "Remove",
@@ -183,7 +167,6 @@
   "batch_done": "Batch complete.",
   "batch_errors_title": "Processing Errors",
   "batch_errors_msg": "The following files failed:\n{files}",
-
   "output_title": "Output Configuration",
   "output_fields_section": "Output Fields",
   "output_field_timestamp": "Timestamp",
@@ -202,7 +185,6 @@
   "output_name_format_section": "Name Format",
   "output_name_format_components": "Components",
   "output_name_format_preview": "Preview",
-
   "hotkeys_title": "Hotkey Configuration",
   "hotkey_start_label": "Start Recording",
   "hotkey_stop_label": "Stop Recording",
@@ -214,7 +196,6 @@
   "hotkey_system_check_note": "Note: Only conflicts with applications using the standard Windows hotkey API are detected. Apps that use low-level keyboard hooks (e.g. Copilot, Teams) cannot be detected.",
   "btn_save_hotkeys": "Save",
   "btn_reset_hotkeys": "Reset to Defaults",
-
   "labelling_title": "Speaker Labelling",
   "labelling_prompt": "Who is this speaker?",
   "labelling_no_pending": "No speakers awaiting identification.",
@@ -222,7 +203,6 @@
   "btn_skip_speaker": "Skip",
   "btn_confirm_label": "Confirm",
   "btn_undo_label": "Undo",
-
   "history_title": "Session History",
   "history_col_date": "Date",
   "history_col_source": "Source",
@@ -233,7 +213,6 @@
   "btn_delete_session": "Delete Session",
   "history_empty": "No recorded sessions yet.",
   "history_regenerated": "Output written to: {path}",
-
   "backup_title": "Backup and Restore",
   "btn_create_backup": "Create Backup",
   "btn_restore_backup": "Restore from Backup",
@@ -246,7 +225,6 @@
   "restore_confirm_msg": "All current data will be replaced with the backup contents. Continue?",
   "restore_done": "Restore complete. {count} files restored.",
   "restore_failed": "Restore failed: {error}",
-
   "tray_open": "Open",
   "tray_mode": "Mode: {mode}",
   "tray_start": "Start Recording",
@@ -255,7 +233,6 @@
   "tray_exit_confirm_title": "Exit During Processing",
   "tray_exit_confirm_msg": "A recording or batch job is in progress.\nExit and stop processing?",
   "tray_notify_done": "Processing complete.",
-
   "error_title": "Error",
   "error_language_missing": "Language file missing or corrupted. Restoring from backup...",
   "error_language_restored": "Language file restored. Please restart to apply changes.",
@@ -263,7 +240,6 @@
   "error_no_device": "No audio input device found.",
   "error_vlc_not_found": "VLC not found. Audio playback is unavailable.",
   "error_generic": "An error occurred: {error}",
-
   "ai_config_title": "AI Configuration",
   "ai_config_whisper_section": "faster-whisper",
   "ai_config_pyannote_section": "pyannote.audio",
@@ -286,12 +262,14 @@
   "ai_config_word_ts_info": "When True, generates a timestamp for each individual word in addition to the segment-level timestamps.\n\nUseful for precise text-audio alignment.\n\nNote: Enabling this increases processing time.\n\nDefault: False",
   "ai_config_clustering_info": "Distance threshold used by the speaker clustering algorithm.\n\nControls how aggressively speakers are merged:\n  Lower value  → more distinct speakers identified\n  Higher value → fewer speakers (more merging)\n\nDefault: 0.715\nRecommended range: 0.5–0.9\n\nChanges take effect on the next session.",
   "ai_config_max_speakers_info": "Maximum number of speakers allowed in the output.\n\nSet to 0 for no limit (automatic detection).\n\nSetting an explicit value constrains the diarization and can improve accuracy when the number of speakers is known in advance.",
-
   "about_title": "About",
   "about_version_label": "Version",
   "about_author_label": "Author",
   "about_build_label": "Build date",
-
   "lang_code": "en",
-  "lang_name": "English"
+  "lang_name": "English",
+  "dict_help_source_title": "Source Matching",
+  "dict_help_source_text": "Type the word or phrase to match in transcribed text.\n\nRules:\n• Case-insensitive — \"OK\", \"ok\" and \"Ok\" all match\n• Whole-word only — \"ok\" will not match \"okay\"\n• Wildcards supported:\n    *  matches any number of characters\n    ?  matches exactly one character\n\nExamples:\n  colour   matches the exact word \"colour\"\n  colo*r   matches \"color\" and \"colour\"\n  sp??k    matches \"speak\" and \"spook\"\n  f*ck*    matches \"fuck\", \"fucking\", etc.",
+  "dict_help_replacement_title": "Replacement",
+  "dict_help_replacement_text": "Type the text to substitute when the source term is matched.\n\nLeave blank to delete the matched word from the transcript.\n\nExamples:\n  gonna        →  going to\n  AI           →  artificial intelligence\n  Dr           →  Doctor\n  f*ck*  (src) →  ****  (replacement)"
 }

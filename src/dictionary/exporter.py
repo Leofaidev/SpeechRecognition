@@ -21,9 +21,9 @@ def export_csv(store: "DictionaryStore", path: Path | str) -> int:
     count = 0
     with path.open("w", encoding="utf-8", newline="") as fh:
         writer = csv.writer(fh)
-        writer.writerow(["source", "replacement", "flags"])
+        writer.writerow(["source", "replacement"])
         for entry in store:
-            writer.writerow([entry.source, entry.replacement, entry.flags])
+            writer.writerow([entry.source, entry.replacement])
             count += 1
 
     return count

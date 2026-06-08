@@ -1,7 +1,6 @@
 {
   "_note": "Automated translation — pending native-speaker review",
   "app_title": "语音识别程序",
-
   "nav_home": "主页",
   "nav_settings": "设置",
   "nav_profiles": "声音档案",
@@ -14,7 +13,6 @@
   "nav_history": "会话历史",
   "nav_backup": "备份与恢复",
   "nav_about": "关于",
-
   "label_device": "输入设备",
   "label_group": "说话人组",
   "label_mode": "模式",
@@ -35,10 +33,8 @@
   "status_processing": "处理中...",
   "status_done": "完成",
   "status_labelling": "正在标注说话人...",
-
   "progress_file": "文件进度",
   "progress_queue": "队列：{current}/{total}",
-
   "field1_label": "转录",
   "field2_label": "翻译",
   "btn_translate_save": "翻译并保存到剪贴板",
@@ -47,11 +43,9 @@
   "field_placeholder_transcription": "转录文本将出现在此处...",
   "field_placeholder_translation": "翻译文本将出现在此处...",
   "output_text_placeholder": "处理后输出将出现在此处...",
-
   "btn_play": "播放",
   "btn_pause": "暂停",
   "playback_disabled_recording": "录音期间播放已禁用",
-
   "settings_title": "设置",
   "settings_audio_section": "音频输入",
   "settings_signal_label": "信号电平",
@@ -87,7 +81,6 @@
   "settings_output_folder": "输出文件夹",
   "settings_source_language": "源语言",
   "settings_target_language": "目标语言",
-
   "licence_title": "HuggingFace pyannote许可证",
   "licence_intro": "说话人识别使用pyannote.audio，需要接受HuggingFace许可协议。",
   "licence_accept_btn": "我接受许可证",
@@ -95,7 +88,6 @@
   "licence_accepted_msg": "许可证已接受。请重启应用程序。",
   "licence_restart_btn": "立即重启",
   "licence_later_btn": "稍后",
-
   "model_tiny": "Tiny — 最快，精度最低",
   "model_base": "Base",
   "model_small": "Small",
@@ -105,10 +97,8 @@
   "model_downloading": "正在下载模型...",
   "model_download_done": "模型下载成功。",
   "model_retrain_prompt": "模型已更改。立即重新训练所有档案？",
-
   "engine_opus_mt": "OPUS-MT（本地，离线）",
   "engine_google": "Google翻译（在线）",
-
   "profiles_title": "声音档案管理",
   "profiles_speakers_section": "说话人",
   "profiles_groups_section": "组",
@@ -136,7 +126,6 @@
   "profile_no_samples": "暂无样本。",
   "profile_retraining": "正在重新训练...",
   "profile_retrain_single_done": "完成。",
-
   "dialog_create_profile": "创建声音档案",
   "dialog_edit_profile": "编辑声音档案",
   "profile_audio_label": "音频文件",
@@ -149,22 +138,18 @@
   "profile_organisation": "组织",
   "profile_position": "职位",
   "profile_note": "备注",
-
   "conflict_title": "档案冲突",
   "conflict_message": "名为「{name}」的档案已存在。",
   "conflict_overwrite": "覆盖",
   "conflict_merge": "合并",
   "conflict_reject": "跳过",
-
   "delete_confirm_title": "确认删除",
   "delete_confirm_msg": "删除{count}个档案？此操作无法撤销。",
   "group_name_prompt": "输入组名：",
   "group_new_name_prompt": "输入新组名：",
-
   "dict_title": "替换词典",
   "dict_col_source": "来源",
   "dict_col_replacement": "替换",
-  "dict_col_flags": "标志",
   "btn_add_entry": "添加行",
   "btn_delete_entry": "删除",
   "btn_undo": "撤销",
@@ -173,7 +158,6 @@
   "dict_empty": "词典为空。",
   "dict_import_result": "已导入：{added}个已添加，{rejected}个已拒绝。",
   "dict_export_result": "已导出{count}个条目。",
-
   "batch_title": "批量队列",
   "btn_add_files": "添加文件",
   "btn_remove_file": "移除",
@@ -184,7 +168,6 @@
   "batch_done": "批量处理完成。",
   "batch_errors_title": "处理错误",
   "batch_errors_msg": "以下文件处理失败：\n{files}",
-
   "output_title": "输出配置",
   "output_fields_section": "输出字段",
   "output_field_timestamp": "时间戳",
@@ -203,7 +186,6 @@
   "output_name_format_section": "名称格式",
   "output_name_format_components": "组件",
   "output_name_format_preview": "预览",
-
   "hotkeys_title": "快捷键配置",
   "hotkey_start_label": "开始录音",
   "hotkey_stop_label": "停止录音",
@@ -215,7 +197,6 @@
   "hotkey_system_check_note": "注意：仅能检测使用标准 Windows 热键 API 的应用程序冲突。使用低级键盘钩子的应用程序（如 Copilot、Teams）无法被检测到。",
   "btn_save_hotkeys": "保存",
   "btn_reset_hotkeys": "恢复默认",
-
   "labelling_title": "说话人标注",
   "labelling_prompt": "这是谁在说话？",
   "labelling_no_pending": "没有等待识别的说话人。",
@@ -223,7 +204,6 @@
   "btn_skip_speaker": "跳过",
   "btn_confirm_label": "确认",
   "btn_undo_label": "撤销",
-
   "history_title": "会话历史",
   "history_col_date": "日期",
   "history_col_source": "来源",
@@ -234,7 +214,6 @@
   "btn_delete_session": "删除会话",
   "history_empty": "暂无录制会话。",
   "history_regenerated": "输出已写入：{path}",
-
   "backup_title": "备份与恢复",
   "btn_create_backup": "创建备份",
   "btn_restore_backup": "从备份恢复",
@@ -247,7 +226,6 @@
   "restore_confirm_msg": "所有当前数据将被替换。继续？",
   "restore_done": "恢复完成。{count}个文件。",
   "restore_failed": "恢复失败：{error}",
-
   "tray_open": "打开",
   "tray_mode": "模式：{mode}",
   "tray_start": "开始录音",
@@ -256,7 +234,6 @@
   "tray_exit_confirm_title": "处理中退出",
   "tray_exit_confirm_msg": "正在录音或批量处理。\n退出并停止处理？",
   "tray_notify_done": "处理完成。",
-
   "error_title": "错误",
   "error_language_missing": "语言文件丢失或损坏。正在恢复...",
   "error_language_restored": "语言文件已恢复。请重启。",
@@ -264,7 +241,6 @@
   "error_no_device": "未找到音频输入设备。",
   "error_vlc_not_found": "未找到VLC。音频播放不可用。",
   "error_generic": "发生错误：{error}",
-
   "ai_config_title": "AI配置",
   "ai_config_whisper_section": "faster-whisper",
   "ai_config_pyannote_section": "pyannote.audio",
@@ -287,12 +263,14 @@
   "ai_config_word_ts_info": "为「是」时，除段级时间戳外，还为每个单词生成时间戳。\n\n适用于精确的文本-音频对齐。\n\n注意：启用此功能会增加处理时间。\n\n默认值：否",
   "ai_config_clustering_info": "说话人聚类算法使用的距离阈值。\n\n控制说话人合并的积极程度：\n  较低值  → 识别出更多不同说话人\n  较高值 → 较少说话人（更多合并）\n\n默认值：0.715\n推荐范围：0.5–0.9\n\n更改在下一次会话中生效。",
   "ai_config_max_speakers_info": "输出中允许的最大说话人数。\n\n设为0表示不限制（自动检测）。\n\n当预先知道说话人数时，设置明确值可约束分割并提高准确性。",
-
   "about_title": "关于",
   "about_version_label": "版本",
   "about_author_label": "作者",
   "about_build_label": "构建日期",
-
   "lang_code": "zh_CN",
-  "lang_name": "简体中文"
+  "lang_name": "简体中文",
+  "dict_help_source_title": "来源匹配",
+  "dict_help_source_text": "输入要在转录文本中匹配的单词或短语。\n\n规则：\n• 不区分大小写\n• 仅匹配完整单词\n• 通配符：*（任意字符），?（单个字符）\n\n示例：\n  colour    精确匹配 \"colour\"\n  colo*r    匹配 \"color\" 和 \"colour\"",
+  "dict_help_replacement_title": "替换",
+  "dict_help_replacement_text": "输入替换文本。留空则删除匹配的单词。\n\n示例：\n  gonna  →  going to\n  AI     →  人工智能"
 }

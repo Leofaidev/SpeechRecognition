@@ -1,6 +1,5 @@
 {
   "app_title": "Puheentunnistusohjelma",
-
   "nav_home": "Koti",
   "nav_settings": "Asetukset",
   "nav_profiles": "Ääniprofiilit",
@@ -13,7 +12,6 @@
   "nav_history": "Istuntohistoria",
   "nav_backup": "Varmuuskopiointi",
   "nav_about": "Tietoja",
-
   "label_device": "Syöttölaite",
   "label_group": "Puhujaryhmä",
   "label_mode": "Tila",
@@ -34,10 +32,8 @@
   "status_processing": "Käsitellään...",
   "status_done": "Valmis",
   "status_labelling": "Nimetään puhujia...",
-
   "progress_file": "Tiedoston edistyminen",
   "progress_queue": "Jono: {current}/{total}",
-
   "field1_label": "Transkriptio",
   "field2_label": "Käännös",
   "btn_translate_save": "Käännä ja tallenna leikepöydälle",
@@ -46,11 +42,9 @@
   "field_placeholder_transcription": "Transkriptoitu teksti ilmestyy tähän...",
   "field_placeholder_translation": "Käännetty teksti ilmestyy tähän...",
   "output_text_placeholder": "Tulostus ilmestyy tähän käsittelyn jälkeen...",
-
   "btn_play": "Toista",
   "btn_pause": "Tauko",
   "playback_disabled_recording": "Toisto poistettu käytöstä tallennuksen aikana",
-
   "settings_title": "Asetukset",
   "settings_audio_section": "Äänitulo",
   "settings_signal_label": "Signaalitaso",
@@ -86,7 +80,6 @@
   "settings_output_folder": "Tulostekansio",
   "settings_source_language": "Lähdekieli",
   "settings_target_language": "Kohdekieli",
-
   "licence_title": "HuggingFace pyannote -lisenssi",
   "licence_intro": "Puhujantunnistus käyttää pyannote.audiota, joka vaatii HuggingFace-lisenssisopimuksen hyväksymisen.",
   "licence_accept_btn": "Hyväksyn lisenssin",
@@ -94,7 +87,6 @@
   "licence_accepted_msg": "Lisenssi hyväksytty. Käynnistä sovellus uudelleen.",
   "licence_restart_btn": "Käynnistä nyt uudelleen",
   "licence_later_btn": "Myöhemmin",
-
   "model_tiny": "Pieni — nopein, heikoin tarkkuus",
   "model_base": "Perus",
   "model_small": "Pieni",
@@ -104,10 +96,8 @@
   "model_downloading": "Ladataan mallia...",
   "model_download_done": "Malli ladattu onnistuneesti.",
   "model_retrain_prompt": "Malli on muuttunut. Kouluta kaikki profiilit uudelleen nyt?",
-
   "engine_opus_mt": "OPUS-MT (paikallinen, offline)",
   "engine_google": "Google Translate (online)",
-
   "profiles_title": "Ääniprofiilien hallinta",
   "profiles_speakers_section": "Puhujat",
   "profiles_groups_section": "Ryhmät",
@@ -135,7 +125,6 @@
   "profile_no_samples": "Ei näytteitä vielä.",
   "profile_retraining": "Koulutetaan uudelleen...",
   "profile_retrain_single_done": "Valmis.",
-
   "dialog_create_profile": "Luo ääniprofiili",
   "dialog_edit_profile": "Muokkaa ääniprofiilia",
   "profile_audio_label": "Äänitiedosto",
@@ -148,22 +137,18 @@
   "profile_organisation": "Organisaatio",
   "profile_position": "Asema",
   "profile_note": "Huomio",
-
   "conflict_title": "Profiiliristiriita",
   "conflict_message": "Profiili nimeltä '{name}' on jo olemassa.",
   "conflict_overwrite": "Korvaa",
   "conflict_merge": "Yhdistä",
   "conflict_reject": "Ohita",
-
   "delete_confirm_title": "Vahvista poisto",
   "delete_confirm_msg": "Poistetaanko {count} profiili(a)? Tätä ei voi kumota.",
   "group_name_prompt": "Anna ryhmän nimi:",
   "group_new_name_prompt": "Anna uusi ryhmän nimi:",
-
   "dict_title": "Korvaussanakirja",
   "dict_col_source": "Lähde",
   "dict_col_replacement": "Korvaus",
-  "dict_col_flags": "Liput",
   "btn_add_entry": "Lisää rivi",
   "btn_delete_entry": "Poista",
   "btn_undo": "Kumoa",
@@ -172,7 +157,6 @@
   "dict_empty": "Sanakirja on tyhjä.",
   "dict_import_result": "Tuotu: {added} lisätty, {rejected} hylätty.",
   "dict_export_result": "{count} merkintää viety.",
-
   "batch_title": "Eräjono",
   "btn_add_files": "Lisää tiedostoja",
   "btn_remove_file": "Poista",
@@ -183,7 +167,6 @@
   "batch_done": "Eräkäsittely valmis.",
   "batch_errors_title": "Käsittelyvirheet",
   "batch_errors_msg": "Seuraavat tiedostot epäonnistuivat:\n{files}",
-
   "output_title": "Tulosteen asetukset",
   "output_fields_section": "Tulostekentät",
   "output_field_timestamp": "Aikaleima",
@@ -202,7 +185,6 @@
   "output_name_format_section": "Nimimuoto",
   "output_name_format_components": "Osat",
   "output_name_format_preview": "Esikatselu",
-
   "hotkeys_title": "Pikanäppäinten asetukset",
   "hotkey_start_label": "Aloita tallennus",
   "hotkey_stop_label": "Pysäytä tallennus",
@@ -214,7 +196,6 @@
   "hotkey_system_check_note": "Huomio: Vain ristiriidat sovellusten kanssa, jotka käyttävät Windowsin tavallista pikanäppäinrekisteröintiä, havaitaan. Matalan tason näppäimistökoukuilla toimivia sovelluksia (esim. Copilot, Teams) ei voida havaita.",
   "btn_save_hotkeys": "Tallenna",
   "btn_reset_hotkeys": "Palauta oletukset",
-
   "labelling_title": "Puhujan merkintä",
   "labelling_prompt": "Kuka puhuu?",
   "labelling_no_pending": "Ei odottavia puhujia.",
@@ -222,7 +203,6 @@
   "btn_skip_speaker": "Ohita",
   "btn_confirm_label": "Vahvista",
   "btn_undo_label": "Kumoa",
-
   "history_title": "Istuntohistoria",
   "history_col_date": "Päivämäärä",
   "history_col_source": "Lähde",
@@ -233,7 +213,6 @@
   "btn_delete_session": "Poista istunto",
   "history_empty": "Ei tallennettuja istuntoja.",
   "history_regenerated": "Tuloste kirjoitettu: {path}",
-
   "backup_title": "Varmuuskopiointi ja palautus",
   "btn_create_backup": "Luo varmuuskopio",
   "btn_restore_backup": "Palauta varmuuskopiosta",
@@ -246,7 +225,6 @@
   "restore_confirm_msg": "Kaikki nykyiset tiedot korvataan. Jatketaanko?",
   "restore_done": "Palautus valmis. {count} tiedostoa.",
   "restore_failed": "Palautus epäonnistui: {error}",
-
   "tray_open": "Avaa",
   "tray_mode": "Tila: {mode}",
   "tray_start": "Aloita tallennus",
@@ -255,7 +233,6 @@
   "tray_exit_confirm_title": "Poistu käsittelyn aikana",
   "tray_exit_confirm_msg": "Tallennus tai eräajo on käynnissä.\nPoistu ja pysäytä käsittely?",
   "tray_notify_done": "Käsittely valmis.",
-
   "error_title": "Virhe",
   "error_language_missing": "Kielitiedosto puuttuu tai on vioittunut. Palautetaan...",
   "error_language_restored": "Kielitiedosto palautettu. Käynnistä uudelleen.",
@@ -263,7 +240,6 @@
   "error_no_device": "Äänilähdettä ei löydy.",
   "error_vlc_not_found": "VLC:tä ei löydy. Äänen toisto ei ole käytettävissä.",
   "error_generic": "Tapahtui virhe: {error}",
-
   "ai_config_title": "Tekoälyn asetukset",
   "ai_config_whisper_section": "faster-whisper",
   "ai_config_pyannote_section": "pyannote.audio",
@@ -286,12 +262,14 @@
   "ai_config_word_ts_info": "Kun arvo on Totta, jokaiselle yksittäiselle sanalle luodaan aikaleima segmenttitason aikaleiman lisäksi.\n\nHyödyllinen tarkkaan teksti-ääniliitokseen.\n\nHuomio: Tämän käyttöönotto lisää käsittelyaikaa.\n\nOletus: Epätotta",
   "ai_config_clustering_info": "Puhujien klusterointialgoritmin käyttämä etäisyyskynnys.\n\nMäärittää, kuinka aggressiivisesti puhujat yhdistetään:\n  Pienempi arvo  → enemmän erillisiä puhujia tunnistettu\n  Suurempi arvo → vähemmän puhujia (enemmän yhdistämistä)\n\nOletus: 0.715\nSuositeltu alue: 0.5–0.9\n\nMuutokset tulevat voimaan seuraavassa istunnossa.",
   "ai_config_max_speakers_info": "Tulostuksen sallittu enimmäispuhujamäärä.\n\nAseta 0 rajattomuudelle (automaattinen tunnistus).\n\nEksplisiittinen arvo rajoittaa diarisointia ja voi parantaa tarkkuutta, kun puhujamäärä on etukäteen tiedossa.",
-
   "about_title": "Tietoja",
   "about_version_label": "Versio",
   "about_author_label": "Tekijä",
   "about_build_label": "Koontipäivä",
-
   "lang_code": "fi",
-  "lang_name": "Suomi"
+  "lang_name": "Suomi",
+  "dict_help_source_title": "Lähteen haku",
+  "dict_help_source_text": "Kirjoita sana tai lause, jota haetaan litteroidusta tekstistä.\n\nSäännöt:\n• Kirjainkoko ei merkitse — \"OK\", \"ok\" ja \"Ok\" täsmäävät\n• Vain kokonaiset sanat — \"ok\" ei täsmää sanaan \"okay\"\n• Jokerimerkit: * (mikä tahansa määrä merkkejä), ? (yksi merkki)\n\nEsimerkkejä:\n  colour    täsmää vain sanaan \"colour\"\n  colo*r    täsmää \"color\" ja \"colour\"",
+  "dict_help_replacement_title": "Korvaus",
+  "dict_help_replacement_text": "Kirjoita korvaava teksti. Jätä tyhjäksi poistaaksesi sanan.\n\nEsimerkkejä:\n  gonna  →  going to\n  tekoäly  →  tekoäly (kirjoitettu auki)"
 }

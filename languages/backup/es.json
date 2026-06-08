@@ -1,6 +1,5 @@
 {
   "app_title": "Programa de Reconocimiento de Voz",
-
   "nav_home": "Inicio",
   "nav_settings": "Ajustes",
   "nav_profiles": "Perfiles de Voz",
@@ -13,7 +12,6 @@
   "nav_history": "Historial de Sesiones",
   "nav_backup": "Copia de Seguridad",
   "nav_about": "Acerca de",
-
   "label_device": "Dispositivo de Entrada",
   "label_group": "Grupo de Hablantes",
   "label_mode": "Modo",
@@ -34,10 +32,8 @@
   "status_processing": "Procesando...",
   "status_done": "Completado",
   "status_labelling": "Etiquetando hablantes...",
-
   "progress_file": "Progreso del archivo",
   "progress_queue": "Cola: {current} de {total}",
-
   "field1_label": "Transcripción",
   "field2_label": "Traducción",
   "btn_translate_save": "Traducir y guardar en portapapeles",
@@ -46,11 +42,9 @@
   "field_placeholder_transcription": "El texto transcrito aparecerá aquí...",
   "field_placeholder_translation": "El texto traducido aparecerá aquí...",
   "output_text_placeholder": "La salida aparecerá aquí tras el procesamiento...",
-
   "btn_play": "Reproducir",
   "btn_pause": "Pausar",
   "playback_disabled_recording": "Reproducción deshabilitada durante la grabación",
-
   "settings_title": "Ajustes",
   "settings_audio_section": "Entrada de Audio",
   "settings_signal_label": "Nivel de Señal",
@@ -86,7 +80,6 @@
   "settings_output_folder": "Carpeta de Salida",
   "settings_source_language": "Idioma Fuente",
   "settings_target_language": "Idioma Destino",
-
   "licence_title": "Licencia HuggingFace pyannote",
   "licence_intro": "La identificación de hablantes usa pyannote.audio que requiere aceptar el acuerdo de licencia de HuggingFace.",
   "licence_accept_btn": "Acepto la Licencia",
@@ -94,7 +87,6 @@
   "licence_accepted_msg": "Licencia aceptada. Por favor reinicie la aplicación.",
   "licence_restart_btn": "Reiniciar Ahora",
   "licence_later_btn": "Después",
-
   "model_tiny": "Tiny — más rápido, menor precisión",
   "model_base": "Base",
   "model_small": "Pequeño",
@@ -104,10 +96,8 @@
   "model_downloading": "Descargando modelo...",
   "model_download_done": "Modelo descargado correctamente.",
   "model_retrain_prompt": "El modelo ha cambiado. ¿Reentrenar todos los perfiles ahora?",
-
   "engine_opus_mt": "OPUS-MT (local, sin conexión)",
   "engine_google": "Google Translate (en línea)",
-
   "profiles_title": "Gestión de Perfiles de Voz",
   "profiles_speakers_section": "Hablantes",
   "profiles_groups_section": "Grupos",
@@ -135,7 +125,6 @@
   "profile_no_samples": "Sin muestras todavía.",
   "profile_retraining": "Reentrenando...",
   "profile_retrain_single_done": "Listo.",
-
   "dialog_create_profile": "Crear Perfil de Voz",
   "dialog_edit_profile": "Editar Perfil de Voz",
   "profile_audio_label": "Archivo de Audio",
@@ -148,22 +137,18 @@
   "profile_organisation": "Organización",
   "profile_position": "Cargo",
   "profile_note": "Nota",
-
   "conflict_title": "Conflicto de Perfil",
   "conflict_message": "Ya existe un perfil llamado '{name}'.",
   "conflict_overwrite": "Sobrescribir",
   "conflict_merge": "Combinar",
   "conflict_reject": "Omitir",
-
   "delete_confirm_title": "Confirmar Eliminación",
   "delete_confirm_msg": "¿Eliminar {count} perfil(es)? Esto no se puede deshacer.",
   "group_name_prompt": "Ingrese nombre del grupo:",
   "group_new_name_prompt": "Ingrese nuevo nombre del grupo:",
-
   "dict_title": "Diccionario de Sustitución",
   "dict_col_source": "Fuente",
   "dict_col_replacement": "Reemplazo",
-  "dict_col_flags": "Indicadores",
   "btn_add_entry": "Agregar Fila",
   "btn_delete_entry": "Eliminar",
   "btn_undo": "Deshacer",
@@ -172,7 +157,6 @@
   "dict_empty": "El diccionario está vacío.",
   "dict_import_result": "Importado: {added} agregados, {rejected} rechazados.",
   "dict_export_result": "{count} entradas exportadas.",
-
   "batch_title": "Cola por Lotes",
   "btn_add_files": "Agregar Archivos",
   "btn_remove_file": "Quitar",
@@ -183,7 +167,6 @@
   "batch_done": "Procesamiento por lotes completado.",
   "batch_errors_title": "Errores de Procesamiento",
   "batch_errors_msg": "Los siguientes archivos fallaron:\n{files}",
-
   "output_title": "Configuración de Salida",
   "output_fields_section": "Campos de Salida",
   "output_field_timestamp": "Marca de Tiempo",
@@ -202,7 +185,6 @@
   "output_name_format_section": "Formato de Nombre",
   "output_name_format_components": "Componentes",
   "output_name_format_preview": "Vista Previa",
-
   "hotkeys_title": "Configuración de Teclas de Acceso",
   "hotkey_start_label": "Iniciar Grabación",
   "hotkey_stop_label": "Detener Grabación",
@@ -214,7 +196,6 @@
   "hotkey_system_check_note": "Nota: Solo se detectan conflictos con aplicaciones que usan el registro estándar de atajos de Windows. Las aplicaciones con ganchos de teclado de bajo nivel (p. ej. Copilot, Teams) no pueden detectarse.",
   "btn_save_hotkeys": "Guardar",
   "btn_reset_hotkeys": "Restablecer Predeterminados",
-
   "labelling_title": "Etiquetado de Hablantes",
   "labelling_prompt": "¿Quién está hablando?",
   "labelling_no_pending": "No hay hablantes esperando identificación.",
@@ -222,7 +203,6 @@
   "btn_skip_speaker": "Omitir",
   "btn_confirm_label": "Confirmar",
   "btn_undo_label": "Deshacer",
-
   "history_title": "Historial de Sesiones",
   "history_col_date": "Fecha",
   "history_col_source": "Fuente",
@@ -233,7 +213,6 @@
   "btn_delete_session": "Eliminar Sesión",
   "history_empty": "Sin sesiones grabadas todavía.",
   "history_regenerated": "Salida escrita en: {path}",
-
   "backup_title": "Copia de Seguridad y Restauración",
   "btn_create_backup": "Crear Copia de Seguridad",
   "btn_restore_backup": "Restaurar desde Copia",
@@ -246,7 +225,6 @@
   "restore_confirm_msg": "Todos los datos actuales serán reemplazados. ¿Continuar?",
   "restore_done": "Restauración completa. {count} archivos.",
   "restore_failed": "Restauración fallida: {error}",
-
   "tray_open": "Abrir",
   "tray_mode": "Modo: {mode}",
   "tray_start": "Iniciar Grabación",
@@ -255,7 +233,6 @@
   "tray_exit_confirm_title": "Salir Durante el Procesamiento",
   "tray_exit_confirm_msg": "Hay una grabación o lote activo.\n¿Salir y detener el procesamiento?",
   "tray_notify_done": "Procesamiento completado.",
-
   "error_title": "Error",
   "error_language_missing": "Archivo de idioma faltante o corrupto. Restaurando...",
   "error_language_restored": "Archivo de idioma restaurado. Por favor reinicie.",
@@ -263,7 +240,6 @@
   "error_no_device": "No se encontró dispositivo de entrada de audio.",
   "error_vlc_not_found": "VLC no encontrado. Reproducción de audio no disponible.",
   "error_generic": "Ocurrió un error: {error}",
-
   "ai_config_title": "Configuración de IA",
   "ai_config_whisper_section": "faster-whisper",
   "ai_config_pyannote_section": "pyannote.audio",
@@ -286,12 +262,14 @@
   "ai_config_word_ts_info": "Cuando es Verdadero, genera una marca de tiempo para cada palabra individual además de las marcas de nivel de segmento.\n\nÚtil para la alineación precisa texto-audio.\n\nNota: Activar esto aumenta el tiempo de procesamiento.\n\nPredeterminado: Falso",
   "ai_config_clustering_info": "Umbral de distancia utilizado por el algoritmo de agrupación de hablantes.\n\nControla con qué agresividad se fusionan los hablantes:\n  Valor menor  → más hablantes distintos identificados\n  Valor mayor → menos hablantes (más fusión)\n\nPredeterminado: 0.715\nRango recomendado: 0.5–0.9\n\nLos cambios se aplican en la siguiente sesión.",
   "ai_config_max_speakers_info": "Número máximo de hablantes permitidos en la salida.\n\nEstablezca 0 para sin límite (detección automática).\n\nEstablecer un valor explícito limita la diarización y puede mejorar la precisión cuando se conoce de antemano el número de hablantes.",
-
   "about_title": "Acerca de",
   "about_version_label": "Versión",
   "about_author_label": "Autor",
   "about_build_label": "Fecha de compilación",
-
   "lang_code": "es",
-  "lang_name": "Español"
+  "lang_name": "Español",
+  "dict_help_source_title": "Coincidencia de fuente",
+  "dict_help_source_text": "Escriba la palabra o frase a buscar en el texto transcrito.\n\nReglas:\n• Sin distinción de mayúsculas — \"OK\", \"ok\" y \"Ok\" coinciden\n• Solo palabras completas — \"ok\" no coincide con \"okay\"\n• Comodines: * (cualquier número de caracteres), ? (un carácter)\n\nEjemplos:\n  colour    coincide exactamente con \"colour\"\n  colo*r    coincide con \"color\" y \"colour\"",
+  "dict_help_replacement_title": "Reemplazo",
+  "dict_help_replacement_text": "Escriba el texto de sustitución. Déjelo vacío para eliminar la palabra.\n\nEjemplos:\n  gonna  →  going to\n  IA     →  inteligencia artificial"
 }

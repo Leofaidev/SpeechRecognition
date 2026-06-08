@@ -1,6 +1,5 @@
 {
   "app_title": "Spracherkennungsprogramm",
-
   "nav_home": "Startseite",
   "nav_settings": "Einstellungen",
   "nav_profiles": "Sprachprofile",
@@ -13,7 +12,6 @@
   "nav_history": "Sitzungsverlauf",
   "nav_backup": "Sicherung & Wiederherstellung",
   "nav_about": "Über",
-
   "label_device": "Eingabegerät",
   "label_group": "Sprechergruppe",
   "label_mode": "Modus",
@@ -34,10 +32,8 @@
   "status_processing": "Verarbeitung...",
   "status_done": "Fertig",
   "status_labelling": "Sprecher benennen...",
-
   "progress_file": "Dateifortschritt",
   "progress_queue": "Warteschlange: {current} von {total}",
-
   "field1_label": "Transkription",
   "field2_label": "Übersetzung",
   "btn_translate_save": "Übersetzen und in Zwischenablage speichern",
@@ -46,11 +42,9 @@
   "field_placeholder_transcription": "Transkribierter Text erscheint hier...",
   "field_placeholder_translation": "Übersetzter Text erscheint hier...",
   "output_text_placeholder": "Ausgabe erscheint hier nach der Verarbeitung...",
-
   "btn_play": "Abspielen",
   "btn_pause": "Pause",
   "playback_disabled_recording": "Wiedergabe während Aufnahme deaktiviert",
-
   "settings_title": "Einstellungen",
   "settings_audio_section": "Audioeingabe",
   "settings_signal_label": "Signalpegel",
@@ -86,7 +80,6 @@
   "settings_output_folder": "Ausgabeordner",
   "settings_source_language": "Quellsprache",
   "settings_target_language": "Zielsprache",
-
   "licence_title": "HuggingFace pyannote-Lizenz",
   "licence_intro": "Die Sprechererkennung verwendet pyannote.audio, das die Annahme der HuggingFace-Lizenzvereinbarung erfordert.",
   "licence_accept_btn": "Ich akzeptiere die Lizenz",
@@ -94,7 +87,6 @@
   "licence_accepted_msg": "Lizenz akzeptiert. Bitte starten Sie die Anwendung neu.",
   "licence_restart_btn": "Jetzt neu starten",
   "licence_later_btn": "Später",
-
   "model_tiny": "Winzig — am schnellsten, geringste Genauigkeit",
   "model_base": "Basis",
   "model_small": "Klein",
@@ -104,10 +96,8 @@
   "model_downloading": "Modell wird heruntergeladen...",
   "model_download_done": "Modell erfolgreich heruntergeladen.",
   "model_retrain_prompt": "Sprachmodell geändert. Alle Profile jetzt neu trainieren?",
-
   "engine_opus_mt": "OPUS-MT (lokal, offline)",
   "engine_google": "Google Übersetzer (online)",
-
   "profiles_title": "Sprachprofilverwaltung",
   "profiles_speakers_section": "Sprecher",
   "profiles_groups_section": "Gruppen",
@@ -135,7 +125,6 @@
   "profile_no_samples": "Noch keine Aufnahmen.",
   "profile_retraining": "Neutraining...",
   "profile_retrain_single_done": "Fertig.",
-
   "dialog_create_profile": "Sprachprofil erstellen",
   "dialog_edit_profile": "Sprachprofil bearbeiten",
   "profile_audio_label": "Audiodatei",
@@ -148,22 +137,18 @@
   "profile_organisation": "Organisation",
   "profile_position": "Position",
   "profile_note": "Notiz",
-
   "conflict_title": "Profilkonflikt",
   "conflict_message": "Ein Profil namens '{name}' existiert bereits.",
   "conflict_overwrite": "Überschreiben",
   "conflict_merge": "Zusammenführen",
   "conflict_reject": "Überspringen",
-
   "delete_confirm_title": "Löschen bestätigen",
   "delete_confirm_msg": "{count} Profil(e) löschen? Dies kann nicht rückgängig gemacht werden.",
   "group_name_prompt": "Gruppenname eingeben:",
   "group_new_name_prompt": "Neuen Gruppenname eingeben:",
-
   "dict_title": "Ersetzungswörterbuch",
   "dict_col_source": "Quelle",
   "dict_col_replacement": "Ersetzung",
-  "dict_col_flags": "Flags",
   "btn_add_entry": "Zeile hinzufügen",
   "btn_delete_entry": "Löschen",
   "btn_undo": "Rückgängig",
@@ -172,7 +157,6 @@
   "dict_empty": "Wörterbuch ist leer.",
   "dict_import_result": "Importiert: {added} hinzugefügt, {rejected} abgelehnt.",
   "dict_export_result": "{count} Einträge exportiert.",
-
   "batch_title": "Stapelwarteschlange",
   "btn_add_files": "Dateien hinzufügen",
   "btn_remove_file": "Entfernen",
@@ -183,7 +167,6 @@
   "batch_done": "Stapelverarbeitung abgeschlossen.",
   "batch_errors_title": "Verarbeitungsfehler",
   "batch_errors_msg": "Folgende Dateien sind fehlgeschlagen:\n{files}",
-
   "output_title": "Ausgabekonfiguration",
   "output_fields_section": "Ausgabefelder",
   "output_field_timestamp": "Zeitstempel",
@@ -202,7 +185,6 @@
   "output_name_format_section": "Namensformat",
   "output_name_format_components": "Komponenten",
   "output_name_format_preview": "Vorschau",
-
   "hotkeys_title": "Tastenkürzel-Konfiguration",
   "hotkey_start_label": "Aufnahme starten",
   "hotkey_stop_label": "Aufnahme stoppen",
@@ -214,7 +196,6 @@
   "hotkey_system_check_note": "Hinweis: Es werden nur Konflikte mit Anwendungen erkannt, die die Standard-Windows-Hotkey-Registrierung verwenden. Anwendungen mit Low-Level-Tastaturhaken (z. B. Copilot, Teams) können nicht erkannt werden.",
   "btn_save_hotkeys": "Speichern",
   "btn_reset_hotkeys": "Auf Standard zurücksetzen",
-
   "labelling_title": "Sprecher kennzeichnen",
   "labelling_prompt": "Wer spricht hier?",
   "labelling_no_pending": "Keine Sprecher warten auf Identifikation.",
@@ -222,7 +203,6 @@
   "btn_skip_speaker": "Überspringen",
   "btn_confirm_label": "Bestätigen",
   "btn_undo_label": "Rückgängig",
-
   "history_title": "Sitzungsverlauf",
   "history_col_date": "Datum",
   "history_col_source": "Quelle",
@@ -233,7 +213,6 @@
   "btn_delete_session": "Sitzung löschen",
   "history_empty": "Noch keine aufgezeichneten Sitzungen.",
   "history_regenerated": "Ausgabe geschrieben nach: {path}",
-
   "backup_title": "Sicherung und Wiederherstellung",
   "btn_create_backup": "Sicherung erstellen",
   "btn_restore_backup": "Aus Sicherung wiederherstellen",
@@ -246,7 +225,6 @@
   "restore_confirm_msg": "Alle aktuellen Daten werden ersetzt. Fortfahren?",
   "restore_done": "Wiederherstellung abgeschlossen. {count} Dateien.",
   "restore_failed": "Wiederherstellung fehlgeschlagen: {error}",
-
   "tray_open": "Öffnen",
   "tray_mode": "Modus: {mode}",
   "tray_start": "Aufnahme starten",
@@ -255,7 +233,6 @@
   "tray_exit_confirm_title": "Beenden während Verarbeitung",
   "tray_exit_confirm_msg": "Aufnahme oder Stapel ist aktiv.\nBeenden und Verarbeitung abbrechen?",
   "tray_notify_done": "Verarbeitung abgeschlossen.",
-
   "error_title": "Fehler",
   "error_language_missing": "Sprachdatei fehlt oder ist beschädigt. Wiederherstellung...",
   "error_language_restored": "Sprachdatei wiederhergestellt. Bitte neu starten.",
@@ -263,7 +240,6 @@
   "error_no_device": "Kein Audioeingabegerät gefunden.",
   "error_vlc_not_found": "VLC nicht gefunden. Audiowiedergabe nicht verfügbar.",
   "error_generic": "Ein Fehler ist aufgetreten: {error}",
-
   "ai_config_title": "KI-Konfiguration",
   "ai_config_whisper_section": "faster-whisper",
   "ai_config_pyannote_section": "pyannote.audio",
@@ -286,12 +262,14 @@
   "ai_config_word_ts_info": "Bei «Wahr» wird für jedes einzelne Wort ein Zeitstempel erzeugt, zusätzlich zu den Zeitstempeln auf Segmentebene.\n\nNützlich für genaue Text-Audio-Ausrichtung.\n\nHinweis: Die Aktivierung erhöht die Verarbeitungszeit.\n\nStandard: Falsch",
   "ai_config_clustering_info": "Abstandsschwelle des Sprecher-Clustering-Algorithmus.\n\nSteuert, wie aggressiv Sprecher zusammengeführt werden:\n  Niedrigerer Wert  → mehr unterschiedliche Sprecher\n  Höherer Wert → weniger Sprecher (mehr Zusammenführung)\n\nStandard: 0.715\nEmpfohlener Bereich: 0.5–0.9\n\nÄnderungen wirken ab der nächsten Sitzung.",
   "ai_config_max_speakers_info": "Maximale Anzahl von Sprechern in der Ausgabe.\n\nAuf 0 setzen für kein Limit (automatische Erkennung).\n\nEin expliziter Wert schränkt die Diarisierung ein und kann die Genauigkeit verbessern, wenn die Sprecheranzahl im Voraus bekannt ist.",
-
   "about_title": "Über",
   "about_version_label": "Version",
   "about_author_label": "Autor",
   "about_build_label": "Erstellungsdatum",
-
   "lang_code": "de",
-  "lang_name": "Deutsch"
+  "lang_name": "Deutsch",
+  "dict_help_source_title": "Quelltextsuche",
+  "dict_help_source_text": "Geben Sie das Wort oder die Phrase ein, die im transkribierten Text gesucht werden soll.\n\nRegeln:\n• Groß-/Kleinschreibung wird ignoriert\n• Nur ganze Wörter — \"ok\" trifft nicht \"okay\"\n• Platzhalter: * (beliebig viele Zeichen), ? (genau ein Zeichen)\n\nBeispiele:\n  colour    trifft nur \"colour\"\n  colo*r    trifft \"color\" und \"colour\"",
+  "dict_help_replacement_title": "Ersetzung",
+  "dict_help_replacement_text": "Geben Sie den Ersatztext ein. Leer lassen, um das Wort zu löschen.\n\nBeispiele:\n  gonna  →  going to\n  KI     →  Künstliche Intelligenz"
 }

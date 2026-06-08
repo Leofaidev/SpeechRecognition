@@ -1,7 +1,6 @@
 {
   "_note": "Automated translation — pending native-speaker review",
   "app_title": "Программа распознавания речи",
-
   "nav_home": "Главная",
   "nav_settings": "Настройки",
   "nav_profiles": "Голосовые профили",
@@ -14,7 +13,6 @@
   "nav_history": "История сессий",
   "nav_backup": "Резервное копирование",
   "nav_about": "О программе",
-
   "label_device": "Устройство ввода",
   "label_group": "Группа докладчиков",
   "label_mode": "Режим",
@@ -35,10 +33,8 @@
   "status_processing": "Обработка...",
   "status_done": "Готово",
   "status_labelling": "Разметка дикторов...",
-
   "progress_file": "Прогресс файла",
   "progress_queue": "Очередь: {current} из {total}",
-
   "field1_label": "Транскрипция",
   "field2_label": "Перевод",
   "btn_translate_save": "Перевести и сохранить в буфер",
@@ -47,11 +43,9 @@
   "field_placeholder_transcription": "Расшифрованный текст появится здесь...",
   "field_placeholder_translation": "Переведённый текст появится здесь...",
   "output_text_placeholder": "Результат появится здесь после обработки...",
-
   "btn_play": "Воспроизвести",
   "btn_pause": "Пауза",
   "playback_disabled_recording": "Воспроизведение отключено во время записи",
-
   "settings_title": "Настройки",
   "settings_audio_section": "Аудиовход",
   "settings_signal_label": "Уровень сигнала",
@@ -87,7 +81,6 @@
   "settings_output_folder": "Папка вывода",
   "settings_source_language": "Исходный язык",
   "settings_target_language": "Целевой язык",
-
   "licence_title": "Лицензия HuggingFace pyannote",
   "licence_intro": "Идентификация докладчиков использует pyannote.audio, что требует принятия лицензионного соглашения HuggingFace.",
   "licence_accept_btn": "Я принимаю лицензию",
@@ -95,7 +88,6 @@
   "licence_accepted_msg": "Лицензия принята. Перезапустите приложение.",
   "licence_restart_btn": "Перезапустить сейчас",
   "licence_later_btn": "Позже",
-
   "model_tiny": "Tiny — самый быстрый, наименьшая точность",
   "model_base": "Base",
   "model_small": "Small",
@@ -105,10 +97,8 @@
   "model_downloading": "Загрузка модели...",
   "model_download_done": "Модель успешно загружена.",
   "model_retrain_prompt": "Модель изменилась. Переобучить все профили сейчас?",
-
   "engine_opus_mt": "OPUS-MT (локально, офлайн)",
   "engine_google": "Google Translate (онлайн)",
-
   "profiles_title": "Управление голосовыми профилями",
   "profiles_speakers_section": "Докладчики",
   "profiles_groups_section": "Группы",
@@ -136,7 +126,6 @@
   "profile_no_samples": "Записей пока нет.",
   "profile_retraining": "Переобучение...",
   "profile_retrain_single_done": "Готово.",
-
   "dialog_create_profile": "Создать голосовой профиль",
   "dialog_edit_profile": "Редактировать голосовой профиль",
   "profile_audio_label": "Аудиофайл",
@@ -149,22 +138,18 @@
   "profile_organisation": "Организация",
   "profile_position": "Должность",
   "profile_note": "Примечание",
-
   "conflict_title": "Конфликт профиля",
   "conflict_message": "Профиль '{name}' уже существует.",
   "conflict_overwrite": "Перезаписать",
   "conflict_merge": "Объединить",
   "conflict_reject": "Пропустить",
-
   "delete_confirm_title": "Подтвердить удаление",
   "delete_confirm_msg": "Удалить {count} профиль(ей)? Это необратимо.",
   "group_name_prompt": "Введите название группы:",
   "group_new_name_prompt": "Введите новое название группы:",
-
   "dict_title": "Словарь замен",
   "dict_col_source": "Исходное",
   "dict_col_replacement": "Замена",
-  "dict_col_flags": "Флаги",
   "btn_add_entry": "Добавить строку",
   "btn_delete_entry": "Удалить",
   "btn_undo": "Отменить",
@@ -173,7 +158,6 @@
   "dict_empty": "Словарь пуст.",
   "dict_import_result": "Импортировано: {added} добавлено, {rejected} отклонено.",
   "dict_export_result": "{count} записей экспортировано.",
-
   "batch_title": "Пакетная очередь",
   "btn_add_files": "Добавить файлы",
   "btn_remove_file": "Удалить",
@@ -184,7 +168,6 @@
   "batch_done": "Пакетная обработка завершена.",
   "batch_errors_title": "Ошибки обработки",
   "batch_errors_msg": "Следующие файлы завершились с ошибкой:\n{files}",
-
   "output_title": "Настройки вывода",
   "output_fields_section": "Поля вывода",
   "output_field_timestamp": "Временная метка",
@@ -203,7 +186,6 @@
   "output_name_format_section": "Формат имени",
   "output_name_format_components": "Компоненты",
   "output_name_format_preview": "Предпросмотр",
-
   "hotkeys_title": "Настройка горячих клавиш",
   "hotkey_start_label": "Начать запись",
   "hotkey_stop_label": "Остановить запись",
@@ -215,7 +197,6 @@
   "hotkey_system_check_note": "Примечание: Обнаруживаются только конфликты с приложениями, использующими стандартную регистрацию горячих клавиш Windows. Приложения с перехватчиками клавиатуры низкого уровня (например, Copilot, Teams) не могут быть обнаружены.",
   "btn_save_hotkeys": "Сохранить",
   "btn_reset_hotkeys": "Сбросить по умолчанию",
-
   "labelling_title": "Маркировка докладчиков",
   "labelling_prompt": "Кто говорит?",
   "labelling_no_pending": "Нет докладчиков, ожидающих идентификации.",
@@ -223,7 +204,6 @@
   "btn_skip_speaker": "Пропустить",
   "btn_confirm_label": "Подтвердить",
   "btn_undo_label": "Отменить",
-
   "history_title": "История сессий",
   "history_col_date": "Дата",
   "history_col_source": "Источник",
@@ -234,7 +214,6 @@
   "btn_delete_session": "Удалить сессию",
   "history_empty": "Записанных сессий нет.",
   "history_regenerated": "Вывод записан: {path}",
-
   "backup_title": "Резервное копирование и восстановление",
   "btn_create_backup": "Создать резервную копию",
   "btn_restore_backup": "Восстановить из резервной копии",
@@ -247,7 +226,6 @@
   "restore_confirm_msg": "Все текущие данные будут заменены. Продолжить?",
   "restore_done": "Восстановление завершено. {count} файлов.",
   "restore_failed": "Восстановление не удалось: {error}",
-
   "tray_open": "Открыть",
   "tray_mode": "Режим: {mode}",
   "tray_start": "Начать запись",
@@ -256,7 +234,6 @@
   "tray_exit_confirm_title": "Выход во время обработки",
   "tray_exit_confirm_msg": "Идёт запись или пакетная задача.\nВыйти и остановить обработку?",
   "tray_notify_done": "Обработка завершена.",
-
   "error_title": "Ошибка",
   "error_language_missing": "Языковой файл отсутствует или повреждён. Восстановление...",
   "error_language_restored": "Языковой файл восстановлен. Перезапустите.",
@@ -264,7 +241,6 @@
   "error_no_device": "Аудиоустройство ввода не найдено.",
   "error_vlc_not_found": "VLC не найден. Воспроизведение аудио недоступно.",
   "error_generic": "Произошла ошибка: {error}",
-
   "ai_config_title": "Конфигурация ИИ",
   "ai_config_whisper_section": "faster-whisper",
   "ai_config_pyannote_section": "pyannote.audio",
@@ -287,12 +263,14 @@
   "ai_config_word_ts_info": "При значении «Да» для каждого слова формируется временна́я метка в дополнение к метке уровня сегмента.\n\nПолезно для точного выравнивания текста и аудио.\n\nПримечание: включение этой опции увеличивает время обработки.\n\nПо умолчанию: Нет",
   "ai_config_clustering_info": "Пороговое значение расстояния для алгоритма кластеризации докладчиков.\n\nОпределяет интенсивность объединения докладчиков:\n  Меньшее значение  → больше различных докладчиков\n  Бо́льшее значение → меньше докладчиков (больше объединений)\n\nПо умолчанию: 0.715\nРекомендуемый диапазон: 0.5–0.9\n\nИзменения вступают в силу в следующей сессии.",
   "ai_config_max_speakers_info": "Максимальное количество докладчиков в результате.\n\nУстановите 0 для отсутствия ограничений (автоматическое определение).\n\nУказание явного значения ограничивает диаризацию и может повысить точность, если количество докладчиков известно заранее.",
-
   "about_title": "О программе",
   "about_version_label": "Версия",
   "about_author_label": "Автор",
   "about_build_label": "Дата сборки",
-
   "lang_code": "ru",
-  "lang_name": "Русский"
+  "lang_name": "Русский",
+  "dict_help_source_title": "Совпадение источника",
+  "dict_help_source_text": "Введите слово или фразу для поиска в расшифрованном тексте.\n\nПравила:\n• Без учёта регистра — «ОК», «ок» и «Ok» совпадают\n• Только целые слова — «ок» не совпадёт с «okay»\n• Поддерживаются шаблоны:\n    *  любое количество символов\n    ?  ровно один символ\n\nПримеры:\n  цвет     точное слово «цвет»\n  цвет*    «цвет», «цвета», «цветок» и т.д.",
+  "dict_help_replacement_title": "Замена",
+  "dict_help_replacement_text": "Введите текст для замены совпадающего термина.\n\nОставьте пустым, чтобы удалить совпавшее слово из расшифровки.\n\nПримеры:\n  гонна  →  собираюсь\n  ИИ     →  искусственный интеллект"
 }
