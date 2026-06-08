@@ -57,7 +57,7 @@ _NAV_ITEMS = [
 ]
 
 _SIDEBAR_WIDTH = 187
-_MIN_WINDOW_SIZE = (980, 620)
+_MIN_WINDOW_SIZE = (1127, 620)
 
 
 _SHORT_SAMPLE_THRESHOLD = 10.0   # seconds — below this, gather extra fragments
@@ -143,7 +143,14 @@ class App(ctk.CTk):
         # Window setup
         self.title(self._lang.t("app_title"))
         self.minsize(*_MIN_WINDOW_SIZE)
-        self.geometry(f"{_MIN_WINDOW_SIZE[0]}x{_MIN_WINDOW_SIZE[1]}")
+        saved_geo = self._config.get("window_geometry", "")
+        if saved_geo:
+            try:
+                self.geometry(saved_geo)
+            except Exception:
+                self.geometry(f"{_MIN_WINDOW_SIZE[0]}x{_MIN_WINDOW_SIZE[1]}")
+        else:
+            self.geometry(f"{_MIN_WINDOW_SIZE[0]}x{_MIN_WINDOW_SIZE[1]}")
         ctk.set_appearance_mode("dark")
         ctk.set_default_color_theme("blue")
 
@@ -202,6 +209,8 @@ class App(ctk.CTk):
             )
             btn.pack(pady=2, padx=10)
             self._nav_buttons[panel_id] = btn
+
+        self._setup_sidebar_keyboard()
 
         # ---- Right: main area ---------------------------------------
         right = ctk.CTkFrame(self, fg_color="transparent")
@@ -385,6 +394,38 @@ class App(ctk.CTk):
             panel.grid_remove()
             self._panels[panel_id] = panel
 
+    def _focus_first(self, widget) -> bool:
+        """Recursively focus the first keyboard-focusable child of *widget*."""
+        _skip = (ctk.CTkScrollbar, ctk.CTkLabel)
+        for child in widget.winfo_children():
+            if not child.winfo_viewable():
+                continue
+            if isinstance(child, _skip):
+                continue
+            try:
+                child.focus_set()
+                if self.focus_get() is child:
+                    return True
+            except Exception:
+                pass
+            if self._focus_first(child):
+                return True
+        return False
+
+    def _setup_sidebar_keyboard(self) -> None:
+        """Arrow-key navigation within the sidebar; Return activates the focused button."""
+        nav_ids = [pid for _, pid in _NAV_ITEMS]
+        buttons  = [self._nav_buttons[pid] for pid in nav_ids]
+        n = len(buttons)
+
+        for i, btn in enumerate(buttons):
+            pid = nav_ids[i]
+            prev_i = (i - 1) % n
+            next_i = (i + 1) % n
+            btn.bind("<Up>",   lambda e, j=prev_i, bs=buttons: bs[j].focus_set())
+            btn.bind("<Down>", lambda e, j=next_i, bs=buttons: bs[j].focus_set())
+            btn.bind("<Return>", lambda e, p=pid: self._show_panel(p))
+
     def _show_panel(self, panel_id: str) -> None:
         """Show a side panel, hiding the main view."""
         if panel_id == "home":
@@ -402,6 +443,7 @@ class App(ctk.CTk):
         panel.grid()
         panel.on_show()
         self._active_panel = panel_id
+        self.after(50, lambda: self._focus_first(panel))
 
         # Highlight active nav button
         for pid, btn in self._nav_buttons.items():
@@ -1298,6 +1340,10 @@ class App(ctk.CTk):
             self._shutdown()
 
     def _shutdown(self) -> None:
+        try:
+            self._config.set("window_geometry", self.geometry())
+        except Exception:
+            pass
         self._hotkeys.shutdown()
         if self._tray:
             self._tray.stop()
