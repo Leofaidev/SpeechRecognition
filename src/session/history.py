@@ -53,13 +53,22 @@ def list_sessions(session_dir: Path | str) -> list[dict]:
         try:
             with path.open(encoding="utf-8") as fh:
                 d = json.load(fh)
+            segments = d.get("segments", [])
+            duration = _parse_srt_time(segments[-1].get("end_time", "")) if segments else 0.0
+            seen: dict[str, bool] = {}
+            for seg in segments:
+                name = seg.get("speaker_name", "")
+                if name:
+                    seen[name] = True
             summaries.append({
-                "session_id": d.get("session_id", path.stem),
-                "created_at": d.get("created_at", ""),
-                "source_type": d.get("source_type", ""),
-                "source_path": d.get("source_path"),
+                "session_id":      d.get("session_id", path.stem),
+                "created_at":      d.get("created_at", ""),
+                "source_type":     d.get("source_type", ""),
+                "source_path":     d.get("source_path"),
                 "output_outdated": d.get("output_outdated", False),
-                "segment_count": len(d.get("segments", [])),
+                "segment_count":   len(segments),
+                "duration_seconds": duration,
+                "speakers":        list(seen.keys()),
             })
         except (json.JSONDecodeError, OSError):
             pass
