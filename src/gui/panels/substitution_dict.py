@@ -49,21 +49,23 @@ class SubstitutionDictPanel(BasePanel):
         hdr.grid_columnconfigure(1, weight=2, minsize=140) # source
         hdr.grid_columnconfigure(2, weight=3)              # replacement
 
-        # Source column header + help
+        # Source column header + help (label and button centred together)
         src_hdr = ctk.CTkFrame(hdr, fg_color="transparent")
         src_hdr.grid(row=0, column=1, sticky="ew", padx=(4, 2), pady=4)
-        ctk.CTkLabel(src_hdr, text=t("dict_col_source"),
-                     font=ctk.CTkFont(weight="bold"),
-                     anchor="w").pack(side="left", fill="x", expand=True)
-        self._info_btn(src_hdr, "dict_help_source_title", "dict_help_source_text")
+        src_inner = ctk.CTkFrame(src_hdr, fg_color="transparent")
+        src_inner.pack(expand=True)
+        ctk.CTkLabel(src_inner, text=t("dict_col_source"),
+                     font=ctk.CTkFont(weight="bold")).pack(side="left")
+        self._info_btn(src_inner, "dict_help_source_title", "dict_help_source_text")
 
-        # Replacement column header + help
+        # Replacement column header + help (label and button centred together)
         rep_hdr = ctk.CTkFrame(hdr, fg_color="transparent")
         rep_hdr.grid(row=0, column=2, sticky="ew", padx=(2, 6), pady=4)
-        ctk.CTkLabel(rep_hdr, text=t("dict_col_replacement"),
-                     font=ctk.CTkFont(weight="bold"),
-                     anchor="w").pack(side="left", fill="x", expand=True)
-        self._info_btn(rep_hdr, "dict_help_replacement_title",
+        rep_inner = ctk.CTkFrame(rep_hdr, fg_color="transparent")
+        rep_inner.pack(expand=True)
+        ctk.CTkLabel(rep_inner, text=t("dict_col_replacement"),
+                     font=ctk.CTkFont(weight="bold")).pack(side="left")
+        self._info_btn(rep_inner, "dict_help_replacement_title",
                        "dict_help_replacement_text")
 
         # ---- Scrollable rows ----------------------------------------
