@@ -15,6 +15,7 @@ from gui.widgets.context_menu import bind_context_menu
 
 _TRANSLATION_ENGINES = ["opus-mt", "google"]
 
+
 # Display name → language code (for target-language selector)
 _TARGET_LANGUAGES: dict[str, str] = {
     "English":    "en",
@@ -35,33 +36,6 @@ _TARGET_LANGUAGES: dict[str, str] = {
     "Suomi":      "fi",
 }
 _CODE_TO_NAME = {v: k for k, v in _TARGET_LANGUAGES.items()}
-_PYANNOTE_MODELS = (
-    "pyannote/speaker-diarization-3.1",
-    "pyannote/segmentation-3.0",
-)
-
-
-def _validate_hf_token(token: str, t_valid: str, t_invalid: str,
-                        t_gated: str) -> tuple[bool, str]:
-    """Validate *token* against HuggingFace — runs in a background thread."""
-    try:
-        from huggingface_hub import HfApi
-        api = HfApi()
-        try:
-            api.whoami(token=token)
-        except Exception:
-            return False, t_invalid
-        for model_id in _PYANNOTE_MODELS:
-            try:
-                api.model_info(model_id, token=token)
-            except Exception as exc:
-                msg = str(exc)
-                if "403" in msg or "gated" in msg.lower() or \
-                        type(exc).__name__ in ("GatedRepoError", "RepositoryNotFoundError"):
-                    return False, t_gated.format(model=model_id)
-        return True, t_valid
-    except ImportError:
-        return True, t_valid
 
 
 class SettingsPanel(BasePanel):
@@ -205,46 +179,6 @@ class SettingsPanel(BasePanel):
             row=row, column=0, columnspan=2, sticky="w", padx=12, pady=4)
         row += 1
 
-        # ---- HuggingFace licence -------------------------------------
-        self._section(scroll, t("settings_licence_section"), row)
-        row += 1
-        ctk.CTkLabel(scroll, text=t("settings_hf_token_label")).grid(
-            row=row, column=0, sticky="w", padx=12, pady=4)
-        self._hf_token_var = ctk.StringVar(
-            value=self._config.get("huggingface_token", ""))
-        hf_entry = ctk.CTkEntry(scroll, textvariable=self._hf_token_var,
-                                width=300)
-        hf_entry.grid(row=row, column=1, sticky="ew", padx=4, pady=4)
-        hf_entry.bind("<Return>", lambda _: self._test_and_save_token())
-        hf_entry.bind("<FocusOut>", lambda _: self._autosave_token())
-        bind_context_menu(hf_entry, t=t)
-        self._hf_test_btn = ctk.CTkButton(
-            scroll, text=t("settings_hf_token_test_btn"),
-            width=120, command=self._test_and_save_token)
-        self._hf_test_btn.grid(row=row, column=2, padx=4, pady=4)
-        row += 1
-        self._hf_token_status = ctk.CTkLabel(scroll, text="", text_color="gray60")
-        self._hf_token_status.grid(
-            row=row, column=0, columnspan=3, sticky="w", padx=12, pady=(0, 2))
-        row += 1
-        ctk.CTkLabel(scroll, text=t("settings_hf_token_hint"),
-                     text_color="gray60", wraplength=420,
-                     justify="left").grid(
-            row=row, column=0, columnspan=3, sticky="w", padx=12, pady=(0, 6))
-        row += 1
-        accepted = self._config.get("licence_accepted", False)
-        lbl_text = (t("settings_licence_accepted") if accepted
-                    else t("settings_licence_not_accepted"))
-        lbl_colour = "#4caf50" if accepted else "#ff9800"
-        self._licence_status = ctk.CTkLabel(scroll, text=lbl_text,
-                                             text_color=lbl_colour)
-        self._licence_status.grid(row=row, column=0, columnspan=2,
-                                   sticky="w", padx=12, pady=4)
-        row += 1
-        ctk.CTkButton(scroll, text=t("settings_licence_btn"),
-                      command=self._show_licence_dialog).grid(
-            row=row, column=0, columnspan=2, sticky="w", padx=12, pady=4)
-        row += 1
 
     # ------------------------------------------------------------------
     # Mic monitor (live signal meter while Settings panel is visible)
@@ -358,53 +292,3 @@ class SettingsPanel(BasePanel):
         except Exception:
             pass
 
-    def _show_licence_dialog(self) -> None:
-        from gui.panels.licence_dialog import LicenceDialog
-        LicenceDialog(self, config=self._config, t=self._t,
-                      on_accepted=self._on_licence_accepted)
-
-    def _autosave_token(self) -> None:
-        token = self._hf_token_var.get().strip()
-        if token:
-            self._config.set("huggingface_token", token)
-
-    def _test_and_save_token(self) -> None:
-        import threading
-        token = self._hf_token_var.get().strip()
-        if not token:
-            self._config.set("huggingface_token", None)
-            self._hf_token_status.configure(text="", text_color="gray60")
-            return
-        self._hf_test_btn.configure(state="disabled")
-        self._hf_token_status.configure(
-            text=self._t("settings_hf_token_testing"), text_color="gray60")
-        t_valid = self._t("settings_hf_token_valid")
-        t_invalid = self._t("settings_hf_token_invalid")
-        t_gated = self._t("settings_hf_token_gated")
-
-        def _bg():
-            ok, msg = _validate_hf_token(token, t_valid, t_invalid, t_gated)
-            self.after(0, lambda: self._on_token_result(ok, msg, token))
-
-        threading.Thread(target=_bg, daemon=True).start()
-
-    def _on_token_result(self, ok: bool, msg: str, token: str) -> None:
-        self._hf_test_btn.configure(state="normal")
-        if ok:
-            self._config.set("huggingface_token", token)
-            # Token valid + model access confirmed → licence implicitly accepted
-            self._config.set("licence_accepted", True)
-            self._hf_token_status.configure(text=msg, text_color="#4caf50")
-            self._licence_status.configure(
-                text=self._t("settings_licence_accepted"),
-                text_color="#4caf50",
-            )
-        else:
-            self._hf_token_status.configure(text=msg, text_color="#f44336")
-
-    def _on_licence_accepted(self) -> None:
-        self._config.set("licence_accepted", True)
-        self._licence_status.configure(
-            text=self._t("settings_licence_accepted"),
-            text_color="#4caf50",
-        )

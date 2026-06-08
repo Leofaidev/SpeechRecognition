@@ -56,7 +56,7 @@ _NAV_ITEMS = [
     ("nav_about", "about"),
 ]
 
-_SIDEBAR_WIDTH = 170
+_SIDEBAR_WIDTH = 187
 _MIN_WINDOW_SIZE = (980, 620)
 
 
