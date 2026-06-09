@@ -252,6 +252,7 @@
   "restore_confirm_title": "Confirm Restore",
   "restore_confirm_msg": "All current data will be replaced with the backup contents. Continue?",
   "restore_done": "Restore complete. {count} files restored.",
+  "restore_restarting": "Restarting...",
   "restore_failed": "Restore failed: {error}",
 
   "tray_open": "Open",

@@ -66,8 +66,17 @@ class ConfigStore:
     # public API
     # ------------------------------------------------------------------
 
+    @property
+    def path(self) -> Path | None:
+        return self._path
+
     def get(self, key: str, default: Any = None) -> Any:
         return self._data.get(key, default)
+
+    def reload(self) -> None:
+        """Re-read the config file, resetting to defaults first."""
+        self._data = dict(_DEFAULTS)
+        self._load()
 
     def set(self, key: str, value: Any) -> None:
         self._data[key] = value

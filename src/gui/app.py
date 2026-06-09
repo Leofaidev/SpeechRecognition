@@ -1339,11 +1339,12 @@ class App(ctk.CTk):
         else:
             self._shutdown()
 
-    def _shutdown(self) -> None:
-        try:
-            self._config.set("window_geometry", self.geometry())
-        except Exception:
-            pass
+    def _shutdown(self, save_config: bool = True) -> None:
+        if save_config:
+            try:
+                self._config.set("window_geometry", self.geometry())
+            except Exception:
+                pass
         self._hotkeys.shutdown()
         if self._tray:
             self._tray.stop()
@@ -1359,6 +1360,24 @@ class App(ctk.CTk):
 # Entry point
 # ---------------------------------------------------------------------------
 
+def _migrate_library_root(config: ConfigStore) -> None:
+    """Move speaker profiles from src/library/ to the proper user-data dir."""
+    import os, shutil
+    if config.get("library_root") is not None:
+        return
+    local_app_data = os.environ.get("LOCALAPPDATA", os.path.expanduser("~"))
+    library_root = Path(local_app_data) / "SpeechRecognition" / "library"
+    config.set("library_root", str(library_root))
+    src_lib = Path(__file__).parent.parent / "library"
+    if src_lib.is_dir():
+        library_root.mkdir(parents=True, exist_ok=True)
+        for item in src_lib.iterdir():
+            if item.is_dir() and (item / "speaker.json").exists():
+                dest = library_root / item.name
+                if not dest.exists():
+                    shutil.copytree(item, dest)
+
+
 def run(config: ConfigStore | None = None) -> None:
     """Launch the GUI application."""
     if config is None:
@@ -1366,6 +1385,8 @@ def run(config: ConfigStore | None = None) -> None:
         local_app_data = os.environ.get("LOCALAPPDATA", os.path.expanduser("~"))
         config_path = Path(local_app_data) / "SpeechRecognition" / "config.json"
         config = ConfigStore(config_path)
+
+    _migrate_library_root(config)
 
     app = App(config=config)
 

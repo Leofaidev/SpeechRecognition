@@ -78,10 +78,15 @@ class BackupRestorePanel(BasePanel):
             self._size_label.configure(text="")
 
     def _build_app_paths(self):
+        import os
         from backup.manager import AppPaths
         c = self._config
+        config_file = c.path
+        if config_file is None:
+            local_app_data = os.environ.get("LOCALAPPDATA", os.path.expanduser("~"))
+            config_file = Path(local_app_data) / "SpeechRecognition" / "config.json"
         return AppPaths(
-            config_file=Path(c.get("config_file", "config.json")),
+            config_file=config_file,
             dictionary_file=Path(c.get("dictionary_file", "dictionary.json")),
             library_root=Path(c.get("library_root", "library")),
             sessions_dir=Path(c.get("sessions_dir", "sessions")),
@@ -127,14 +132,23 @@ class BackupRestorePanel(BasePanel):
             safety_dir = Path(
                 self._config.get("install_dir", ".")) / "backups"
             result = restore(self._build_app_paths(), Path(path), safety_dir)
-            self._status_label.configure(
-                text=self._t("restore_safety_msg",
-                              path=result.safety_backup_path) +
-                "\n" + (
-                    self._t("restore_done", count=result.restored_files)
-                    if result.success
-                    else self._t("restore_failed", error=result.error)
-                ))
+            if result.success:
+                self._restart_app()
+            else:
+                self._status_label.configure(
+                    text=self._t("restore_safety_msg",
+                                  path=result.safety_backup_path) +
+                    "\n" + self._t("restore_failed", error=result.error))
         except Exception as exc:
             from tkinter import messagebox
             messagebox.showerror(self._t("error_title"), str(exc))
+
+    def _restart_app(self) -> None:
+        import subprocess, sys
+        from pathlib import Path
+        pythonw = Path(sys.executable).parent / "pythonw.exe"
+        if not pythonw.exists():
+            pythonw = Path(sys.executable)
+        src_dir = Path(__file__).parent.parent.parent
+        subprocess.Popen([str(pythonw), "-m", "gui.app"], cwd=str(src_dir))
+        self.winfo_toplevel()._shutdown(save_config=False)
