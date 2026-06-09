@@ -94,6 +94,7 @@ def regenerate_output(
     output_dir: Path | str,
     fields: dict[str, bool] | None = None,
     formats: list[str] | None = None,
+    combine: bool = True,
 ) -> list[Path]:
     """Reload a session and write new output files with current field config.
 
@@ -141,6 +142,12 @@ def regenerate_output(
     source_stem = Path(manager.source_path).stem if manager.source_path else "session"
     written: list[Path] = []
 
+    if combine:
+        from output.segment_combiner import combine_consecutive
+        combined_segments = combine_consecutive(ts_segments)
+    else:
+        combined_segments = ts_segments
+
     for fmt in formats:
         ext = f".{fmt}"
         out_path = make_output_path(
@@ -149,13 +156,13 @@ def regenerate_output(
             output_dir,
         )
         if fmt == "txt":
-            txt_writer.write(ts_segments, out_path, fields=fields)
+            txt_writer.write(combined_segments, out_path, fields=fields)
         elif fmt == "srt":
             srt_writer.write(ts_segments, out_path)
         elif fmt == "json":
             json_writer.write(ts_segments, out_path)
         elif fmt == "docx":
-            docx_writer.write(ts_segments, out_path, fields=fields)
+            docx_writer.write(combined_segments, out_path, fields=fields)
         written.append(out_path)
 
     return written

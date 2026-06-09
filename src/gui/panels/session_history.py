@@ -246,7 +246,9 @@ class SessionHistoryPanel(BasePanel):
         output_dir   = Path(self._config.get("output_folder") or ".")
         try:
             from session.history import regenerate_output
-            written = regenerate_output(sessions_dir, self._selected_id, output_dir)
+            written = regenerate_output(
+                sessions_dir, self._selected_id, output_dir,
+                combine=self._config.get("combine_consecutive_segments", True))
             from tkinter import messagebox
             messagebox.showinfo(
                 "", self._t("history_regenerated",

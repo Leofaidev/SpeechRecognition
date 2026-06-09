@@ -399,16 +399,21 @@ class PipelineRunner:
                     inp = _Path(_source_path) if _source_path else _Path("output")
                     out_segs = _segs
                     _output_fields = _cfg.get("output_fields", None)
+                    if _cfg.get("combine_consecutive_segments", True):
+                        from output.segment_combiner import combine_consecutive
+                        _combined_segs = combine_consecutive(out_segs)
+                    else:
+                        _combined_segs = out_segs
                     for fmt in eff_fmts:
                         out_path = make_output_path(inp, f".{fmt}", eff_dir)
                         if fmt == "txt":
-                            txt_writer.write(out_segs, out_path, fields=_output_fields)
+                            txt_writer.write(_combined_segs, out_path, fields=_output_fields)
                         elif fmt == "srt":
                             srt_writer.write(out_segs, out_path, fields=_output_fields)
                         elif fmt == "json":
                             json_writer.write(out_segs, out_path)
                         elif fmt == "docx":
-                            docx_writer.write(out_segs, out_path, fields=_output_fields)
+                            docx_writer.write(_combined_segs, out_path, fields=_output_fields)
                         written_d.append(out_path)
                 if _cfg.get("output_to_clipboard", False):
                     try:
@@ -454,17 +459,22 @@ class PipelineRunner:
                 input_path = _Path(source_path) if source_path else _Path("output")
                 out_segs = ts_segments
                 output_fields = config.get("output_fields", None)
+                if config.get("combine_consecutive_segments", True):
+                    from output.segment_combiner import combine_consecutive
+                    combined_segs = combine_consecutive(out_segs)
+                else:
+                    combined_segs = out_segs
 
                 for fmt in eff_formats:
                     out_path = make_output_path(input_path, f".{fmt}", eff_output_dir)
                     if fmt == "txt":
-                        txt_writer.write(out_segs, out_path, fields=output_fields)
+                        txt_writer.write(combined_segs, out_path, fields=output_fields)
                     elif fmt == "srt":
                         srt_writer.write(out_segs, out_path, fields=output_fields)
                     elif fmt == "json":
                         json_writer.write(out_segs, out_path)
                     elif fmt == "docx":
-                        docx_writer.write(out_segs, out_path, fields=output_fields)
+                        docx_writer.write(combined_segs, out_path, fields=output_fields)
                     written.append(out_path)
 
             if config.get("output_to_clipboard", False):

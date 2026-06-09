@@ -201,6 +201,8 @@
   "output_dest_file": "Write to File",
   "output_dest_display": "Show in Window",
   "output_dest_clipboard": "Copy to Clipboard",
+  "output_combine_section": "Segment Combining",
+  "output_combine_label": "Combine consecutive segments from the same speaker (TXT and DOCX)",
   "output_folder_label": "Output Folder",
   "output_clipboard_file_warning": "Clipboard output is unavailable for file input sources.",
   "output_name_format_section": "Name Format",

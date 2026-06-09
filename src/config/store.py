@@ -33,6 +33,7 @@ _DEFAULTS: dict[str, Any] = {
     "transcript_font_size": 12,
     "recording_mode": "regular",
     "ui_language": "en",
+    "combine_consecutive_segments": True,
     "hotkeys": {
         "start_stop": "ctrl+shift+r",
         "stop_recording": "ctrl+shift+s",

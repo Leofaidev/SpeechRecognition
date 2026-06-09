@@ -87,6 +87,17 @@ class OutputConfigPanel(BasePanel):
         self._clipboard_warn.grid_remove()
         row += 1
 
+        # ---- Combine consecutive segments ---------------------------
+        self._section(scroll, t("output_combine_section"), row); row += 1
+        self._combine_var = ctk.BooleanVar(
+            value=self._config.get("combine_consecutive_segments", True))
+        ctk.CTkCheckBox(scroll, text=t("output_combine_label"),
+                        variable=self._combine_var,
+                        command=lambda: self._config.set(
+                            "combine_consecutive_segments",
+                            self._combine_var.get())).grid(
+            row=row, column=0, sticky="w", padx=12, pady=2); row += 1
+
         # ---- Output folder ------------------------------------------
         self._section(scroll, t("output_folder_label"), row); row += 1
         folder_frame = ctk.CTkFrame(scroll, fg_color="transparent")

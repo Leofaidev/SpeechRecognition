@@ -238,6 +238,7 @@ def _cmd_regenerate_output(args, config) -> int:
         written = sh.regenerate_output(
             sessions_dir, args.session, output_dir,
             formats=args.output_format or config.get("output_formats", ["txt"]),
+            combine=config.get("combine_consecutive_segments", True),
         )
     except FileNotFoundError:
         print(f"Error: Session '{args.session}' not found.", file=sys.stderr)
@@ -392,17 +393,22 @@ def _cmd_process(args, config) -> int:
         session.add_segments(ts_segments)
 
         written: list[Path] = []
+        if config.get("combine_consecutive_segments", True):
+            from output.segment_combiner import combine_consecutive
+            combined_segs = combine_consecutive(ts_segments)
+        else:
+            combined_segs = ts_segments
         for fmt in formats:
             ext = f".{fmt}"
             out_path = make_output_path(Path(input_file), ext, output_dir)
             if fmt == "txt":
-                txt_writer.write(ts_segments, out_path)
+                txt_writer.write(combined_segs, out_path)
             elif fmt == "srt":
                 srt_writer.write(ts_segments, out_path)
             elif fmt == "json":
                 json_writer.write(ts_segments, out_path)
             elif fmt == "docx":
-                docx_writer.write(ts_segments, out_path)
+                docx_writer.write(combined_segs, out_path)
             written.append(out_path)
             print(f"  Output: {out_path}")
 
