@@ -201,6 +201,8 @@
   "output_dest_file": "Kirjoita tiedostoon",
   "output_dest_display": "Näytä ikkunassa",
   "output_dest_clipboard": "Kopioi leikepöydälle",
+  "output_combine_section": "Segmenttien yhdistäminen",
+  "output_combine_label": "Yhdistä saman puhujan peräkkäiset segmentit (TXT ja DOCX)",
   "output_folder_label": "Tulostekansio",
   "output_clipboard_file_warning": "Leikepöytälähtö ei ole käytettävissä tiedostolähteille.",
   "output_name_format_section": "Nimimuoto",

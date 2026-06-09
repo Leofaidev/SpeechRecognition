@@ -181,6 +181,8 @@
   "output_dest_file": "Записать в файл",
   "output_dest_display": "Показать в окне",
   "output_dest_clipboard": "Копировать в буфер",
+  "output_combine_section": "Объединение сегментов",
+  "output_combine_label": "Объединять последовательные сегменты одного говорящего (TXT и DOCX)",
   "output_folder_label": "Папка вывода",
   "output_clipboard_file_warning": "Вывод в буфер недоступен для файловых источников.",
   "output_name_format_section": "Формат имени",

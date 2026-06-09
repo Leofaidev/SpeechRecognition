@@ -181,6 +181,8 @@
   "output_dest_file": "寫入檔案",
   "output_dest_display": "顯示於視窗",
   "output_dest_clipboard": "複製至剪貼簿",
+  "output_combine_section": "段落合併",
+  "output_combine_label": "合併同一說話者的連續段落（TXT 和 DOCX）",
   "output_folder_label": "輸出資料夾",
   "output_clipboard_file_warning": "檔案輸入不支援剪貼簿輸出。",
   "output_name_format_section": "名稱格式",

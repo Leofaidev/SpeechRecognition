@@ -180,6 +180,8 @@
   "output_dest_file": "In Datei schreiben",
   "output_dest_display": "Im Fenster anzeigen",
   "output_dest_clipboard": "In Zwischenablage kopieren",
+  "output_combine_section": "Segmentzusammenführung",
+  "output_combine_label": "Aufeinanderfolgende Segmente desselben Sprechers zusammenführen (TXT und DOCX)",
   "output_folder_label": "Ausgabeordner",
   "output_clipboard_file_warning": "Zwischenablage-Ausgabe ist für Dateieingaben nicht verfügbar.",
   "output_name_format_section": "Namensformat",

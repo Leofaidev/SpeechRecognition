@@ -201,6 +201,8 @@
   "output_dest_file": "Escribir en Archivo",
   "output_dest_display": "Mostrar en Ventana",
   "output_dest_clipboard": "Copiar al Portapapeles",
+  "output_combine_section": "Combinación de segmentos",
+  "output_combine_label": "Combinar segmentos consecutivos del mismo hablante (TXT y DOCX)",
   "output_folder_label": "Carpeta de Salida",
   "output_clipboard_file_warning": "La salida al portapapeles no está disponible para entradas de archivo.",
   "output_name_format_section": "Formato de Nombre",

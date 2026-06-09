@@ -202,6 +202,8 @@
   "output_dest_file": "写入文件",
   "output_dest_display": "显示在窗口",
   "output_dest_clipboard": "复制到剪贴板",
+  "output_combine_section": "段落合并",
+  "output_combine_label": "合并同一说话人的连续段落（TXT 和 DOCX）",
   "output_folder_label": "输出文件夹",
   "output_clipboard_file_warning": "文件输入不支持剪贴板输出。",
   "output_name_format_section": "名称格式",
