@@ -123,20 +123,20 @@ def test_pyannote(hf_token: str | None, results: list) -> bool:
         print(f"  {_INFO}  Loading diarization pipeline on {device} …", flush=True)
         pipeline = Pipeline.from_pretrained(
             "pyannote/speaker-diarization-3.1",
-            use_auth_token=hf_token,
+            token=hf_token,
         )
         import torch as _torch
         pipeline.to(_torch.device(device))
         _check("pipeline loaded", True)
 
-        wav_bytes = _make_silence_wav(5.0)
-        tmp = _save_tmp_wav(wav_bytes)
-        try:
-            diarization = pipeline(str(tmp))
-            segments = list(diarization.itertracks(yield_label=True))
-            _check("diarize(silence)", True, f"{len(segments)} segment(s)")
-        finally:
-            tmp.unlink(missing_ok=True)
+        sr = 16000
+        waveform = torch.zeros(1, sr * 5)  # 5 s mono silence, no file I/O
+        output = pipeline({"waveform": waveform, "sample_rate": sr})
+        # pyannote ≥3.x returns DiarizeOutput; annotation is in .speaker_diarization
+        diarization = getattr(output, "speaker_diarization",
+                              getattr(output, "diarization", output))
+        segments = list(diarization.itertracks(yield_label=True))
+        _check("diarize(silence)", True, f"{len(segments)} segment(s)")
 
         results.append(("pyannote", True))
         return True
