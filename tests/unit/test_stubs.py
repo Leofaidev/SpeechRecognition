@@ -1,60 +1,72 @@
-"""CHK-03: all non-Windows stub modules raise NotImplementedError with a message."""
+"""CHK-03: non-Windows platform modules — Linux implemented, macOS still stubs."""
 
+import os
 import pytest
 
 
-# ── Linux stubs ────────────────────────────────────────────────────────────────
+# ── Linux platform (fully implemented) ────────────────────────────────────────
 
-class TestLinuxStubs:
-    def test_data_dirs_get_app_dir(self):
+class TestLinuxPlatform:
+    def test_data_dirs_get_app_dir_returns_string(self):
         from platforms.linux.data_dirs import DataDirs
-        with pytest.raises(NotImplementedError, match="linux"):
-            DataDirs().get_app_dir()
+        result = DataDirs().get_app_dir()
+        assert isinstance(result, str)
+        assert "SpeechRecognition" in result
 
-    def test_data_dirs_ensure_app_dir(self):
+    def test_data_dirs_ensure_app_dir_returns_string(self, tmp_path):
         from platforms.linux.data_dirs import DataDirs
-        with pytest.raises(NotImplementedError, match="linux"):
-            DataDirs().ensure_app_dir()
+        old_xdg = os.environ.get("XDG_DATA_HOME")
+        os.environ["XDG_DATA_HOME"] = str(tmp_path)
+        try:
+            result = DataDirs().ensure_app_dir()
+            assert isinstance(result, str)
+            assert os.path.isdir(result)
+        finally:
+            if old_xdg is None:
+                os.environ.pop("XDG_DATA_HOME", None)
+            else:
+                os.environ["XDG_DATA_HOME"] = old_xdg
 
-    def test_installer_build(self):
+    def test_installer_build_raises(self):
         from platforms.linux.installer import Installer
-        with pytest.raises(NotImplementedError, match="linux"):
+        with pytest.raises(NotImplementedError):
             Installer().build_installer("wsp.spec", "out/")
 
-    def test_auto_start_enable(self):
+    def test_auto_start_roundtrip(self, tmp_path):
         from platforms.linux.auto_start import AutoStart
-        with pytest.raises(NotImplementedError, match="linux"):
-            AutoStart().enable("/app/app")
+        old_xdg = os.environ.get("XDG_CONFIG_HOME")
+        os.environ["XDG_CONFIG_HOME"] = str(tmp_path)
+        try:
+            a = AutoStart()
+            assert a.is_enabled() is False
+            a.enable("/usr/bin/app")
+            assert a.is_enabled() is True
+            a.disable()
+            assert a.is_enabled() is False
+        finally:
+            if old_xdg is None:
+                os.environ.pop("XDG_CONFIG_HOME", None)
+            else:
+                os.environ["XDG_CONFIG_HOME"] = old_xdg
 
-    def test_auto_start_disable(self):
-        from platforms.linux.auto_start import AutoStart
-        with pytest.raises(NotImplementedError, match="linux"):
-            AutoStart().disable()
-
-    def test_auto_start_is_enabled(self):
-        from platforms.linux.auto_start import AutoStart
-        with pytest.raises(NotImplementedError, match="linux"):
-            AutoStart().is_enabled()
-
-    def test_tray_create(self):
+    def test_tray_create_no_raise(self):
         from platforms.linux.tray import Tray
-        with pytest.raises(NotImplementedError, match="linux"):
-            Tray().create("icon.png", [])
+        Tray().create("icon.png", [])  # wrapped in try/except, must not raise
 
-    def test_hotkeys_register(self):
+    def test_hotkeys_register_no_raise(self):
         from platforms.linux.hotkeys import Hotkeys
-        with pytest.raises(NotImplementedError, match="linux"):
-            Hotkeys().register("ctrl+r", lambda: None)
+        Hotkeys().register("ctrl+r", lambda: None)  # wrapped in try/except
 
-    def test_accelerator_list_devices(self):
+    def test_accelerator_list_devices_returns_list(self):
         from platforms.linux.accelerator import Accelerator
-        with pytest.raises(NotImplementedError):
-            Accelerator().list_devices()
+        result = Accelerator().list_devices()
+        assert isinstance(result, list)
 
     def test_device_enum_list_devices(self):
+        pyaudio = pytest.importorskip("pyaudio")  # skip if pyaudio not installed
         from platforms.linux.device_enum import DeviceEnum
-        with pytest.raises(NotImplementedError, match="linux"):
-            DeviceEnum().list_devices()
+        result = DeviceEnum().list_devices()
+        assert isinstance(result, list)
 
 
 # ── macOS stubs ────────────────────────────────────────────────────────────────
