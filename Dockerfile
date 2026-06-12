@@ -17,7 +17,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# System dependencies
+# System dependencies (vlc/curl omitted — their deps hit transient 503s; not needed for AI test)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3.12 \
     python3.12-dev \
@@ -25,22 +25,20 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3.12-venv \
     portaudio19-dev \
     ffmpeg \
-    vlc \
     libsm6 \
     libxext6 \
     libgl1 \
     libglib2.0-0 \
     build-essential \
     git \
-    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Make python3.12 the default python3
 RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.12 1 \
     && update-alternatives --install /usr/bin/python python /usr/bin/python3.12 1
 
-# Upgrade pip
-RUN python3 -m pip install --upgrade pip --break-system-packages
+# Upgrade pip (--ignore-installed avoids failure on Debian-managed pip with no RECORD file)
+RUN python3 -m pip install --upgrade pip --break-system-packages --ignore-installed
 
 # Install PyTorch with CUDA 12.6 first (separate step for caching)
 RUN python3 -m pip install --break-system-packages \
@@ -59,7 +57,7 @@ WORKDIR /app
 COPY . .
 
 # Add platforms/ and src/ to PYTHONPATH
-ENV PYTHONPATH="/app/platforms:/app/src:${PYTHONPATH}"
+ENV PYTHONPATH="/app/platforms:/app/src"
 
 # Default: run the pipeline test
 CMD ["python3", "scripts/test_ai_pipeline.py"]

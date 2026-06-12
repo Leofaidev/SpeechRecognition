@@ -287,8 +287,17 @@ class SettingsPanel(BasePanel):
         enabled = self._auto_start.get()
         self._config.set("auto_start", enabled)
         try:
-            from platforms.windows.autostart import set_autostart
-            set_autostart(enabled)
+            import platforms as _plat
+            _mod = __import__(
+                f"platforms.{_plat.get_platform_name()}.auto_start",
+                fromlist=["AutoStart"],
+            )
+            auto_start = _mod.AutoStart()
+            if enabled:
+                import sys as _sys
+                auto_start.enable(_sys.executable)
+            else:
+                auto_start.disable()
         except Exception:
             pass
 
