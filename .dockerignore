@@ -1,0 +1,16 @@
+.git/
+.venv*/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+*.egg/
+dist/
+build/
+*.spec
+src/backups/
+tests/fixtures/audio/
+*.log
+*.tmp
+node_modules/
