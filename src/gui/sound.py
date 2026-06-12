@@ -3,8 +3,8 @@
 Plays a short audio file when processing finishes.  Suppressed when
 ``sound_enabled`` is False in config, and always suppressed in CLI mode.
 
-Uses ``winsound`` on Windows (no extra dependency).  Falls back silently
-if the sound file is missing or playback fails.
+Uses ``winsound`` on Windows, ``aplay``/``paplay`` on Linux.  Falls back
+silently if the sound file is missing or playback fails.
 """
 
 from __future__ import annotations
@@ -82,8 +82,22 @@ class SoundPlayer:
 
     @staticmethod
     def _play_sync(path: Path) -> None:
+        import sys
         try:
-            import winsound
-            winsound.PlaySound(str(path), winsound.SND_FILENAME | winsound.SND_ASYNC)
+            if sys.platform == "win32":
+                import winsound
+                winsound.PlaySound(str(path), winsound.SND_FILENAME)
+            else:
+                import subprocess
+                for player in ("paplay", "aplay"):
+                    try:
+                        subprocess.run(
+                            [player, str(path)],
+                            check=True,
+                            capture_output=True,
+                        )
+                        return
+                    except (FileNotFoundError, subprocess.CalledProcessError):
+                        continue
         except Exception:
             pass

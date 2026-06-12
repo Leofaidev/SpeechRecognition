@@ -78,13 +78,17 @@ class BackupRestorePanel(BasePanel):
             self._size_label.configure(text="")
 
     def _build_app_paths(self):
-        import os
+        import sys, os
         from backup.manager import AppPaths
         c = self._config
         config_file = c.path
         if config_file is None:
-            local_app_data = os.environ.get("LOCALAPPDATA", os.path.expanduser("~"))
-            config_file = Path(local_app_data) / "SpeechRecognition" / "config.json"
+            if sys.platform == "win32":
+                base = os.environ.get("LOCALAPPDATA") or os.path.expanduser("~")
+            else:
+                xdg = os.environ.get("XDG_DATA_HOME", "")
+                base = xdg if xdg else os.path.join(os.path.expanduser("~"), ".local", "share")
+            config_file = Path(base) / "SpeechRecognition" / "config.json"
         return AppPaths(
             config_file=config_file,
             dictionary_file=Path(c.get("dictionary_file", "dictionary.json")),
@@ -146,9 +150,12 @@ class BackupRestorePanel(BasePanel):
     def _restart_app(self) -> None:
         import subprocess, sys
         from pathlib import Path
-        pythonw = Path(sys.executable).parent / "pythonw.exe"
-        if not pythonw.exists():
-            pythonw = Path(sys.executable)
+        if sys.platform == "win32":
+            launcher = Path(sys.executable).parent / "pythonw.exe"
+            if not launcher.exists():
+                launcher = Path(sys.executable)
+        else:
+            launcher = Path(sys.executable)
         src_dir = Path(__file__).parent.parent.parent
-        subprocess.Popen([str(pythonw), "-m", "gui.app"], cwd=str(src_dir))
+        subprocess.Popen([str(launcher), "-m", "gui.app"], cwd=str(src_dir))
         self.winfo_toplevel()._shutdown(save_config=False)

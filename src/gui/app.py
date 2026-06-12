@@ -1360,13 +1360,23 @@ class App(ctk.CTk):
 # Entry point
 # ---------------------------------------------------------------------------
 
+def _get_data_dir() -> Path:
+    """Return the platform-appropriate user-data directory for this app."""
+    import os
+    if sys.platform == "win32":
+        base = os.environ.get("LOCALAPPDATA") or os.path.expanduser("~")
+    else:
+        xdg = os.environ.get("XDG_DATA_HOME", "")
+        base = xdg if xdg else os.path.join(os.path.expanduser("~"), ".local", "share")
+    return Path(base) / "SpeechRecognition"
+
+
 def _migrate_library_root(config: ConfigStore) -> None:
     """Move speaker profiles from src/library/ to the proper user-data dir."""
-    import os, shutil
+    import shutil
     if config.get("library_root") is not None:
         return
-    local_app_data = os.environ.get("LOCALAPPDATA", os.path.expanduser("~"))
-    library_root = Path(local_app_data) / "SpeechRecognition" / "library"
+    library_root = _get_data_dir() / "library"
     config.set("library_root", str(library_root))
     src_lib = Path(__file__).parent.parent / "library"
     if src_lib.is_dir():
@@ -1381,9 +1391,7 @@ def _migrate_library_root(config: ConfigStore) -> None:
 def run(config: ConfigStore | None = None) -> None:
     """Launch the GUI application."""
     if config is None:
-        import os
-        local_app_data = os.environ.get("LOCALAPPDATA", os.path.expanduser("~"))
-        config_path = Path(local_app_data) / "SpeechRecognition" / "config.json"
+        config_path = _get_data_dir() / "config.json"
         config = ConfigStore(config_path)
 
     _migrate_library_root(config)

@@ -1,16 +1,16 @@
+import os
+
 from platforms.base.data_dirs import DataDirsBase
 
-_PLATFORM = 'linux'
 
 class DataDirs(DataDirsBase):
+
     def get_app_dir(self) -> str:
-        raise NotImplementedError(
-            f"DataDirs is not implemented for platform '{_PLATFORM}'. "
-            "This stub exists to support future ports (Spec Section 17)."
-        )
+        xdg = os.environ.get("XDG_DATA_HOME", "")
+        base = xdg if xdg else os.path.join(os.path.expanduser("~"), ".local", "share")
+        return os.path.join(base, self.APP_NAME)
 
     def ensure_app_dir(self) -> str:
-        raise NotImplementedError(
-            f"DataDirs is not implemented for platform '{_PLATFORM}'. "
-            "This stub exists to support future ports (Spec Section 17)."
-        )
+        path = self.get_app_dir()
+        os.makedirs(path, exist_ok=True)
+        return path
