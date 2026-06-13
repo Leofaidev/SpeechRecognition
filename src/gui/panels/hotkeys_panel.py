@@ -145,13 +145,20 @@ class HotkeysPanel(BasePanel):
             return ctrl, shift, alt
         return False, False, False  # non-Windows: caller falls back to event.state
 
+    # X11 keysyms that are modifier-only keys (Linux/macOS)
+    _MODIFIER_SYMS = frozenset({
+        'Control_L', 'Control_R', 'Shift_L', 'Shift_R',
+        'Alt_L', 'Alt_R', 'Meta_L', 'Meta_R', 'Super_L', 'Super_R',
+        'ISO_Level3_Shift', 'Caps_Lock', 'Num_Lock',
+    })
+
     def _capture_key(self, event, action: str) -> str:
         ctrl, shift, alt = self._modifier_state()
         # Fall back to Tkinter state bits on non-Windows
-        if not sys.platform == "win32":
+        if sys.platform != "win32":
             ctrl  = bool(event.state & 0x4)
             shift = bool(event.state & 0x1)
-            alt   = bool(event.state & 0x20000)
+            alt   = bool(event.state & 0x8)   # Mod1 = Alt on X11 (not 0x20000)
         # Ctrl+Alt = AltGr: conflicts with keyboard layouts and causes stuck-modifier glitches
         if ctrl and alt:
             self._warn_labels[action].configure(
@@ -165,10 +172,16 @@ class HotkeysPanel(BasePanel):
             parts.append("shift")
         if alt:
             parts.append("alt")
-        keycode = event.keycode
-        if keycode not in _MODIFIER_VK:
-            key_name = _VK_TO_KEY.get(keycode) or event.keysym.lower()
-            parts.append(key_name)
+        if sys.platform == "win32":
+            # Windows: use VK code table for layout-independent key names
+            keycode = event.keycode
+            if keycode not in _MODIFIER_VK:
+                key_name = _VK_TO_KEY.get(keycode) or event.keysym.lower()
+                parts.append(key_name)
+        else:
+            # Linux/macOS: X11 keycodes differ from Windows VK codes — use keysym directly
+            if event.keysym not in self._MODIFIER_SYMS:
+                parts.append(event.keysym.lower())
         combo = "+".join(parts)
         if combo and parts and parts[-1] not in ("ctrl", "shift", "alt"):
             self._key_vars[action].set(combo)
