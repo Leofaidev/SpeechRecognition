@@ -357,6 +357,19 @@ def _cmd_profile_rename(args, config) -> int:
     return EXIT_SUCCESS
 
 
+class _OverrideConfig:
+    """Thin wrapper that layers in-memory CLI overrides on top of ConfigStore."""
+    def __init__(self, base, overrides: dict) -> None:
+        self._base = base
+        self._overrides = overrides
+
+    def get(self, key, default=None):
+        return self._overrides.get(key, self._base.get(key, default))
+
+    def set(self, key, value) -> None:
+        self._base.set(key, value)
+
+
 def _cmd_process(args, config) -> int:
     """Run the full pipeline for each input file."""
     from audio.ingest import load
@@ -374,10 +387,27 @@ def _cmd_process(args, config) -> int:
     output_dir.mkdir(parents=True, exist_ok=True)
     formats = args.output_format or config.get("output_formats", ["txt"])
 
+    # CLI args override stored config values (in-memory, not saved to disk)
+    overrides: dict = {}
+    if args.source_language:
+        overrides["source_language"] = args.source_language
+    if args.target_language:
+        overrides["target_language"] = args.target_language
+    if args.translation_engine:
+        overrides["translation_engine"] = args.translation_engine
+        overrides["translation_enabled"] = True
+    eff_config = _OverrideConfig(config, overrides) if overrides else config
+
     dict_store = DictionaryStore(Path(config.get("dictionary_file", "dictionary.json")))
-    diarizer = DiarizationEngine(config)
-    transcriber = TranscriptionEngine(config)
-    translator = TranslationEngine(config)
+    diarizer = DiarizationEngine(eff_config)
+    transcriber = TranscriptionEngine(eff_config)
+    translator = TranslationEngine(eff_config)
+
+    translation_enabled = eff_config.get("translation_enabled", False)
+    txt_fields = {
+        "timestamp": True, "speaker": True, "language": True,
+        "confidence": True, "text": True, "translation": translation_enabled,
+    }
 
     for input_file in args.input:
         print(f"Processing: {input_file}")
@@ -397,7 +427,7 @@ def _cmd_process(args, config) -> int:
         session.add_segments(ts_segments)
 
         written: list[Path] = []
-        if config.get("combine_consecutive_segments", True):
+        if eff_config.get("combine_consecutive_segments", True):
             from output.segment_combiner import combine_consecutive
             combined_segs = combine_consecutive(ts_segments)
         else:
@@ -406,7 +436,7 @@ def _cmd_process(args, config) -> int:
             ext = f".{fmt}"
             out_path = make_output_path(Path(input_file), ext, output_dir)
             if fmt == "txt":
-                txt_writer.write(combined_segs, out_path)
+                txt_writer.write(combined_segs, out_path, fields=txt_fields)
             elif fmt == "srt":
                 srt_writer.write(ts_segments, out_path)
             elif fmt == "json":
