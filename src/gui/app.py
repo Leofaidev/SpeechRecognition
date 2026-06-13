@@ -156,13 +156,13 @@ class App(ctk.CTk):
 
         # App icon — store both paths for idle/recording swap
         _assets = Path(__file__).resolve().parent.parent.parent / "assets"
-        self._icon_idle = str(_assets / "WSP.ico")
-        self._icon_recording = str(_assets / "WSP_recording.ico")
-        if Path(self._icon_idle).exists():
-            try:
-                self.iconbitmap(self._icon_idle)
-            except Exception:
-                pass
+        if sys.platform == "win32":
+            self._icon_idle = str(_assets / "WSP.ico")
+            self._icon_recording = str(_assets / "WSP_recording.ico")
+        else:
+            self._icon_idle = str(_assets / "WSP.png")
+            self._icon_recording = str(_assets / "WSP_recording.png")
+        self._set_window_icon(self._icon_idle)
 
         self._build_layout()
         self._register_hotkeys()
@@ -175,6 +175,20 @@ class App(ctk.CTk):
         self.protocol("WM_DELETE_WINDOW", self._on_close)
 
     # ------------------------------------------------------------------
+    def _set_window_icon(self, path: str) -> None:
+        if not Path(path).exists():
+            return
+        try:
+            if sys.platform == "win32":
+                self.iconbitmap(path)
+            else:
+                from PIL import Image, ImageTk
+                img = Image.open(path)
+                self._tk_icon = ImageTk.PhotoImage(img)
+                self.iconphoto(True, self._tk_icon)
+        except Exception:
+            pass
+
     # Layout construction
     # ------------------------------------------------------------------
 
@@ -511,11 +525,7 @@ class App(ctk.CTk):
             self._status_label.configure(text=t("status_processing"))
             self._btn_record.configure(state="disabled")
         icon_path = self._icon_recording if recording else self._icon_idle
-        if Path(icon_path).exists():
-            try:
-                self.iconbitmap(icon_path)
-            except Exception:
-                pass
+        self._set_window_icon(icon_path)
         if self._tray:
             self._tray.set_recording(recording)
 
