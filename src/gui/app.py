@@ -106,7 +106,7 @@ class App(ctk.CTk):
 
     def __init__(self, config: ConfigStore | None = None,
                  lang_dir: Path | None = None) -> None:
-        super().__init__()
+        super().__init__(className="WSP")
 
         # Services
         self._config = config or ConfigStore()
@@ -162,7 +162,7 @@ class App(ctk.CTk):
         else:
             self._icon_idle = str(_assets / "WSP.png")
             self._icon_recording = str(_assets / "WSP_recording.png")
-        self._set_window_icon(self._icon_idle)
+        self.after(200, lambda: self._set_window_icon(self._icon_idle))
 
         self._build_layout()
         self._register_hotkeys()
@@ -178,14 +178,37 @@ class App(ctk.CTk):
     def _set_window_icon(self, path: str) -> None:
         if not Path(path).exists():
             return
-        try:
-            if sys.platform == "win32":
+        if sys.platform == "win32":
+            try:
                 self.iconbitmap(path)
-            else:
-                from PIL import Image, ImageTk
-                img = Image.open(path)
-                self._tk_icon = ImageTk.PhotoImage(img)
-                self.iconphoto(True, self._tk_icon)
+            except Exception:
+                pass
+            return
+        # Linux: set _NET_WM_ICON via Xlib — iconphoto() is unreliable on Xwayland.
+        # Resize to 128x128: X11 max request is 65535 units; 256x256 (65538) exceeds it.
+        # winfo_id() returns a Tk child window; walk up to the WM_CLASS top-level.
+        try:
+            from PIL import Image
+            from Xlib import display as xdisplay, Xatom
+            img = Image.open(path).convert("RGBA").resize((128, 128), Image.LANCZOS)
+            icon_data = [128, 128]
+            for r, g, b, a in img.getdata():
+                icon_data.append((a << 24) | (r << 16) | (g << 8) | b)
+            dpy = xdisplay.Display()
+            WM_CLASS_atom = dpy.intern_atom("WM_CLASS")
+            win = dpy.create_resource_object("window", self.winfo_id())
+            # Walk up the parent chain until we reach the window that has WM_CLASS
+            for _ in range(10):
+                if win.get_full_property(WM_CLASS_atom, Xatom.STRING) is not None:
+                    break
+                parent = win.query_tree().parent
+                if parent is None or parent.id == dpy.screen().root.id:
+                    break
+                win = parent
+            atom = dpy.intern_atom("_NET_WM_ICON")
+            win.change_property(atom, Xatom.CARDINAL, 32, icon_data)
+            dpy.flush()
+            dpy.close()
         except Exception:
             pass
 
@@ -526,6 +549,9 @@ class App(ctk.CTk):
             self._btn_record.configure(state="disabled")
         icon_path = self._icon_recording if recording else self._icon_idle
         self._set_window_icon(icon_path)
+        if sys.platform != "win32":
+            base_title = self._lang.t("app_title")
+            self.title(("● " + base_title) if recording else base_title)
         if self._tray:
             self._tray.set_recording(recording)
 
@@ -1264,6 +1290,47 @@ class App(ctk.CTk):
                 lambda: self.after(0, self._hotkey_start_only))
             self._hotkeys.register("stop_recording",
                 lambda: self.after(0, self._hotkey_stop_only))
+        if sys.platform != "win32":
+            self._bind_tk_hotkeys(start_key, stop_key)
+
+    @staticmethod
+    def _combo_to_tk(key: str) -> str:
+        """Convert 'f12' or 'ctrl+shift+r' to a Tk event string."""
+        parts = key.lower().split("+")
+        mods = []
+        for p in parts[:-1]:
+            if p == "ctrl":
+                mods.append("Control")
+            elif p == "shift":
+                mods.append("Shift")
+            elif p == "alt":
+                mods.append("Alt")
+        main = parts[-1]
+        if main.startswith("f") and main[1:].isdigit():
+            main = main.upper()  # Tk needs 'F12', not 'f12'
+        return "<" + ("-".join(mods + [main])) + ">"
+
+    def _bind_tk_hotkeys(self, start_key: str, stop_key: str) -> None:
+        # Unbind previous Tk hotkeys
+        for seq in getattr(self, "_tk_hk_seqs", []):
+            try:
+                self.unbind_all(seq)
+            except Exception:
+                pass
+        self._tk_hk_seqs: list[str] = []
+        if start_key and start_key == stop_key:
+            seq = self._combo_to_tk(start_key)
+            self.bind_all(seq, lambda e: self._hotkey_toggle(), add="+")
+            self._tk_hk_seqs.append(seq)
+        else:
+            if start_key:
+                seq = self._combo_to_tk(start_key)
+                self.bind_all(seq, lambda e: self._hotkey_start_only(), add="+")
+                self._tk_hk_seqs.append(seq)
+            if stop_key:
+                seq = self._combo_to_tk(stop_key)
+                self.bind_all(seq, lambda e: self._hotkey_stop_only(), add="+")
+                self._tk_hk_seqs.append(seq)
 
     def _hotkey_toggle(self) -> None:
         if self._hk_pending:
