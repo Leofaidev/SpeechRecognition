@@ -148,14 +148,22 @@ class BackupRestorePanel(BasePanel):
             messagebox.showerror(self._t("error_title"), str(exc))
 
     def _restart_app(self) -> None:
-        import subprocess, sys
+        import os, subprocess, sys
         from pathlib import Path
+        launcher = Path(sys.executable)
         if sys.platform == "win32":
-            launcher = Path(sys.executable).parent / "pythonw.exe"
-            if not launcher.exists():
-                launcher = Path(sys.executable)
-        else:
-            launcher = Path(sys.executable)
-        src_dir = Path(__file__).parent.parent.parent
-        subprocess.Popen([str(launcher), "-m", "gui.app"], cwd=str(src_dir))
+            w = launcher.parent / "pythonw.exe"
+            if w.exists():
+                launcher = w
+        # src/ holds the gui package (3 levels up from panels/)
+        src_dir = Path(__file__).resolve().parent.parent.parent
+        repo_root = src_dir.parent
+        # Use absolute PYTHONPATH so it's correct regardless of cwd
+        env = os.environ.copy()
+        env["PYTHONPATH"] = str(repo_root / "platforms") + os.pathsep + str(src_dir)
+        kwargs: dict = {"cwd": str(src_dir), "env": env}
+        if sys.platform != "win32":
+            # Detach from the screen session so the child survives parent exit
+            kwargs["start_new_session"] = True
+        subprocess.Popen([str(launcher), "-m", "gui.app"], **kwargs)
         self.winfo_toplevel()._shutdown(save_config=False)
