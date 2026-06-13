@@ -41,8 +41,13 @@ def build_parser() -> argparse.ArgumentParser:
         prog="wsp",
         description="Speech Recognition Program — headless CLI",
         add_help=True,
-        exit_on_error=False,  # so we can control the exit code
+        # exit_on_error=False omitted: Python 3.14 suppresses --help output when set.
+        # parser.error is overridden below to raise ArgumentError instead of sys.exit(2).
     )
+    # Raise instead of sys.exit so we can return our own exit code for bad params.
+    def _error(message: str) -> None:
+        raise argparse.ArgumentError(None, message)
+    parser.error = _error  # type: ignore[method-assign]
 
     # Global options
     parser.add_argument("--input", "-i", nargs="+", metavar="FILE",
@@ -164,12 +169,11 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     try:
         args = parser.parse_args(argv)
-    except (argparse.ArgumentError, SystemExit) as exc:
-        # argparse prints usage and exits; with exit_on_error=False it raises
-        if isinstance(exc, SystemExit) and exc.code == 0:
-            return EXIT_SUCCESS
+    except argparse.ArgumentError as exc:
         print(f"Error: {exc}", file=sys.stderr)
         return EXIT_BAD_PARAM
+    except SystemExit as exc:
+        return EXIT_SUCCESS if exc.code == 0 else EXIT_BAD_PARAM
 
     # Lazy imports to avoid pulling in heavy deps for --help / unrecognised param
     from config.store import ConfigStore
@@ -428,3 +432,7 @@ def _build_app_paths(config):
         sessions_dir=Path(config.get("sessions_dir", "sessions")),
         install_dir=Path(config.get("install_dir", ".")),
     )
+
+
+if __name__ == "__main__":
+    sys.exit(main())
