@@ -302,37 +302,39 @@ class _EntryEditDialog(ctk.CTkToplevel):
     def __init__(self, parent, t: Callable) -> None:
         super().__init__(parent)
         self._t = t
-        self.title(t("btn_add_entry"))
-        self.geometry("400x150")
-        self.resizable(False, False)
-        self.grab_set()
+        self._src = ctk.StringVar()
+        self._rep = ctk.StringVar()
         self.result = None
+        self.title(t("btn_add_entry"))
+        self.geometry("400x170")
+        self.resizable(False, False)
+        self.transient(parent.winfo_toplevel())
         self._build()
+        self.update()          # flush Tk geometry so widgets render before grab
+        self.grab_set()
         self.focus_force()
 
     def _build(self) -> None:
         t = self._t
-        self.grid_columnconfigure(1, weight=1)
-        for row, (label_key, attr) in enumerate([
-            ("dict_col_source", "_src"),
-            ("dict_col_replacement", "_rep"),
-        ]):
-            ctk.CTkLabel(self, text=t(label_key)).grid(
-                row=row, column=0, sticky="w", padx=12, pady=6)
-            var = ctk.StringVar()
-            setattr(self, attr, var)
-            e = ctk.CTkEntry(self, textvariable=var)
-            e.grid(row=row, column=1, sticky="ew", padx=8, pady=6)
-            bind_context_menu(e)
+
+        for label_key, var in [
+            ("dict_col_source", self._src),
+            ("dict_col_replacement", self._rep),
+        ]:
+            row = ctk.CTkFrame(self, fg_color="transparent")
+            row.pack(fill="x", padx=12, pady=(10, 0))
+            ctk.CTkLabel(row, text=t(label_key), width=110, anchor="w").pack(side="left")
+            e = ctk.CTkEntry(row, textvariable=var)
+            e.pack(side="left", fill="x", expand=True)
+            bind_context_menu(e, t=t)
 
         btn_frame = ctk.CTkFrame(self, fg_color="transparent")
-        btn_frame.grid(row=2, column=0, columnspan=2, sticky="e",
-                       padx=12, pady=8)
+        btn_frame.pack(fill="x", padx=12, pady=(14, 12))
         ctk.CTkButton(btn_frame, text=t("btn_cancel"),
                       fg_color="#555555",
                       command=self.destroy).pack(side="left", padx=8)
         ctk.CTkButton(btn_frame, text=t("btn_confirm"),
-                      command=self._confirm).pack(side="left")
+                      command=self._confirm).pack(side="right")
 
     def _confirm(self) -> None:
         src = self._src.get().strip()
