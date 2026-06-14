@@ -1,0 +1,31 @@
+Jun 13 09:58:20 leo-VMware-Virtual-Platform sshd[2084]: Server listening on 0.0.0.0 port 22.
+Jun 13 09:58:20 leo-VMware-Virtual-Platform sshd[2084]: Server listening on :: port 22.
+Jun 13 09:58:20 leo-VMware-Virtual-Platform systemd[1]: Started ssh.service - OpenBSD Secure Shell server.
+Jun 13 10:54:50 leo-VMware-Virtual-Platform sshd[2084]: Received signal 15; terminating.
+Jun 13 10:54:50 leo-VMware-Virtual-Platform systemd[1]: Stopping ssh.service - OpenBSD Secure Shell server...
+Jun 13 10:54:50 leo-VMware-Virtual-Platform systemd[1]: ssh.service: Deactivated successfully.
+Jun 13 10:54:50 leo-VMware-Virtual-Platform systemd[1]: Stopped ssh.service - OpenBSD Secure Shell server.
+Jun 13 10:54:50 leo-VMware-Virtual-Platform systemd[1]: Starting ssh.service - OpenBSD Secure Shell server...
+Jun 13 10:54:50 leo-VMware-Virtual-Platform sshd[9142]: Server listening on 0.0.0.0 port 22.
+Jun 13 10:54:50 leo-VMware-Virtual-Platform sshd[9142]: Server listening on :: port 22.
+Jun 13 10:54:50 leo-VMware-Virtual-Platform systemd[1]: Started ssh.service - OpenBSD Secure Shell server.
+Jun 13 11:07:38 leo-VMware-Virtual-Platform sshd[9142]: Received signal 15; terminating.
+Jun 13 11:07:38 leo-VMware-Virtual-Platform systemd[1]: Stopping ssh.service - OpenBSD Secure Shell server...
+Jun 13 11:07:38 leo-VMware-Virtual-Platform systemd[1]: ssh.service: Deactivated successfully.
+Jun 13 11:07:38 leo-VMware-Virtual-Platform systemd[1]: Stopped ssh.service - OpenBSD Secure Shell server.
+-- Boot 68bda5bf27c74f1a90aa0f1a797b30c1 --
+Jun 13 11:14:38 leo-VMware-Virtual-Platform systemd[1]: Starting ssh.service - OpenBSD Secure Shell server...
+Jun 13 11:14:38 leo-VMware-Virtual-Platform sshd[2019]: Server listening on 0.0.0.0 port 22.
+Jun 13 11:14:38 leo-VMware-Virtual-Platform sshd[2019]: Server listening on :: port 22.
+Jun 13 11:14:38 leo-VMware-Virtual-Platform systemd[1]: Started ssh.service - OpenBSD Secure Shell server.
+Jun 13 11:17:34 leo-VMware-Virtual-Platform sshd[2019]: Timeout before authentication for connection from 192.168.153.1 to 192.168.153.129, pid = 4537
+Jun 13 11:18:18 leo-VMware-Virtual-Platform sshd-session[4567]: Connection reset by authenticating user claude 192.168.153.1 port 64425 [preauth]
+Jun 13 11:18:54 leo-VMware-Virtual-Platform sshd[2019]: Received signal 15; terminating.
+Jun 13 11:18:54 leo-VMware-Virtual-Platform systemd[1]: Stopping ssh.service - OpenBSD Secure Shell server...
+Jun 13 11:18:54 leo-VMware-Virtual-Platform systemd[1]: ssh.service: Deactivated successfully.
+Jun 13 11:18:54 leo-VMware-Virtual-Platform systemd[1]: Stopped ssh.service - OpenBSD Secure Shell server.
+Jun 13 11:18:54 leo-VMware-Virtual-Platform systemd[1]: Starting ssh.service - OpenBSD Secure Shell server...
+Jun 13 11:18:54 leo-VMware-Virtual-Platform sshd[4625]: Server listening on 0.0.0.0 port 22.
+Jun 13 11:18:54 leo-VMware-Virtual-Platform sshd[4625]: Server listening on :: port 22.
+Jun 13 11:18:54 leo-VMware-Virtual-Platform systemd[1]: Started ssh.service - OpenBSD Secure Shell server.
+Jun 13 11:19:12 leo-VMware-Virtual-Platform sshd-session[4649]: Connection reset by authenticating user claude 192.168.153.1 port 60720 [preauth]

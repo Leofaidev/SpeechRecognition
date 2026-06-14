@@ -1,0 +1,60 @@
+Jun 13 11:21:55 leo-VMware-Virtual-Platform sshd-session[4850]: debug3: mm_request_send: entering, type 4 [preauth]
+Jun 13 11:21:55 leo-VMware-Virtual-Platform sshd-session[4850]: debug2: input_userauth_request: try method none [preauth]
+Jun 13 11:21:55 leo-VMware-Virtual-Platform sshd-session[4850]: debug3: userauth_finish: failure partial=0 next methods="publickey,password" [preauth]
+Jun 13 11:21:55 leo-VMware-Virtual-Platform sshd-session[4850]: debug3: send packet: type 51 [preauth]
+Jun 13 11:21:55 leo-VMware-Virtual-Platform sshd-session[4850]: debug3: receive packet: type 50 [preauth]
+Jun 13 11:21:55 leo-VMware-Virtual-Platform sshd-session[4850]: debug1: userauth-request for user claude service ssh-connection method publickey [preauth]
+Jun 13 11:21:55 leo-VMware-Virtual-Platform sshd-session[4850]: debug1: attempt 1 failures 0 [preauth]
+Jun 13 11:21:55 leo-VMware-Virtual-Platform sshd-session[4850]: debug2: input_userauth_request: try method publickey [preauth]
+Jun 13 11:21:55 leo-VMware-Virtual-Platform sshd-session[4850]: debug2: userauth_pubkey: valid user claude querying public key ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIL1cOimMvprgWV/7lmJMU5hHAzs3CDw7kGzDAJ4Bbkt8 [preauth]
+Jun 13 11:21:55 leo-VMware-Virtual-Platform sshd-session[4850]: debug1: userauth_pubkey: publickey test pkalg ssh-ed25519 pkblob ED25519 SHA256:cy1pr3J26Zmdb3zOEz320QcumV/rpJt2mV0x0xKxeNw [preauth]
+Jun 13 11:21:55 leo-VMware-Virtual-Platform sshd-session[4850]: debug3: mm_key_allowed: entering [preauth]
+Jun 13 11:21:55 leo-VMware-Virtual-Platform sshd-session[4850]: debug3: mm_request_send: entering, type 22 [preauth]
+Jun 13 11:21:55 leo-VMware-Virtual-Platform sshd-session[4850]: debug3: mm_key_allowed: waiting for MONITOR_ANS_KEYALLOWED [preauth]
+Jun 13 11:21:55 leo-VMware-Virtual-Platform sshd-session[4850]: debug3: mm_request_receive_expect: entering, type 23 [preauth]
+Jun 13 11:21:55 leo-VMware-Virtual-Platform sshd-session[4850]: debug3: mm_request_receive: entering [preauth]
+Jun 13 11:21:55 leo-VMware-Virtual-Platform sshd-session[4850]: debug3: mm_request_receive: entering
+Jun 13 11:21:55 leo-VMware-Virtual-Platform sshd-session[4850]: debug3: monitor_read: checking request 100
+Jun 13 11:21:55 leo-VMware-Virtual-Platform sshd-session[4850]: debug1: PAM: initializing for "claude" with service "sshd"
+Jun 13 11:21:55 leo-VMware-Virtual-Platform sshd-session[4850]: debug1: PAM: setting PAM_RHOST to "192.168.153.1"
+Jun 13 11:21:55 leo-VMware-Virtual-Platform sshd-session[4850]: debug1: PAM: setting PAM_TTY to "ssh"
+Jun 13 11:21:55 leo-VMware-Virtual-Platform sshd-session[4850]: debug2: monitor_read: 100 used once, disabling now
+Jun 13 11:21:55 leo-VMware-Virtual-Platform sshd-session[4850]: debug3: mm_request_receive: entering
+Jun 13 11:21:55 leo-VMware-Virtual-Platform sshd-session[4850]: debug3: monitor_read: checking request 4
+Jun 13 11:21:55 leo-VMware-Virtual-Platform sshd-session[4850]: debug3: mm_answer_authserv: service=ssh-connection, style=, role=
+Jun 13 11:21:55 leo-VMware-Virtual-Platform sshd-session[4850]: debug2: monitor_read: 4 used once, disabling now
+Jun 13 11:21:55 leo-VMware-Virtual-Platform sshd-session[4850]: debug3: mm_request_receive: entering
+Jun 13 11:21:55 leo-VMware-Virtual-Platform sshd-session[4850]: debug3: monitor_read: checking request 22
+Jun 13 11:21:55 leo-VMware-Virtual-Platform sshd-session[4850]: debug3: mm_answer_keyallowed: entering
+Jun 13 11:21:55 leo-VMware-Virtual-Platform sshd-session[4850]: debug1: temporarily_use_uid: 1001/1001 (e=0/0)
+Jun 13 11:21:55 leo-VMware-Virtual-Platform sshd-session[4850]: debug1: restore_uid: 0/0
+Jun 13 11:21:55 leo-VMware-Virtual-Platform sshd-session[4850]: debug1: temporarily_use_uid: 1001/1001 (e=0/0)
+Jun 13 11:21:55 leo-VMware-Virtual-Platform sshd-session[4850]: debug1: trying public key file /home/claude/.ssh/authorized_keys
+Jun 13 11:21:55 leo-VMware-Virtual-Platform sshd-session[4850]: debug1: fd 10 clearing O_NONBLOCK
+Jun 13 11:21:55 leo-VMware-Virtual-Platform sshd-session[4850]: debug1: /home/claude/.ssh/authorized_keys:1: matching key found: ED25519 SHA256:cy1pr3J26Zmdb3zOEz320QcumV/rpJt2mV0x0xKxeNw
+Jun 13 11:21:55 leo-VMware-Virtual-Platform sshd-session[4850]: debug1: /home/claude/.ssh/authorized_keys:1: key options: agent-forwarding port-forwarding pty user-rc x11-forwarding
+Jun 13 11:21:55 leo-VMware-Virtual-Platform sshd-session[4850]: debug3: /home/claude/.ssh/authorized_keys:1: key options: agent-forwarding port-forwarding pty user-rc x11-forwarding
+Jun 13 11:21:55 leo-VMware-Virtual-Platform sshd-session[4850]: Accepted key ED25519 SHA256:cy1pr3J26Zmdb3zOEz320QcumV/rpJt2mV0x0xKxeNw found at /home/claude/.ssh/authorized_keys:1
+Jun 13 11:21:55 leo-VMware-Virtual-Platform sshd-session[4850]: debug2: auth_check_authkeys_file: /home/claude/.ssh/authorized_keys: processed 1/1 lines
+Jun 13 11:21:55 leo-VMware-Virtual-Platform sshd-session[4850]: debug1: restore_uid: 0/0
+Jun 13 11:21:55 leo-VMware-Virtual-Platform sshd-session[4850]: debug3: mm_answer_keyallowed: publickey authentication test: ED25519 key is allowed
+Jun 13 11:21:55 leo-VMware-Virtual-Platform sshd-session[4850]: debug3: mm_request_send: entering, type 23
+Jun 13 11:21:55 leo-VMware-Virtual-Platform sshd-session[4850]: debug3: send packet: type 60 [preauth]
+Jun 13 11:21:55 leo-VMware-Virtual-Platform sshd-session[4850]: debug2: userauth_pubkey: authenticated 0 pkalg ssh-ed25519 [preauth]
+Jun 13 11:21:55 leo-VMware-Virtual-Platform sshd-session[4850]: debug3: user_specific_delay: user specific delay 3.865ms [preauth]
+Jun 13 11:21:55 leo-VMware-Virtual-Platform sshd-session[4850]: debug3: ensure_minimum_time_since: elapsed 3.260ms, delaying 5.605ms (requested 8.865ms) [preauth]
+Jun 13 11:21:55 leo-VMware-Virtual-Platform sshd-session[4850]: Postponed publickey for claude from 192.168.153.1 port 54327 ssh2 [preauth]
+Jun 13 11:21:55 leo-VMware-Virtual-Platform sshd-session[4850]: Connection reset by authenticating user claude 192.168.153.1 port 54327 [preauth]
+Jun 13 11:21:55 leo-VMware-Virtual-Platform sshd-session[4850]: debug1: monitor_read_log: child log fd closed
+Jun 13 11:21:55 leo-VMware-Virtual-Platform sshd-session[4850]: debug3: mm_request_receive: entering
+Jun 13 11:21:55 leo-VMware-Virtual-Platform sshd-session[4850]: debug3: mm_request_receive: monitor fd closed
+Jun 13 11:21:55 leo-VMware-Virtual-Platform sshd-session[4850]: debug1: mm_reap: child exited with status 255
+Jun 13 11:21:55 leo-VMware-Virtual-Platform sshd-session[4850]: debug1: do_cleanup
+Jun 13 11:21:55 leo-VMware-Virtual-Platform sshd-session[4850]: debug1: PAM: cleanup
+Jun 13 11:21:55 leo-VMware-Virtual-Platform sshd-session[4850]: debug3: sshpam_thread_cleanup: entering
+Jun 13 11:21:55 leo-VMware-Virtual-Platform sshd-session[4850]: debug1: Killing privsep child 4851
+Jun 13 11:21:55 leo-VMware-Virtual-Platform sshd-session[4850]: debug1: audit_event: unhandled event 12
+Jun 13 11:21:55 leo-VMware-Virtual-Platform sshd[4826]: debug3: server_accept_loop: child 4850 for connection from 192.168.153.1 to 192.168.153.129 closed pipe
+Jun 13 11:21:55 leo-VMware-Virtual-Platform sshd[4826]: debug1: child_close: enter
+Jun 13 11:21:55 leo-VMware-Virtual-Platform sshd[4826]: debug1: child_reap: preauth child 4850 for connection from 192.168.153.1 to 192.168.153.129 exited after unsuccessful auth attempt
+Jun 13 11:21:55 leo-VMware-Virtual-Platform sshd[4826]: srclimit_penalise: ipv4: new 192.168.153.1/32 deferred penalty of 5 seconds for penalty: failed authentication

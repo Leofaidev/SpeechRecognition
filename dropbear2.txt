@@ -1,0 +1,11 @@
+Generating 2048 bit rsa key, this may take a while...
+Public key portion is:
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCF0d5b82VJcadqEP5GA2aG+Vps4f6E+Cw5sHHd/RyfvJjYdTE+pzknX3zS9vPwRzrie3vdZ3TShRuIogdPWWAMCHK2s3estNYvQnmu94WLyCd3zgNqttIlKrLvBH4XhUAEKbLhgQQPur5kDhUBYdZ7eSM62RPtcCwgTX6FUEuBQNuE06qS/93ULLvLfT1E+YjGlgZ4hno79WNVUBA4wTGsgcjs77lptyLH4o+YnwGagU2std4b6tMduVmViagqChwUJg5J8Yv962tUyh993HUMuzLAfaFerhp8JLLJepu3Upl6drZ+xyqjkeNCtScAHFRboUZqvi4+9rYltbec6gRl root@leo-VMware-Virtual-Platform
+Fingerprint: SHA256:uiw2OzfHNA5U200FV53npN/Gt6OwhBZHS7veQQHS/fw
+Generating 256 bit ed25519 key, this may take a while...
+Public key portion is:
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIB+eBKMlJsNFtphENn0jcJxb8wLQKj0GfaKNNA703h7L root@leo-VMware-Virtual-Platform
+Fingerprint: SHA256:v9ylXPDNI3MTAkV8N0irSvT6zhUVnhOiD7FpwPYyVCI
+LISTEN 0      1000         0.0.0.0:2222      0.0.0.0:*          
+LISTEN 0      1000            [::]:2222         [::]:*          
+DONE

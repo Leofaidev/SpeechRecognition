@@ -1,0 +1,24 @@
+total 18540
+drwxr-x--- 17 claude claude     4096 Jun 13 11:17 .
+drwxr-xr-x  4 root   root       4096 Jun 12 13:12 ..
+-rw-------  1 claude claude      160 Jun 13 11:07 .bash_history
+-rw-r--r--  1 claude claude      220 Jun 12 13:12 .bash_logout
+Include /etc/ssh/sshd_config.d/*.conf
+PermitRootLogin no
+PubkeyAuthentication yes
+AuthorizedKeysFile .ssh/authorized_keys
+PasswordAuthentication yes
+KbdInteractiveAuthentication no
+UsePAM yes
+X11Forwarding yes
+PrintMotd no
+AcceptEnv LANG LC_* COLORTERM NO_COLOR
+Subsystem	sftp	/usr/lib/openssh/sftp-server
+cat: '/etc/ssh/sshd_config.d/*.conf': No such file or directory
+pubkeyauthentication yes
+strictmodes yes
+authorizedkeyscommand none
+authorizedkeyscommanduser none
+pubkeyacceptedalgorithms ssh-ed25519-cert-v01@openssh.com,ecdsa-sha2-nistp256-cert-v01@openssh.com,ecdsa-sha2-nistp384-cert-v01@openssh.com,ecdsa-sha2-nistp521-cert-v01@openssh.com,sk-ssh-ed25519-cert-v01@openssh.com,sk-ecdsa-sha2-nistp256-cert-v01@openssh.com,rsa-sha2-512-cert-v01@openssh.com,rsa-sha2-256-cert-v01@openssh.com,ssh-ed25519,ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521,sk-ssh-ed25519@openssh.com,sk-ecdsa-sha2-nistp256@openssh.com,rsa-sha2-512,rsa-sha2-256
+authorizedkeysfile .ssh/authorized_keys
+pubkeyauthoptions none

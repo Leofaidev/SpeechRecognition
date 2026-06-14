@@ -1,0 +1,2 @@
+256 SHA256:3W3GHaAg87+7bZdBmtHrS0r3MvfSfdnQw1FDcRfxjio root@leo-VMware-Virtual-Platform (ED25519)
+ii  openssh-server 1:10.2p1-2ubuntu3.2 amd64        secure shell (SSH) server, for secure access from remote machines

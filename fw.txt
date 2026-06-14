@@ -1,0 +1,5 @@
+ERROR: In order to run this script, you need to be root
+ERROR: In order to run this script, you need to be root
+ERROR: In order to run this script, you need to be root
+LISTEN 0      4096         0.0.0.0:22        0.0.0.0:*          
+LISTEN 0      4096            [::]:22           [::]:*          

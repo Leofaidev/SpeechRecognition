@@ -1,0 +1,5 @@
+[5357] Jun 13 11:39:55 Failed loading /etc/dropbear/dropbear_ecdsa_host_key
+[5357] Jun 13 11:39:55 Not backgrounding
+[5358] Jun 13 11:39:59 Child connection from 192.168.153.1:63229
+[5358] Jun 13 11:39:59 Failed loading /etc/dropbear/dropbear_ecdsa_host_key
+[5358] Jun 13 11:39:59 Exit before auth from <192.168.153.1:63229>: (user 'claude', 0 fails): Error reading: Connection reset by peer

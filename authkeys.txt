@@ -1,0 +1,6 @@
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIL1cOimMvprgWV/7lmJMU5hHAzs3CDw7kGzDAJ4Bbkt8 leo1@COMPAQ3
+total 12
+drwx------  2 claude claude 4096 Jun 13 11:17 .
+drwxr-x--- 17 claude claude 4096 Jun 13 11:17 ..
+-rw-------  1 claude claude   94 Jun 13 11:17 authorized_keys
+#PubkeyAuthentication yes
