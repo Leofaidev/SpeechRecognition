@@ -70,6 +70,7 @@
   "settings_minimize_tray": "最小化至系統匣",
   "settings_expand_after_session": "工作階段結束後展開",
   "settings_tray_notify": "系統匣通知",
+  "settings_auto_start_login": "登入時自動啟動",
   "settings_auto_start": "隨Windows自動啟動",
   "settings_model_section": "Whisper模型",
   "settings_model_label": "模型",

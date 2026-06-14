@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import sys
 import threading
 from pathlib import Path
 from typing import Callable
@@ -173,7 +174,9 @@ class SettingsPanel(BasePanel):
         row += 1
         self._auto_start = ctk.BooleanVar(
             value=self._config.get("auto_start", False))
-        ctk.CTkCheckBox(scroll, text=t("settings_auto_start"),
+        _auto_start_key = ("settings_auto_start" if sys.platform == "win32"
+                           else "settings_auto_start_login")
+        ctk.CTkCheckBox(scroll, text=t(_auto_start_key),
                         variable=self._auto_start,
                         command=self._on_auto_start).grid(
             row=row, column=0, columnspan=2, sticky="w", padx=12, pady=4)

@@ -62,6 +62,7 @@
   "settings_tray_section": "Infobereich",
   "settings_minimize_tray": "In Infobereich minimieren",
   "settings_tray_notify": "Infobereichsbenachrichtigungen",
+  "settings_auto_start_login": "Automatisch beim Anmelden starten",
   "settings_auto_start": "Autostart mit Windows",
   "settings_model_section": "Whisper-Modell",
   "settings_model_label": "Modell",

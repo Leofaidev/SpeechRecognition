@@ -63,6 +63,7 @@
   "settings_minimize_tray": "Minimize to Tray",
   "settings_tray_notify": "Tray Notifications",
   "settings_auto_start": "Auto-Start with Windows",
+  "settings_auto_start_login": "Auto-Start on Login",
   "settings_model_section": "Whisper Model",
   "settings_model_label": "Model",
   "settings_hf_token_label": "HuggingFace Token",

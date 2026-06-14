@@ -70,6 +70,7 @@
   "settings_minimize_tray": "最小化到托盘",
   "settings_expand_after_session": "会话结束后展开",
   "settings_tray_notify": "托盘通知",
+  "settings_auto_start_login": "登录时自动启动",
   "settings_auto_start": "随Windows自动启动",
   "settings_model_section": "Whisper模型",
   "settings_model_label": "模型",

@@ -69,6 +69,7 @@
   "settings_minimize_tray": "Pienennä järjestelmäpalkkiin",
   "settings_expand_after_session": "Laajenna istunnon jälkeen",
   "settings_tray_notify": "Järjestelmäpalkin ilmoitukset",
+  "settings_auto_start_login": "Käynnistä automaattisesti kirjautuessa",
   "settings_auto_start": "Käynnistä automaattisesti Windowsin kanssa",
   "settings_model_section": "Whisper-malli",
   "settings_model_label": "Malli",

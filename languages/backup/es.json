@@ -62,6 +62,7 @@
   "settings_tray_section": "Bandeja del Sistema",
   "settings_minimize_tray": "Minimizar a la Bandeja",
   "settings_tray_notify": "Notificaciones de Bandeja",
+  "settings_auto_start_login": "Inicio Automático al Iniciar Sesión",
   "settings_auto_start": "Inicio Automático con Windows",
   "settings_model_section": "Modelo Whisper",
   "settings_model_label": "Modelo",
