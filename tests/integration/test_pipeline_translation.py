@@ -44,6 +44,11 @@ def test_finnish_wav_translated_to_english(tmp_path):
             "translation_engine": "local",
             "source_language": "auto",
             "target_language": "en",
+            # finnish_10s.wav is a synthetic sine-wave fixture; force Finnish
+            # mode in Whisper and raise the bad-audio threshold so the
+            # translation pipeline is exercised even with non-speech audio.
+            "whisper_language": "fi",
+            "bad_audio_threshold": 1.1,
             "sessions_dir": str(tmp_path / "sessions"),
             "dictionary_file": str(tmp_path / "dictionary.json"),
         }
@@ -61,7 +66,7 @@ def test_finnish_wav_translated_to_english(tmp_path):
     assert err is None, f"Pipeline error: {err}"
     assert result is not None and result.ok, f"Pipeline not ok: {result}"
 
-    # At least one segment should be Finnish
+    # Language is forced to Finnish via whisper_language config
     langs = {seg.language for seg in result.segments}
     assert "Finnish" in langs, (
         f"Expected Finnish language detection, got: {langs}"
@@ -92,6 +97,9 @@ def test_translation_language_prefix_in_txt(tmp_path):
             "translation_engine": "local",
             "source_language": "auto",
             "target_language": "en",
+            # See note in test_finnish_wav_translated_to_english
+            "whisper_language": "fi",
+            "bad_audio_threshold": 1.1,
             "output_fields": {
                 "timestamp": True,
                 "speaker": True,

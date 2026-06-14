@@ -12,6 +12,7 @@ Requires faster-whisper tiny model.  Pass --integration to run.
 """
 from __future__ import annotations
 
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -20,6 +21,11 @@ import pytest
 
 FIXTURES = Path(__file__).parent.parent / "fixtures"
 SRC = Path(__file__).parent.parent.parent / "src"
+
+# Subprocesses launched by these tests start fresh Python interpreters that
+# do not inherit the pytest PYTHONPATH setting from pytest.ini, so we must
+# pass src/ explicitly via the environment.
+_ENV = {**os.environ, "PYTHONPATH": str(SRC)}
 
 
 @pytest.mark.integration
@@ -39,6 +45,7 @@ def test_cli_batch_txt_and_json(tmp_path):
         capture_output=True,
         text=True,
         cwd=str(SRC.parent),  # repo root so ConfigStore finds defaults
+        env=_ENV,
     )
 
     assert result.returncode == 0, (
@@ -65,6 +72,7 @@ def test_cli_single_file_exit_zero(tmp_path):
         capture_output=True,
         text=True,
         cwd=str(SRC.parent),
+        env=_ENV,
     )
 
     assert result.returncode == 0, (
@@ -85,6 +93,7 @@ def test_cli_nonexistent_file_exits_nonzero():
         capture_output=True,
         text=True,
         cwd=str(SRC.parent),
+        env=_ENV,
     )
 
     assert result.returncode == 3, (
@@ -101,6 +110,7 @@ def test_cli_no_input_exits_nonzero():
         capture_output=True,
         text=True,
         cwd=str(SRC.parent),
+        env=_ENV,
     )
     assert result.returncode == 2, (
         f"Expected exit code 2, got {result.returncode}.\n"

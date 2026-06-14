@@ -69,7 +69,7 @@ def test_full_pipeline_file_txt_and_json(tmp_path):
 
     # At least one segment should have transcribed text
     json_data = json.loads(json_files[0].read_text(encoding="utf-8"))
-    texts = [seg.get("text", "") for seg in json_data.get("segments", [])]
+    texts = [seg.get("text", "") for seg in json_data]  # writer outputs a JSON array
     assert any(t.strip() for t in texts), "No transcribed text found in JSON output"
 
 
