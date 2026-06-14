@@ -141,7 +141,8 @@ class SessionHistoryPanel(BasePanel):
         self._content_canvas.bind("<Configure>", self._on_canvas_resize)
 
         # Mouse-wheel scrolling anywhere inside the panel
-        self._content_canvas.bind("<MouseWheel>", self._on_mousewheel)
+        for seq in ("<MouseWheel>", "<Button-4>", "<Button-5>"):
+            self._content_canvas.bind(seq, self._on_mousewheel)
 
         self._selected_id: str | None = None
         self._row_items: dict[str, tuple[ctk.CTkFrame, int]] = {}
@@ -168,7 +169,13 @@ class SessionHistoryPanel(BasePanel):
             scrollregion=(0, 0, event.width, event.height))
 
     def _on_mousewheel(self, event) -> None:
-        self._content_canvas.yview_scroll(int(-1 * event.delta / 120), "units")
+        if event.num == 4:
+            delta = -1
+        elif event.num == 5:
+            delta = 1
+        else:
+            delta = int(-1 * event.delta / 120)
+        self._content_canvas.yview_scroll(delta, "units")
 
     # ------------------------------------------------------------------
     # Data / selection
@@ -223,7 +230,8 @@ class SessionHistoryPanel(BasePanel):
                                    anchor=_COLUMNS[col][3])
                 lbl.grid(row=0, column=col, padx=(8, 4), pady=3, sticky="ew")
                 lbl.bind("<Button-1>", lambda e, k=sid: self._select_row(k))
-                lbl.bind("<MouseWheel>", self._on_mousewheel)
+                for seq in ("<MouseWheel>", "<Button-4>", "<Button-5>"):
+                    lbl.bind(seq, self._on_mousewheel)
 
             if outdated:
                 lbl_out = ctk.CTkLabel(row_frame,
@@ -231,9 +239,11 @@ class SessionHistoryPanel(BasePanel):
                               text_color="#ff9800")
                 lbl_out.grid(row=0, column=4, padx=4)
                 lbl_out.bind("<Button-1>", lambda e, k=sid: self._select_row(k))
-                lbl_out.bind("<MouseWheel>", self._on_mousewheel)
+                for seq in ("<MouseWheel>", "<Button-4>", "<Button-5>"):
+                    lbl_out.bind(seq, self._on_mousewheel)
             row_frame.bind("<Button-1>", lambda e, k=sid: self._select_row(k))
-            row_frame.bind("<MouseWheel>", self._on_mousewheel)
+            for seq in ("<MouseWheel>", "<Button-4>", "<Button-5>"):
+                row_frame.bind(seq, self._on_mousewheel)
 
     # ------------------------------------------------------------------
     # Actions

@@ -167,6 +167,20 @@ class App(ctk.CTk):
         self._build_layout()
         self._register_hotkeys()
 
+        # Linux: mouse wheel uses Button-4/5 instead of MouseWheel.
+        # Walk up from the event target to find the nearest CTkScrollableFrame
+        # and scroll its internal canvas.
+        if sys.platform == "linux":
+            def _linux_scroll(event, direction: int) -> None:
+                w = event.widget
+                while w is not None:
+                    if hasattr(w, "_parent_canvas"):
+                        w._parent_canvas.yview_scroll(direction, "units")
+                        return
+                    w = getattr(w, "master", None)
+            self.bind_all("<Button-4>", lambda e: _linux_scroll(e, -1), add="+")
+            self.bind_all("<Button-5>", lambda e: _linux_scroll(e,  1), add="+")
+
         # Start signal meter polling
         self._meter_after: str | None = None
         self._poll_signal_level()
