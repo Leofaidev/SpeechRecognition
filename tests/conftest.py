@@ -20,6 +20,11 @@ def two_speaker_30s_mp3() -> Path:
 
 
 @pytest.fixture(scope="session")
+def combined_mp3() -> Path:
+    return FIXTURES_DIR / "combined.mp3"
+
+
+@pytest.fixture(scope="session")
 def silent_wav() -> Path:
     return FIXTURES_DIR / "silent.wav"
 

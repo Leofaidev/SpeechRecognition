@@ -1,8 +1,10 @@
 """CHK-142 — Speaker identification from a voice profile.
 
 Creates a voice profile for a speaker from a known audio sample, then
-processes another sample from the same speaker and verifies the profile
-name appears in the output instead of 'Speaker N'.
+processes the same file and verifies the profile name appears in the
+output instead of 'Speaker N'.
+
+Fixture: tests/fixtures/combined.mp3 — real speech (21 s, two speakers).
 
 Requires:
 - faster-whisper tiny model
@@ -32,8 +34,8 @@ def _skip_if_no_hf_token(hf_token):
 
 @pytest.mark.integration
 def test_speaker_identified_from_profile(tmp_path, hf_token):
-    """Profile created from two_speaker_30s.mp3; processing the same file should
-    identify the registered speaker by name, not as 'Speaker N'. (CHK-142)
+    """Profile created from combined.mp3 (real speech); processing the same
+    file should identify the registered speaker by name. (CHK-142)
     """
     _skip_if_no_hf_token(hf_token)
 
@@ -42,6 +44,7 @@ def test_speaker_identified_from_profile(tmp_path, hf_token):
     from gui.pipeline import PipelineRunner
     from library.storage import LibraryStorage
     from library.profile_creator import ProfileCreator
+    from library.groups import LibraryGroups
 
     library_root = tmp_path / "library"
     cfg = ConfigStore(
@@ -57,8 +60,8 @@ def test_speaker_identified_from_profile(tmp_path, hf_token):
         }
     )
 
-    # Create a voice profile named "TestSpeaker"
-    audio, sr = load(str(FIXTURES / "two_speaker_30s.mp3"))
+    # Create a voice profile named "TestSpeaker" from real speech audio
+    audio, sr = load(str(FIXTURES / "combined.mp3"))
     storage = LibraryStorage(library_root)
     creator = ProfileCreator(storage)
     folder, _meta = creator.create(
@@ -66,14 +69,17 @@ def test_speaker_identified_from_profile(tmp_path, hf_token):
         last="TestSpeaker", first="", middle="", nickname="",
         organisation="", position="", note="",
     )
-    group_name = folder  # create() returns folder_name str, not a Path
+    # speaker_group is a group name, not a profile folder — add the profile to
+    # a group so _match_speakers_to_group can find it via LibraryGroups.members()
+    group_name = "TestGroup"
+    LibraryGroups(storage).add_to_group(folder, group_name)
 
     # Process the same audio with the profile group active
     out_dir = tmp_path / "out"
     runner = PipelineRunner(cfg)
     result, err = run_pipeline_sync(
         runner, "start_file",
-        str(FIXTURES / "two_speaker_30s.mp3"),
+        str(FIXTURES / "combined.mp3"),
         output_dir=out_dir,
         formats=["json"],
         speaker_group=group_name,

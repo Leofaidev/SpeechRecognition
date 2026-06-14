@@ -44,6 +44,11 @@ def test_two_speaker_mp3_exists(two_speaker_30s_mp3):
     assert two_speaker_30s_mp3.stat().st_size > 0
 
 
+def test_combined_mp3_exists(combined_mp3):
+    assert combined_mp3.exists()
+    assert combined_mp3.stat().st_size > 0
+
+
 def test_silent_wav_exists(silent_wav):
     assert silent_wav.exists()
 
