@@ -231,6 +231,7 @@
   "restore_confirm_title": "Confirmar Restauración",
   "restore_confirm_msg": "Todos los datos actuales serán reemplazados. ¿Continuar?",
   "restore_done": "Restauración completa. {count} archivos.",
+  "restore_restarting": "Reiniciando...",
   "restore_failed": "Restauración fallida: {error}",
   "tray_open": "Abrir",
   "tray_mode": "Modo: {mode}",

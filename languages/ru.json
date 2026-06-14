@@ -256,6 +256,7 @@
   "restore_confirm_title": "Подтвердить восстановление",
   "restore_confirm_msg": "Все текущие данные будут заменены. Продолжить?",
   "restore_done": "Восстановление завершено. {count} файлов.",
+  "restore_restarting": "Перезапуск...",
   "restore_failed": "Восстановление не удалось: {error}",
 
   "tray_open": "Открыть",

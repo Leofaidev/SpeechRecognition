@@ -231,6 +231,7 @@
   "restore_confirm_title": "Vahvista palautus",
   "restore_confirm_msg": "Kaikki nykyiset tiedot korvataan. Jatketaanko?",
   "restore_done": "Palautus valmis. {count} tiedostoa.",
+  "restore_restarting": "Käynnistetään uudelleen...",
   "restore_failed": "Palautus epäonnistui: {error}",
   "tray_open": "Avaa",
   "tray_mode": "Tila: {mode}",

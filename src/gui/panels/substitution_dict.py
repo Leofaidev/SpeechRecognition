@@ -312,7 +312,14 @@ class _EntryEditDialog(ctk.CTkToplevel):
         self._build()
         self.update()          # flush Tk geometry so widgets render before grab
         self.grab_set()
-        self.after(100, self._src_entry.focus_force)
+        self._focus_id = self.after(100, self._src_entry.focus_force)
+
+    def destroy(self) -> None:
+        try:
+            self.after_cancel(self._focus_id)
+        except Exception:
+            pass
+        super().destroy()
 
     def _build(self) -> None:
         t = self._t

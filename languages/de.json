@@ -255,6 +255,7 @@
   "restore_confirm_title": "Wiederherstellung bestätigen",
   "restore_confirm_msg": "Alle aktuellen Daten werden ersetzt. Fortfahren?",
   "restore_done": "Wiederherstellung abgeschlossen. {count} Dateien.",
+  "restore_restarting": "Neustart...",
   "restore_failed": "Wiederherstellung fehlgeschlagen: {error}",
 
   "tray_open": "Öffnen",

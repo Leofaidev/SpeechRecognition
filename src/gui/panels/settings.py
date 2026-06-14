@@ -184,6 +184,7 @@ class SettingsPanel(BasePanel):
                 row=row, column=0, columnspan=2, sticky="w", padx=12, pady=4)
             row += 1
 
+        self._update_quality_warning()
 
     # ------------------------------------------------------------------
     # Mic monitor (live signal meter while Settings panel is visible)
@@ -287,11 +288,6 @@ class SettingsPanel(BasePanel):
 
     def _on_tray_notify(self) -> None:
         self._config.set("tray_notifications", self._tray_notify.get())
-
-    def update_strings(self, t: Callable) -> None:
-        super().update_strings(t)
-        self._scroll.destroy()
-        self.build()
 
     def _on_auto_start(self) -> None:
         enabled = self._auto_start.get()

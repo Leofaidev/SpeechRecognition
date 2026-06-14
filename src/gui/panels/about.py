@@ -6,9 +6,9 @@ import customtkinter as ctk
 
 from gui.panels.base import BasePanel
 
-APP_VERSION = "0.5.075"
+APP_VERSION = "0.5.076"
 APP_AUTHOR = "Leonid F"
-BUILD_TIMESTAMP = "2026-06-14  21:00"
+BUILD_TIMESTAMP = "2026-06-14  22:00"
 
 
 class AboutPanel(BasePanel):

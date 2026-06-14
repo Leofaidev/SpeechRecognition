@@ -846,7 +846,9 @@ class App(ctk.CTk):
                     try:
                         from library.retrainer import LibraryRetrainer
                         from library.profile_creator import _pyannote_embed
-                        LibraryRetrainer(storage, _pyannote_embed)._retrain_one(folder_name)
+                        _tok = self._config.get("huggingface_token", None)
+                        _embed_fn = lambda a, sr, _t=_tok: _pyannote_embed(a, sr, token=_t)
+                        LibraryRetrainer(storage, _embed_fn)._retrain_one(folder_name)
                     except Exception:
                         pass
                 threading.Thread(target=_retrain, daemon=True).start()
@@ -1191,6 +1193,7 @@ class App(ctk.CTk):
 
         # Destroy all panels and recreate them with the new language
         for panel in self._panels.values():
+            panel.on_hide()
             panel.destroy()
         self._panels.clear()
         self._active_panel = None

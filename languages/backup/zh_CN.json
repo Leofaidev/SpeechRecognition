@@ -232,6 +232,7 @@
   "restore_confirm_title": "确认恢复",
   "restore_confirm_msg": "所有当前数据将被替换。继续？",
   "restore_done": "恢复完成。{count}个文件。",
+  "restore_restarting": "正在重启...",
   "restore_failed": "恢复失败：{error}",
   "tray_open": "打开",
   "tray_mode": "模式：{mode}",

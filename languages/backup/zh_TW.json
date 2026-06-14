@@ -232,6 +232,7 @@
   "restore_confirm_title": "確認還原",
   "restore_confirm_msg": "所有目前資料將被取代。繼續？",
   "restore_done": "還原完成。{count}個檔案。",
+  "restore_restarting": "正在重新啟動...",
   "restore_failed": "還原失敗：{error}",
   "tray_open": "開啟",
   "tray_mode": "模式：{mode}",

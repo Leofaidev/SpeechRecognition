@@ -302,7 +302,9 @@ class ProfileDialog(ctk.CTkToplevel):
         meta = storage.read_meta(self._folder_name)
         if not meta.samples:
             return
-        LibraryRetrainer(storage, _pyannote_embed)._retrain_one(self._folder_name)
+        _tok = self._config.get("huggingface_token", None)
+        _embed_fn = lambda a, sr, _t=_tok: _pyannote_embed(a, sr, token=_t)
+        LibraryRetrainer(storage, _embed_fn)._retrain_one(self._folder_name)
 
     def _set_retrain_status(self, msg: str) -> None:
         if hasattr(self, "_retrain_status"):
