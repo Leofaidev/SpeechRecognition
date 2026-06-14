@@ -72,4 +72,9 @@ def run_pipeline_sync(
     if not completed:
         box["error"] = f"Pipeline timed out after {timeout}s"
 
+    # Restore original callbacks so a stale background thread cannot fire
+    # into subsequent tests after a timeout.
+    runner._on_done = orig_done
+    runner._on_error = orig_error
+
     return box.get("result"), box.get("error")

@@ -57,6 +57,7 @@ class SettingsPanel(BasePanel):
         self.grid_columnconfigure(0, weight=1)
 
         scroll = ctk.CTkScrollableFrame(self)
+        self._scroll = scroll
         scroll.grid(row=0, column=0, sticky="nsew", padx=8, pady=8)
         self.grid_rowconfigure(0, weight=1)
         scroll.grid_columnconfigure(1, weight=1)
@@ -172,15 +173,16 @@ class SettingsPanel(BasePanel):
                         command=self._on_tray_notify).grid(
             row=row, column=0, columnspan=2, sticky="w", padx=12, pady=4)
         row += 1
-        self._auto_start = ctk.BooleanVar(
-            value=self._config.get("auto_start", False))
-        _auto_start_key = ("settings_auto_start" if sys.platform == "win32"
-                           else "settings_auto_start_login")
-        ctk.CTkCheckBox(scroll, text=t(_auto_start_key),
-                        variable=self._auto_start,
-                        command=self._on_auto_start).grid(
-            row=row, column=0, columnspan=2, sticky="w", padx=12, pady=4)
-        row += 1
+        if sys.platform != "darwin":
+            self._auto_start = ctk.BooleanVar(
+                value=self._config.get("auto_start", False))
+            _auto_start_key = ("settings_auto_start" if sys.platform == "win32"
+                               else "settings_auto_start_login")
+            ctk.CTkCheckBox(scroll, text=t(_auto_start_key),
+                            variable=self._auto_start,
+                            command=self._on_auto_start).grid(
+                row=row, column=0, columnspan=2, sticky="w", padx=12, pady=4)
+            row += 1
 
 
     # ------------------------------------------------------------------
@@ -285,6 +287,11 @@ class SettingsPanel(BasePanel):
 
     def _on_tray_notify(self) -> None:
         self._config.set("tray_notifications", self._tray_notify.get())
+
+    def update_strings(self, t: Callable) -> None:
+        super().update_strings(t)
+        self._scroll.destroy()
+        self.build()
 
     def _on_auto_start(self) -> None:
         enabled = self._auto_start.get()

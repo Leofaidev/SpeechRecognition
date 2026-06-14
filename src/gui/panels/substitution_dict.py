@@ -312,13 +312,12 @@ class _EntryEditDialog(ctk.CTkToplevel):
         self._build()
         self.update()          # flush Tk geometry so widgets render before grab
         self.grab_set()
-        self._src_entry.focus_set()
-        self.bind("<Return>", lambda _e: self._confirm())
+        self.after(100, self._src_entry.focus_force)
 
     def _build(self) -> None:
         t = self._t
 
-        first = True
+        entries: list = []
         for label_key, var in [
             ("dict_col_source", self._src),
             ("dict_col_replacement", self._rep),
@@ -329,9 +328,11 @@ class _EntryEditDialog(ctk.CTkToplevel):
             e = ctk.CTkEntry(row, textvariable=var)
             e.pack(side="left", fill="x", expand=True)
             bind_context_menu(e, t=t)
-            if first:
-                self._src_entry = e
-                first = False
+            entries.append(e)
+        self._src_entry, self._rep_entry = entries
+        # Tab-like flow: Source→Return moves focus to Replacement; Replacement→Return confirms.
+        self._src_entry.bind("<Return>", lambda _e: self._rep_entry.focus_set())
+        self._rep_entry.bind("<Return>", lambda _e: self._confirm())
 
         btn_frame = ctk.CTkFrame(self, fg_color="transparent")
         btn_frame.pack(fill="x", padx=12, pady=(14, 12))

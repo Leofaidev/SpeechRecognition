@@ -274,7 +274,12 @@ def test_retrain_20_profiles_under_5min(tmp_path):
     summary = retrainer.retrain_all()
     elapsed = time.perf_counter() - t0
 
-    assert summary.retrained + summary.failed == 20
+    assert summary.failed == 0, (
+        f"{summary.failed} profile(s) failed retraining: {summary.errors}"
+    )
+    assert summary.retrained == 20, (
+        f"Expected 20 retrained, got {summary.retrained}"
+    )
     assert elapsed < 300.0, (
         f"CHK-153 FAILED: retraining 20 profiles took {elapsed:.1f}s (target < 300s)"
     )

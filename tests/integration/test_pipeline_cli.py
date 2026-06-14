@@ -46,6 +46,7 @@ def test_cli_batch_txt_and_json(tmp_path):
         text=True,
         cwd=str(SRC.parent),  # repo root so ConfigStore finds defaults
         env=_ENV,
+        timeout=300,
     )
 
     assert result.returncode == 0, (
@@ -73,6 +74,7 @@ def test_cli_single_file_exit_zero(tmp_path):
         text=True,
         cwd=str(SRC.parent),
         env=_ENV,
+        timeout=300,
     )
 
     assert result.returncode == 0, (
@@ -94,6 +96,7 @@ def test_cli_nonexistent_file_exits_nonzero():
         text=True,
         cwd=str(SRC.parent),
         env=_ENV,
+        timeout=60,
     )
 
     assert result.returncode == 3, (
@@ -111,6 +114,7 @@ def test_cli_no_input_exits_nonzero():
         text=True,
         cwd=str(SRC.parent),
         env=_ENV,
+        timeout=60,
     )
     assert result.returncode == 2, (
         f"Expected exit code 2, got {result.returncode}.\n"

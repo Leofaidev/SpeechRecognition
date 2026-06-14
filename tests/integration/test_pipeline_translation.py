@@ -72,12 +72,14 @@ def test_finnish_wav_translated_to_english(tmp_path):
         f"Expected Finnish language detection, got: {langs}"
     )
 
-    # Translation pipeline must have run (translated_text set on at least one
-    # non-bad-audio segment).  We don't require it to differ from the source
-    # text because the synthetic fixture may produce identical output from
-    # OPUS-MT for very short or degenerate Whisper output.
-    assert any(seg.translated_text is not None for seg in result.segments), (
-        "Expected translated_text to be set on at least one segment"
+    # Translation pipeline must have run and set translated_text on all
+    # non-bad-audio segments. Note: with a synthetic sine-wave fixture,
+    # OPUS-MT may produce output identical to the Whisper garbage text —
+    # that is acceptable; we only verify the field was populated.
+    assert result.segments, "Whisper produced no segments from finnish_10s.wav"
+    assert all(seg.translated_text is not None for seg in result.segments), (
+        "Expected translated_text set on every segment "
+        "(translation engine may be silently failing)"
     )
 
 

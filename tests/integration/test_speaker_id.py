@@ -87,13 +87,11 @@ def test_speaker_identified_from_profile(tmp_path, hf_token):
     )
 
     assert err is None, f"Pipeline error: {err}"
-    assert result is not None and result.ok
-
-    if not result.segments:
-        pytest.skip(
-            "Diarization returned no segments for synthetic fixture — "
-            "test_speaker_identified_from_profile requires real speech audio"
-        )
+    assert result is not None and result.ok, f"Pipeline not ok: {result}"
+    assert result.segments, (
+        "Diarization returned no segments from combined.mp3 (21s real speech) — "
+        "check pyannote model version and that HF_TOKEN is valid (CHK-142)"
+    )
 
     speaker_names = {seg.speaker_id for seg in result.segments}
     assert "TestSpeaker" in speaker_names, (
