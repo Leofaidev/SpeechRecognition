@@ -249,21 +249,12 @@ def test_retrain_20_profiles_under_5min(tmp_path):
         pytest.skip("CUDA not available — cannot run CHK-153")
 
     from audio.ingest import load
-    from config.store import ConfigStore
     from library.storage import LibraryStorage
-    from library.profile_creator import ProfileCreator
-    from library.retrainer import Retrainer
+    from library.profile_creator import ProfileCreator, _pyannote_embed
+    from library.retrainer import LibraryRetrainer
 
     FIXTURES = Path(__file__).parent.parent / "fixtures"
     library_root = tmp_path / "library"
-    cfg = ConfigStore(
-        overrides={
-            "whisper_model": "medium",
-            "gpu_enabled": True,
-            "licence_accepted": True,
-            "library_root": str(library_root),
-        }
-    )
 
     audio, sr = load(str(FIXTURES / "english_10s.wav"))
     storage = LibraryStorage(library_root)
@@ -277,12 +268,13 @@ def test_retrain_20_profiles_under_5min(tmp_path):
             organisation="", position="", note="",
         )
 
-    retrainer = Retrainer(storage, cfg)
+    embed_fn = lambda a, sr: _pyannote_embed(a, sr, token=hf_token)
+    retrainer = LibraryRetrainer(storage, embed_fn)
     t0 = time.perf_counter()
     summary = retrainer.retrain_all()
     elapsed = time.perf_counter() - t0
 
-    assert summary.total == 20
+    assert summary.retrained + summary.failed == 20
     assert elapsed < 300.0, (
         f"CHK-153 FAILED: retraining 20 profiles took {elapsed:.1f}s (target < 300s)"
     )
