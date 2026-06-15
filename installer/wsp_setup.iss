@@ -75,7 +75,7 @@ Source: "..\dist\wsp\*"; DestDir: "{app}"; \
 [Icons]
 Name: "{group}\{#AppName}";                   Filename: "{app}\{#AppExeName}"
 Name: "{group}\{cm:UninstallProgram,{#AppName}}"; Filename: "{uninstallexe}"
-Name: "{commondesktop}\{#AppName}";           Filename: "{app}\{#AppExeName}"; \
+Name: "{userdesktop}\{#AppName}";             Filename: "{app}\{#AppExeName}"; \
     Tasks: desktopicon
 
 ; ---------------------------------------------------------------------------
