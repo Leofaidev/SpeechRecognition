@@ -197,6 +197,23 @@ class App(ctk.CTk):
                 self.iconbitmap(path)
             except Exception:
                 pass
+            try:
+                import ctypes
+                IMAGE_ICON = 1
+                LR_LOADFROMFILE = 0x10
+                LR_DEFAULTSIZE = 0x40
+                WM_SETICON = 0x0080
+                ICON_BIG = 1
+                hwnd = ctypes.windll.user32.GetParent(self.winfo_id())
+                if not hwnd:
+                    hwnd = self.winfo_id()
+                hicon = ctypes.windll.user32.LoadImageW(
+                    None, path, IMAGE_ICON, 0, 0, LR_LOADFROMFILE | LR_DEFAULTSIZE
+                )
+                if hicon:
+                    ctypes.windll.user32.SendMessageW(hwnd, WM_SETICON, ICON_BIG, hicon)
+            except Exception:
+                pass
             return
         # Linux: set _NET_WM_ICON via Xlib — iconphoto() is unreliable on Xwayland.
         # Resize to 128x128: X11 max request is 65535 units; 256x256 (65538) exceeds it.
@@ -561,8 +578,8 @@ class App(ctk.CTk):
         else:
             self._status_label.configure(text=t("status_processing"))
             self._btn_record.configure(state="disabled")
-        icon_path = self._icon_recording if recording else self._icon_idle
-        self._set_window_icon(icon_path)
+        if recording:
+            self._set_window_icon(self._icon_recording)
         if sys.platform != "win32":
             base_title = self._lang.t("app_title")
             self.title(("● " + base_title) if recording else base_title)
@@ -683,6 +700,7 @@ class App(ctk.CTk):
         self.after(3000, self._reset_status_if_idle)
         self._btn_record.configure(
             text=t("btn_start"), state="normal", command=self._start_recording)
+        self._set_window_icon(self._icon_idle)
 
         if result.ok and result.segments:
             if self._mode == "short":
@@ -734,6 +752,7 @@ class App(ctk.CTk):
     def _on_capture_error(self, error: str) -> None:
         self._recording = False
         self._rec_dot.set_recording(False)
+        self._set_window_icon(self._icon_idle)
         t = self._lang.t
         self._btn_record.configure(
             text=t("btn_start"), state="normal", command=self._start_recording)
@@ -745,6 +764,7 @@ class App(ctk.CTk):
             self._status_label.configure(text=self._lang.t("status_idle"))
 
     def _handle_error(self, error: str) -> None:
+        self._set_window_icon(self._icon_idle)
         t = self._lang.t
         self._status_label.configure(text=t("error_title"))
         self._btn_record.configure(
@@ -948,6 +968,7 @@ class App(ctk.CTk):
         self.after(3000, self._reset_status_if_idle)
         self._btn_record.configure(
             text=t("btn_start"), state="normal", command=self._start_recording)
+        self._set_window_icon(self._icon_idle)
         self._show_main_view()
 
         if result.ok and result.segments:
