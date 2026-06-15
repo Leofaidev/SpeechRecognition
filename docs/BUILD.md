@@ -67,7 +67,8 @@ This produces `dist/wsp/` containing the bundled application. The spec:
 **Notes on the console flag:**
 `wsp.exe` is built with `console=True` so that CLI output (`--input`, `--backup`, etc.) is
 visible in a terminal. When launched via the desktop shortcut (no arguments), `main.py`
-calls `FreeConsole()` immediately to suppress the console window before opening the GUI.
+re-launches itself using `pythonw.exe` (no-console Python) and exits, so no console window
+ever appears. `FreeConsole()` is used only as a fallback if `pythonw.exe` is not found.
 
 ---
 
@@ -139,13 +140,7 @@ CHK-123 through CHK-135 in `docs/WorkPlan.md`. Key checks:
 2. Create the release on GitHub:
    - Attach `installer\Output\wsp_setup.exe`
    - Attach the approved wireframe PDF
-   - Paste the release notes (see `docs/WorkPlan.md` T-125)
-
-Release notes must include:
-- Version number and release date
-- Feature list
-- Known issues (Russian/Chinese translation quality pending native-speaker review)
-- Full list of bundled libraries and their licences
+   - Paste the contents of `docs/RELEASE_NOTES_v1.0.md`
 
 ---
 
