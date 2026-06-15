@@ -58,7 +58,7 @@ cd SpeechRecognition
 python -m venv .venv
 .venv\Scripts\activate
 pip install -r requirements.txt
-python src/main.py
+python main.py
 ```
 
 > **Примечание:** PyAudio требует Microsoft C++ Build Tools и PortAudio через vcpkg перед `pip install`.

@@ -58,7 +58,7 @@ cd SpeechRecognition
 python -m venv .venv
 .venv\Scripts\activate
 pip install -r requirements.txt
-python src/main.py
+python main.py
 ```
 
 > **注意：** 在 `pip install` 之前，PyAudio 需要 Microsoft C++ Build Tools 和透過 vcpkg 安裝的 PortAudio。
