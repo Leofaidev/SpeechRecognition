@@ -171,7 +171,7 @@ var
   LicStr:     String;
 begin
   ModelPath := AppDir + '\models\faster-whisper-' + ModelSize;
-  ModelPath := StringReplace(ModelPath, '\', '\\', [rfReplaceAll]);
+  StringChangeEx(ModelPath, '\', '\\', False);
 
   if AcceptedLicence then LicStr := 'true' else LicStr := 'false';
 
@@ -188,6 +188,12 @@ begin
   end;
 end;
 
+function GetDiskFreeSpaceEx(lpDirectoryName: String;
+    var lpFreeBytesAvailable: Int64;
+    var lpTotalNumberOfBytes: Int64;
+    var lpTotalNumberOfFreeBytes: Int64): Boolean;
+  external 'GetDiskFreeSpaceExW@kernel32.dll stdcall';
+
 { =========================================================================
   Disk space check — called from NextButtonClick on wpSelectDir
   ========================================================================= }
@@ -195,7 +201,7 @@ end;
 function CheckInstallDirSpace(): Boolean;
 var
   FreeAvail, TotalBytes, TotalFree: Int64;
-  FreeMB: Double;
+  FreeGB: Integer;
   Msg: String;
 begin
   Result := True;
@@ -204,13 +210,12 @@ begin
 
   if FreeAvail < MIN_DISK_BYTES then
   begin
-    FreeMB  := FreeAvail  / 1073741824.0;
-    Msg := Format(
-      'Insufficient disk space on the selected drive.%n%n' +
-      'Required:   10.0 GB%n' +
-      'Available:  %.1f GB%n%n' +
-      'Please choose a different installation path or free up disk space.',
-      [FreeMB]);
+    FreeGB := FreeAvail div 1073741824;
+    Msg :=
+      'Insufficient disk space on the selected drive.' + #13#10 + #13#10 +
+      'Required:   10 GB' + #13#10 +
+      'Available:  ' + IntToStr(FreeGB) + ' GB' + #13#10 + #13#10 +
+      'Please choose a different installation path or free up disk space.';
     MsgBox(Msg, mbError, MB_OK);
     Result := False;
   end;
@@ -394,24 +399,24 @@ begin
   HFDeclineRB.Checked := True;
 end;
 
+function AddModelRB(const Caption: String; TopPos: Integer): TRadioButton;
+var
+  R: TRadioButton;
+begin
+  R          := TRadioButton.Create(ModelSelectPage);
+  R.Parent   := ModelSelectPage.Surface;
+  R.Left     := 0;
+  R.Top      := TopPos;
+  R.Width    := ModelSelectPage.SurfaceWidth;
+  R.Caption  := Caption;
+  R.Checked  := False;
+  Result     := R;
+end;
+
 procedure CreateModelSelectPage();
 var
   InfoLabel: TLabel;
   TopY:      Integer;
-
-  function AddModelRB(const Caption: String; TopPos: Integer): TRadioButton;
-  var R: TRadioButton;
-  begin
-    R          := TRadioButton.Create(ModelSelectPage);
-    R.Parent   := ModelSelectPage.Surface;
-    R.Left     := 0;
-    R.Top      := TopPos;
-    R.Width    := ModelSelectPage.SurfaceWidth;
-    R.Caption  := Caption;
-    R.Checked  := False;
-    Result     := R;
-  end;
-
 begin
   ModelSelectPage := CreateCustomPage(
     wpSelectDir,
@@ -444,7 +449,7 @@ begin
   { Download progress page — shared for VLC and model files }
   DownloadPage := CreateDownloadPage(
     SetupMessage(msgWizardInstalling),
-    SetupMessage(msgDiskSpaceDetails),
+    'Downloading files, please wait...',
     nil);
 
   CreateHuggingFacePage();
