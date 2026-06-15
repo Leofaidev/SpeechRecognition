@@ -85,6 +85,17 @@ At least one of `--lastname`, `--firstname`, `--nickname` is recommended; all na
 wsp.exe --profile-create --audio sample.mp3 --lastname Smith --firstname John --organisation "Acme Corp"
 ```
 
+```
+Profile created: Smith_John__
+```
+
+If the audio is shorter than 10 seconds a warning is printed but the profile is still created:
+
+```
+Warning: Audio shorter than 10 seconds — profile has low confidence.
+Profile created: Smith_John__
+```
+
 #### Delete a profile
 
 ```
@@ -93,10 +104,30 @@ wsp.exe --profile-delete --name "<name>"
 
 `<name>` is the full folder name of the profile (e.g. `Smith_John__`).
 
+**Example:**
+
+```bat
+wsp.exe --profile-delete --name "Smith_John__"
+```
+
+```
+Profile deleted: Smith_John__
+```
+
 #### Rename a profile
 
 ```
 wsp.exe --profile-rename --name "<current>" --new-name "<new>"
+```
+
+**Example:**
+
+```bat
+wsp.exe --profile-rename --name "Smith_John__" --new-name "Doe_Jane__"
+```
+
+```
+Profile renamed: Smith_John__ -> Doe_Jane__
 ```
 
 ---
@@ -110,6 +141,16 @@ wsp.exe --dict-export "<path>"
 ```
 
 Writes the current substitution dictionary to a CSV file at `<path>`.
+
+**Example:**
+
+```bat
+wsp.exe --dict-export "C:\Exports\dictionary.csv"
+```
+
+```
+Exported 42 entries to: C:\Exports\dictionary.csv
+```
 
 #### Import dictionary
 
@@ -146,8 +187,7 @@ Before restoring, automatically creates a safety backup of the current state and
 
 ```
 Safety backup created at: C:\Users\Leo1\AppData\Local\SpeechRecognitionProgram\backups\safety_20260519_120000.zip
-Restoring from: C:\Backups\wsp_backup.zip
-Restore complete.
+Restore complete. (87 files restored)
 ```
 
 ---
@@ -163,11 +203,13 @@ wsp.exe --list-sessions
 Prints a table of all stored sessions:
 
 ```
-ID                                   Date                 Source
-------------------------------------+--------------------+---------
-3f2a1b4c-...                         2026-05-19 12:00:00  file
-a1b2c3d4-...                         2026-05-18 09:30:00  microphone
+Session ID                               Created                     Type          Segments  Outdated
+---------------------------------------------------------------------------------------------------------
+3f2a1b4c-9e2d-4a1b-b8c7-123456789abc     2026-05-19T12:00:00          file                 5  No
+a1b2c3d4-5e6f-7890-abcd-ef1234567890     2026-05-18T09:30:00          microphone          12  Yes
 ```
+
+`Outdated` is `Yes` when output files have not been regenerated since the last speaker relabelling.
 
 #### Regenerate output for a session
 
@@ -176,6 +218,17 @@ wsp.exe --regenerate-output --session "<session_id>" --output-folder "<path>"
 ```
 
 Re-writes output files for the specified session using the current output content configuration. Files are named with the standard `_WSP` convention; numeric suffixes are appended on collision.
+
+**Example:**
+
+```bat
+wsp.exe --regenerate-output --session "3f2a1b4c-9e2d-4a1b-b8c7-123456789abc" --output-folder C:\Output
+```
+
+```
+Output written: C:\Output\interview_WSP.txt
+Output written: C:\Output\interview_WSP.srt
+```
 
 ---
 
