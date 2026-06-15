@@ -64,10 +64,11 @@ class BatchQueuePanel(BasePanel):
         for path in self._files:
             frame = ctk.CTkFrame(self._file_list, fg_color="transparent")
             frame.pack(fill="x", pady=1)
-            ctk.CTkLabel(frame, text=Path(path).name).pack(
-                side="left", padx=8)
-            frame.bind("<Button-1>",
-                       lambda e, p=path: setattr(self, "_selected", p))
+            lbl = ctk.CTkLabel(frame, text=Path(path).name)
+            lbl.pack(side="left", padx=8)
+            _sel = lambda e, p=path: setattr(self, "_selected", p)
+            frame.bind("<Button-1>", _sel)
+            lbl.bind("<Button-1>", _sel)
 
     def _add_files(self) -> None:
         if self._locked:

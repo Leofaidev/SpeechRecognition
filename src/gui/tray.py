@@ -20,7 +20,12 @@ try:
 except ImportError:
     _PYSTRAY_AVAILABLE = False
 
-_ASSETS_DIR = Path(__file__).resolve().parent.parent.parent / "assets"
+import sys as _sys
+_ASSETS_DIR = (
+    Path(_sys._MEIPASS) / "assets"
+    if getattr(_sys, "frozen", False)
+    else Path(__file__).resolve().parent.parent.parent / "assets"
+)
 
 
 def _make_icon_image(recording: bool = False) -> "Image.Image":

@@ -13,7 +13,11 @@ from typing import Callable
 
 # platforms/ lives at the repo root (parent of src/); add it to sys.path so
 # that "from platforms.xxx import ..." works when running via -m gui.app.
-_repo_root = str(Path(__file__).resolve().parent.parent.parent)
+if getattr(sys, "frozen", False):
+    # Frozen: _MEIPASS = {app}\_internal\; repo root is one level up.
+    _repo_root = str(Path(sys._MEIPASS).parent)
+else:
+    _repo_root = str(Path(__file__).resolve().parent.parent.parent)
 if _repo_root not in sys.path:
     sys.path.insert(0, _repo_root)
 
@@ -155,7 +159,10 @@ class App(ctk.CTk):
         ctk.set_default_color_theme("blue")
 
         # App icon — store both paths for idle/recording swap
-        _assets = Path(__file__).resolve().parent.parent.parent / "assets"
+        if getattr(sys, "frozen", False):
+            _assets = Path(sys._MEIPASS) / "assets"
+        else:
+            _assets = Path(__file__).resolve().parent.parent.parent / "assets"
         if sys.platform == "win32":
             self._icon_idle = str(_assets / "WSP.ico")
             self._icon_recording = str(_assets / "WSP_recording.ico")
@@ -1199,6 +1206,19 @@ class App(ctk.CTk):
     # ------------------------------------------------------------------
 
     def _on_language_change(self, lang_code: str) -> None:
+        try:
+            self._do_language_change(lang_code)
+        except Exception:
+            import traceback, os
+            log = os.path.join(os.path.expanduser("~"), "Desktop", "wsp_lang_error.txt")
+            try:
+                with open(log, "w", encoding="utf-8") as _f:
+                    traceback.print_exc(file=_f)
+            except OSError:
+                pass
+            raise
+
+    def _do_language_change(self, lang_code: str) -> None:
         self._lang.load(lang_code)
         self._config.set("ui_language", lang_code)
         t = self._lang.t

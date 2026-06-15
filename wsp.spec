@@ -30,6 +30,10 @@ datas += collect_data_files("customtkinter")
 # faster-whisper tokenizer configs
 datas += collect_data_files("faster_whisper")
 
+# pyannote.audio config and asset files (e.g. telemetry/config.yaml)
+datas += collect_data_files("pyannote.audio")
+datas += collect_data_files("pyannote.core")
+
 # Our own directories
 datas += [
     ("languages", "languages"),
