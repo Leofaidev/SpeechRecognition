@@ -94,8 +94,10 @@ Filename: "{app}\{#AppExeName}"; \
 const
   MIN_DISK_BYTES = 10737418240;  { 10 GB }
 
-  { Whisper model file list (same for all sizes) }
-  MODEL_FILES = 'model.bin|config.json|vocabulary.json|tokenizer.json|preprocessor_config.json';
+  { Whisper model files common to all sizes }
+  MODEL_FILES_COMMON = 'model.bin|config.json|tokenizer.json';
+  { Extra files only present in large-v3 }
+  MODEL_FILES_LARGE  = 'model.bin|config.json|vocabulary.json|tokenizer.json|preprocessor_config.json';
 
   HF_LICENCE_TEXT =
     'Speaker diarization uses the pyannote/speaker-diarization-3.1 model, which is' + #13#10 +
@@ -337,7 +339,10 @@ begin
   Files  := TStringList.Create;
   try
     Files.Delimiter     := '|';
-    Files.DelimitedText := MODEL_FILES;
+    if Size = 'large-v3' then
+      Files.DelimitedText := MODEL_FILES_LARGE
+    else
+      Files.DelimitedText := MODEL_FILES_COMMON;
 
     for i := 0 to Files.Count - 1 do
     begin
