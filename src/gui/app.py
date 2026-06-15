@@ -1484,6 +1484,15 @@ def _migrate_library_root(config: ConfigStore) -> None:
 
 def run(config: ConfigStore | None = None) -> None:
     """Launch the GUI application."""
+    if sys.platform == "win32":
+        import ctypes
+        try:
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(
+                "WinSpeechPro.WSP.App"
+            )
+        except Exception:
+            pass
+
     if config is None:
         config_path = _get_data_dir() / "config.json"
         config = ConfigStore(config_path)
