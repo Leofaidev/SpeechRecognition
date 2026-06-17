@@ -352,8 +352,10 @@ function Find-ByName {
     $type     = [System.Windows.Automation.ControlType]::$ctrlType
     $deadline = (Get-Date).AddSeconds($timeoutSec)
     while ((Get-Date) -lt $deadline) {
+        # IgnoreCase: covers installers where button name casing differs from Default.isl
         $nc = New-Object System.Windows.Automation.PropertyCondition(
-            [System.Windows.Automation.AutomationElement]::NameProperty, $name)
+            [System.Windows.Automation.AutomationElement]::NameProperty, $name,
+            [System.Windows.Automation.PropertyConditionFlags]::IgnoreCase)
         $tc = New-Object System.Windows.Automation.PropertyCondition(
             [System.Windows.Automation.AutomationElement]::ControlTypeProperty, $type)
         $el = (Get-Root).FindFirst(
@@ -363,6 +365,41 @@ function Find-ByName {
         Start-Sleep -Milliseconds 400
     }
     return $null
+}
+
+# Dump all UIA button elements visible anywhere on the desktop.
+function Dump-UIAButtons {
+    $type = [System.Windows.Automation.ControlType]::Button
+    $tc   = New-Object System.Windows.Automation.PropertyCondition(
+        [System.Windows.Automation.AutomationElement]::ControlTypeProperty, $type)
+    $found = $false
+    foreach ($b in (Get-Root).FindAll([System.Windows.Automation.TreeScope]::Descendants, $tc)) {
+        try {
+            $n = $b.Current.Name; $en = $b.Current.IsEnabled
+            Log "  [DIAG-BTN] name='$n' enabled=$en"
+            $found = $true
+        } catch {}
+    }
+    if (-not $found) { Log "  [DIAG-BTN] No UIA buttons found on desktop" }
+}
+
+# Click the Next button via Win32 BM_CLICK on the installer HWND (fallback).
+function Click-NextWin32 {
+    param([string]$label = "Next")
+    $hwnd = Get-InstallerHwnd
+    if ($hwnd -eq [IntPtr]::Zero) {
+        Log "  [W32] Installer window not found" "WARN"
+        return $false
+    }
+    $btn = [Win32Helper]::FindChildByText($hwnd, $label)
+    if ($btn -eq [IntPtr]::Zero) {
+        Log "  [W32] '$label' child not found in HWND=$hwnd" "WARN"
+        return $false
+    }
+    [Win32Helper]::Click($btn)
+    Log "  [W32] BM_CLICK on '$label' HWND=$btn"
+    Start-Sleep -Milliseconds 800
+    return $true
 }
 
 function Get-AllVisibleText {
@@ -559,34 +596,54 @@ Log "Launching: $($installer.FullName)"
 Start-Process $installer.FullName -ArgumentList '/model=tiny /licence=accept /TASKS="desktopicon"'
 Start-Sleep -Seconds 4
 
+function Click-PageNext {
+    param([string]$page, [int]$timeoutSec = 300, [string]$label = "Next")
+    Log "--- $page ---"
+    Start-Sleep -Seconds 2
+    # Quick probe: log installer window state and UIA buttons after 5s if not found
+    $quick = Find-ByName $label "Button" 5
+    if (-not $quick) {
+        $hwnd = Get-InstallerHwnd
+        if ($hwnd -eq [IntPtr]::Zero) {
+            Log "  [DIAG] Installer window NOT found - wizard may have closed" "WARN"
+        } else {
+            Log "  [DIAG] Installer HWND=$hwnd"
+        }
+        Dump-UIAButtons
+        # Win32 fallback: BM_CLICK directly on the button HWND
+        if (Click-NextWin32 $label) {
+            return $true
+        }
+    } else {
+        return Invoke-Element $quick $label
+    }
+    # Still not found - wait full timeout using UIA
+    Log "  [DIAG] Waiting for '$label' up to ${timeoutSec}s..."
+    $el = Find-ByName $label "Button" $timeoutSec
+    if (-not $el) {
+        Log "Button '$label' not found after ${timeoutSec}s on '$page'" "ERROR"
+        return $false
+    }
+    return Invoke-Element $el $label
+}
+
 # Page 1: Welcome (allow up to 10 min for 1.6 GB installer to extract to temp dir)
-Log "--- Page 1: Welcome ---"
-if (-not (Click-Button "Next" 600)) { Log "Aborting" "ERROR"; exit 1 }
+if (-not (Click-PageNext "Page 1: Welcome" 600)) { Log "Aborting" "ERROR"; exit 1 }
 
 # Page 2: HuggingFace Licence (Accept pre-selected via /licence=accept)
-Log "--- Page 2: HuggingFace Licence (Accept pre-selected) ---"
-Start-Sleep -Seconds 1
-if (-not (Click-Button "Next")) { Log "Aborting" "ERROR"; exit 1 }
+if (-not (Click-PageNext "Page 2: HuggingFace Licence (Accept pre-selected)")) { Log "Aborting" "ERROR"; exit 1 }
 
 # Page 3: Install Directory
-Log "--- Page 3: Install Directory (default path) ---"
-Start-Sleep -Seconds 1
-if (-not (Click-Button "Next")) { Log "Aborting" "ERROR"; exit 1 }
+if (-not (Click-PageNext "Page 3: Install Directory (default path)")) { Log "Aborting" "ERROR"; exit 1 }
 
 # Page 4: Whisper Model (Tiny pre-selected via /model=tiny)
-Log "--- Page 4: Whisper Model (Tiny pre-selected) ---"
-Start-Sleep -Seconds 1
-if (-not (Click-Button "Next")) { Log "Aborting" "ERROR"; exit 1 }
+if (-not (Click-PageNext "Page 4: Whisper Model (Tiny pre-selected)")) { Log "Aborting" "ERROR"; exit 1 }
 
 # Page 5: Additional Tasks (desktopicon pre-checked via /TASKS="desktopicon")
-Log "--- Page 5: Additional Tasks (desktop icon pre-checked) ---"
-Start-Sleep -Seconds 1
-if (-not (Click-Button "Next")) { Log "Aborting" "ERROR"; exit 1 }
+if (-not (Click-PageNext "Page 5: Additional Tasks (desktop icon pre-checked)")) { Log "Aborting" "ERROR"; exit 1 }
 
 # Page 6: Ready to Install
-Log "--- Page 6: Ready to Install ---"
-Start-Sleep -Seconds 1
-if (-not (Click-Button "Install" 30)) { Log "Aborting" "ERROR"; exit 1 }
+if (-not (Click-PageNext "Page 6: Ready to Install" 30 "Install")) { Log "Aborting" "ERROR"; exit 1 }
 
 # ---------------------------------------------------------------------------
 # Dialog loop: VLC + model downloads (up to 30 min)

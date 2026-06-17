@@ -168,19 +168,29 @@ end;
 procedure WriteInitialConfig(const AppDir, ModelSize: String;
     AcceptedLicence: Boolean);
 var
-  Lines:      TStringList;
-  ModelPath:  String;
-  LicStr:     String;
+  Lines:       TStringList;
+  ModelPath:   String;
+  LicStr:      String;
+  FinalModel:  String;
+  FinalLicence: Boolean;
+  CLIParam:    String;
 begin
-  ModelPath := AppDir + '\models\faster-whisper-' + ModelSize;
+  { Direct CLI overrides bypass radio-button state which can be lost on page transitions. }
+  FinalModel   := ModelSize;
+  FinalLicence := AcceptedLicence;
+  CLIParam := LowerCase(ExpandConstant('{param:model:}'));
+  if CLIParam <> '' then FinalModel := CLIParam;
+  if LowerCase(ExpandConstant('{param:licence:}')) = 'accept' then FinalLicence := True;
+
+  ModelPath := AppDir + '\models\faster-whisper-' + FinalModel;
   StringChangeEx(ModelPath, '\', '\\', False);
 
-  if AcceptedLicence then LicStr := 'true' else LicStr := 'false';
+  if FinalLicence then LicStr := 'true' else LicStr := 'false';
 
   Lines := TStringList.Create;
   try
     Lines.Add('{');
-    Lines.Add('  "whisper_model": "' + ModelSize + '",');
+    Lines.Add('  "whisper_model": "' + FinalModel + '",');
     Lines.Add('  "whisper_model_path": "' + ModelPath + '",');
     Lines.Add('  "licence_accepted": ' + LicStr);
     Lines.Add('}');
@@ -549,6 +559,11 @@ begin
     end;
 
     { Step 2: Whisper model download }
+    { CLI override: apply directly to SelectedModel in case radio-button state was lost }
+    if LowerCase(ExpandConstant('{param:model:}')) <> '' then
+      SelectedModel := LowerCase(ExpandConstant('{param:model:}'));
+    if LowerCase(ExpandConstant('{param:licence:}')) = 'accept' then
+      LicenceAccepted := True;
     if not DownloadWhisperModel(SelectedModel) then
     begin
       if MsgBox(
