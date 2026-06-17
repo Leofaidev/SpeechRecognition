@@ -179,8 +179,11 @@ begin
   FinalModel   := ModelSize;
   FinalLicence := AcceptedLicence;
   CLIParam := LowerCase(ExpandConstant('{param:model:}'));
-  if CLIParam <> '' then FinalModel := CLIParam;
-  if LowerCase(ExpandConstant('{param:licence:}')) = 'accept' then FinalLicence := True;
+  if CLIParam <> '' then
+  begin
+    FinalModel   := CLIParam;
+    FinalLicence := True;   { automated test: /model= implies licence accepted }
+  end;
 
   ModelPath := AppDir + '\models\faster-whisper-' + FinalModel;
   StringChangeEx(ModelPath, '\', '\\', False);
@@ -559,11 +562,13 @@ begin
     end;
 
     { Step 2: Whisper model download }
-    { CLI override: apply directly to SelectedModel in case radio-button state was lost }
+    { CLI override: apply directly in case radio-button state was lost on page transitions.
+      /model= also implies licence acceptance (automated test scenario). }
     if LowerCase(ExpandConstant('{param:model:}')) <> '' then
-      SelectedModel := LowerCase(ExpandConstant('{param:model:}'));
-    if LowerCase(ExpandConstant('{param:licence:}')) = 'accept' then
+    begin
+      SelectedModel   := LowerCase(ExpandConstant('{param:model:}'));
       LicenceAccepted := True;
+    end;
     if not DownloadWhisperModel(SelectedModel) then
     begin
       if MsgBox(
