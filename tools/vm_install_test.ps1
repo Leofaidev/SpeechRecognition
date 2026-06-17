@@ -9,10 +9,6 @@ Add-Type -AssemblyName UIAutomationTypes
 
 # ---------------------------------------------------------------------------
 # Win32 helpers.
-# Radio buttons on custom Inno Setup pages (VCL TRadioButton) do not expose
-# their caption via UIA NameProperty.  We use EnumChildWindows + BM_CLICK to
-# click them directly.  The installer window is located by PID so we don't
-# depend on a specific window title.
 # ---------------------------------------------------------------------------
 Add-Type -TypeDefinition @"
 using System;
@@ -21,14 +17,14 @@ using System.Text;
 public static class Win32Helper {
     public delegate bool EnumWinProc(IntPtr hwnd, IntPtr lp);
 
+    [StructLayout(LayoutKind.Sequential)]
+    public struct RECT { public int Left, Top, Right, Bottom; }
+
     [DllImport("user32.dll")]
     public static extern bool EnumWindows(EnumWinProc fn, IntPtr lp);
 
     [DllImport("user32.dll")]
     public static extern bool EnumChildWindows(IntPtr parent, EnumWinProc fn, IntPtr lp);
-
-    [DllImport("user32.dll")]
-    public static extern uint GetWindowThreadProcessId(IntPtr hwnd, out uint pid);
 
     [DllImport("user32.dll")]
     public static extern bool IsWindowVisible(IntPtr hwnd);
@@ -42,52 +38,294 @@ public static class Win32Helper {
     [DllImport("user32.dll")]
     public static extern IntPtr SendMessage(IntPtr hwnd, uint msg, IntPtr wp, IntPtr lp);
 
-    public const uint BM_CLICK = 0x00F5;
+    [DllImport("user32.dll")]
+    public static extern uint GetWindowLong(IntPtr hwnd, int nIndex);
 
-    // Find the main visible window owned by a given PID.
-    public static IntPtr FindMainWindowByPid(uint pid) {
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    public static extern IntPtr FindWindow(string cls, string title);
+
+    [DllImport("user32.dll")]
+    public static extern IntPtr GetAncestor(IntPtr hwnd, uint gaFlags);
+
+    [DllImport("user32.dll")]
+    public static extern IntPtr GetForegroundWindow();
+
+    [DllImport("user32.dll")]
+    public static extern bool GetWindowRect(IntPtr hwnd, out RECT rect);
+
+    [DllImport("user32.dll")]
+    public static extern bool SetForegroundWindow(IntPtr hwnd);
+
+    [DllImport("user32.dll")]
+    public static extern bool SetCursorPos(int x, int y);
+
+    [DllImport("user32.dll")]
+    public static extern void mouse_event(uint flags, int dx, int dy, uint data, IntPtr extra);
+
+    [DllImport("user32.dll")]
+    public static extern bool PostMessage(IntPtr hwnd, uint msg, IntPtr wp, IntPtr lp);
+
+    [DllImport("user32.dll")]
+    public static extern bool ShowWindow(IntPtr hwnd, int nCmdShow);
+
+    [DllImport("kernel32.dll")]
+    public static extern IntPtr GetConsoleWindow();
+
+    public const uint GA_ROOT             = 2;
+    public const uint BM_CLICK            = 0x00F5;
+    public const uint WM_LBUTTONDOWN      = 0x0201;
+    public const uint WM_LBUTTONUP        = 0x0202;
+    public const uint MK_LBUTTON          = 0x0001;
+    public const int  GWL_STYLE           = -16;
+    public const int  SW_MINIMIZE         = 6;
+    public const int  SW_RESTORE          = 9;
+    public const uint BS_TYPEMASK         = 0x0000000F;
+    public const uint BS_RADIOBUTTON      = 0x00000004;
+    public const uint BS_AUTORADIOBUTTON  = 0x00000009;
+    public const uint MOUSEEVENTF_LEFTDOWN = 0x0002;
+    public const uint MOUSEEVENTF_LEFTUP   = 0x0004;
+
+    public static IntPtr FindWindowByTitle(string part) {
         IntPtr found = IntPtr.Zero;
         EnumWindows((hwnd, lp) => {
             if (!IsWindowVisible(hwnd)) return true;
-            uint winPid;
-            GetWindowThreadProcessId(hwnd, out winPid);
-            if (winPid == pid) { found = hwnd; return false; }
-            return true;
-        }, IntPtr.Zero);
-        return found;
-    }
-
-    // Find a child control whose caption contains 'text' (case-insensitive).
-    public static IntPtr FindChildByText(IntPtr parent, string text) {
-        IntPtr found = IntPtr.Zero;
-        EnumChildWindows(parent, (hwnd, lp) => {
             var sb = new StringBuilder(512);
             GetWindowText(hwnd, sb, 512);
-            if (sb.ToString().IndexOf(text, StringComparison.OrdinalIgnoreCase) >= 0) {
-                found = hwnd;
-                return false;
+            if (sb.ToString().IndexOf(part, StringComparison.OrdinalIgnoreCase) >= 0) {
+                found = hwnd; return false;
             }
             return true;
         }, IntPtr.Zero);
         return found;
     }
 
-    public static string GetClass(IntPtr hwnd) {
-        var sb = new StringBuilder(256);
-        GetClassName(hwnd, sb, 256);
-        return sb.ToString();
+    public static IntPtr FindChildByText(IntPtr parent, string text) {
+        IntPtr found = IntPtr.Zero;
+        EnumChildWindows(parent, (hwnd, lp) => {
+            var sb = new StringBuilder(512);
+            GetWindowText(hwnd, sb, 512);
+            if (sb.ToString().IndexOf(text, StringComparison.OrdinalIgnoreCase) >= 0) {
+                found = hwnd; return false;
+            }
+            return true;
+        }, IntPtr.Zero);
+        return found;
+    }
+
+    public static IntPtr FindChildByClass(IntPtr parent, string cls) {
+        IntPtr found = IntPtr.Zero;
+        EnumChildWindows(parent, (hwnd, lp) => {
+            var sb = new StringBuilder(256);
+            GetClassName(hwnd, sb, 256);
+            if (sb.ToString().Equals(cls, StringComparison.OrdinalIgnoreCase)) {
+                found = hwnd; return false;
+            }
+            return true;
+        }, IntPtr.Zero);
+        return found;
+    }
+
+    // Find the Nth radio button (0-indexed) among VISIBLE descendants only.
+    // IsWindowVisible checks the entire ancestor chain, so controls on hidden
+    // pages (whose Surface has WS_VISIBLE cleared) are excluded automatically.
+    // This ensures index 0 == first radio on the CURRENT page.
+    public static IntPtr FindVisibleRadioByIndex(IntPtr parent, int index) {
+        int[] cnt = { 0 };
+        IntPtr found = IntPtr.Zero;
+        EnumChildWindows(parent, (hwnd, lp) => {
+            if (!IsWindowVisible(hwnd)) return true;
+            uint t = GetWindowLong(hwnd, GWL_STYLE) & BS_TYPEMASK;
+            if (t == BS_RADIOBUTTON || t == BS_AUTORADIOBUTTON) {
+                if (cnt[0] == index) { found = hwnd; return false; }
+                cnt[0]++;
+            }
+            return true;
+        }, IntPtr.Zero);
+        return found;
+    }
+
+    // Count all radio buttons (any visibility) for diagnostics.
+    public static int CountAllRadios(IntPtr parent) {
+        int[] cnt = { 0 };
+        EnumChildWindows(parent, (hwnd, lp) => {
+            uint t = GetWindowLong(hwnd, GWL_STYLE) & BS_TYPEMASK;
+            if (t == BS_RADIOBUTTON || t == BS_AUTORADIOBUTTON) cnt[0]++;
+            return true;
+        }, IntPtr.Zero);
+        return cnt[0];
+    }
+
+    // Count visible radio buttons for diagnostics.
+    public static int CountVisibleRadios(IntPtr parent) {
+        int[] cnt = { 0 };
+        EnumChildWindows(parent, (hwnd, lp) => {
+            if (!IsWindowVisible(hwnd)) return true;
+            uint t = GetWindowLong(hwnd, GWL_STYLE) & BS_TYPEMASK;
+            if (t == BS_RADIOBUTTON || t == BS_AUTORADIOBUTTON) cnt[0]++;
+            return true;
+        }, IntPtr.Zero);
+        return cnt[0];
+    }
+
+    // Return details about every control found by the BS_AUTORADIOBUTTON scan.
+    public static string[] ListRadioCandidates(IntPtr parent) {
+        var list = new System.Collections.Generic.List<string>();
+        EnumChildWindows(parent, (hwnd, lp) => {
+            uint sty = GetWindowLong(hwnd, GWL_STYLE);
+            uint t   = sty & BS_TYPEMASK;
+            if (t == BS_RADIOBUTTON || t == BS_AUTORADIOBUTTON) {
+                var cls = new StringBuilder(256);
+                var txt = new StringBuilder(256);
+                GetClassName(hwnd, cls, 256);
+                GetWindowText(hwnd, txt, 256);
+                RECT r; GetWindowRect(hwnd, out r);
+                bool vis = IsWindowVisible(hwnd);
+                list.Add(String.Format(
+                    "HWND=0x{0:X} cls={1} txt='{2}' vis={3} sty=0x{4:X} rect={5},{6},{7},{8}",
+                    hwnd.ToInt64(), cls, txt, vis, sty,
+                    r.Left, r.Top, r.Right, r.Bottom));
+            }
+            return true;
+        }, IntPtr.Zero);
+        return list.ToArray();
+    }
+
+    // Return unique class names of all descendant windows.
+    public static string[] ListUniqueClasses(IntPtr parent) {
+        var set = new System.Collections.Generic.HashSet<string>();
+        EnumChildWindows(parent, (hwnd, lp) => {
+            var cls = new StringBuilder(256);
+            GetClassName(hwnd, cls, 256);
+            set.Add(cls.ToString());
+            return true;
+        }, IntPtr.Zero);
+        var list = new System.Collections.Generic.List<string>(set);
+        list.Sort();
+        return list.ToArray();
+    }
+
+    // Find Nth radio button regardless of visibility (all pages).
+    public static IntPtr FindRadioByIndex(IntPtr parent, int index) {
+        int[] cnt = { 0 };
+        IntPtr found = IntPtr.Zero;
+        EnumChildWindows(parent, (hwnd, lp) => {
+            uint t = GetWindowLong(hwnd, GWL_STYLE) & BS_TYPEMASK;
+            if (t == BS_RADIOBUTTON || t == BS_AUTORADIOBUTTON) {
+                if (cnt[0] == index) { found = hwnd; return false; }
+                cnt[0]++;
+            }
+            return true;
+        }, IntPtr.Zero);
+        return found;
+    }
+
+    // Find all children whose Win32 class name matches cls.
+    public static IntPtr[] FindAllByClass(IntPtr parent, string cls) {
+        var list = new System.Collections.Generic.List<IntPtr>();
+        EnumChildWindows(parent, (hwnd, lp) => {
+            var sb = new StringBuilder(256);
+            GetClassName(hwnd, sb, 256);
+            if (sb.ToString().Equals(cls, StringComparison.OrdinalIgnoreCase))
+                list.Add(hwnd);
+            return true;
+        }, IntPtr.Zero);
+        return list.ToArray();
+    }
+
+    // Post WM_LBUTTONDOWN/UP directly to the control HWND.
+    // Bypasses foreground/z-order requirements entirely.
+    public static void PostClick(IntPtr hwnd) {
+        RECT r;
+        int cx = 5, cy = 5;
+        if (GetWindowRect(hwnd, out r)) { cx = (r.Right - r.Left) / 2; cy = (r.Bottom - r.Top) / 2; }
+        IntPtr lp = (IntPtr)(((cy & 0xFFFF) << 16) | (cx & 0xFFFF));
+        PostMessage(hwnd, WM_LBUTTONDOWN, (IntPtr)MK_LBUTTON, lp);
+        System.Threading.Thread.Sleep(60);
+        PostMessage(hwnd, WM_LBUTTONUP, IntPtr.Zero, lp);
+    }
+
+    // Click the control's centre using the real mouse.
+    // Minimises the console window first so clicks land on the installer,
+    // then restores it after the click.
+    public static void ClickCenter(IntPtr hwnd) {
+        RECT r;
+        if (!GetWindowRect(hwnd, out r)) return;
+
+        IntPtr console = GetConsoleWindow();
+        if (console != IntPtr.Zero) ShowWindow(console, SW_MINIMIZE);
+        System.Threading.Thread.Sleep(250);
+
+        IntPtr root = GetAncestor(hwnd, GA_ROOT);
+        if (root == IntPtr.Zero) root = hwnd;
+        for (int i = 0; i < 6; i++) {
+            SetForegroundWindow(root);
+            System.Threading.Thread.Sleep(80);
+            if (GetForegroundWindow() == root) break;
+        }
+
+        int x = r.Left + (r.Right  - r.Left) / 2;
+        int y = r.Top  + (r.Bottom - r.Top)  / 2;
+        SetCursorPos(x, y);
+        System.Threading.Thread.Sleep(120);
+        mouse_event(MOUSEEVENTF_LEFTDOWN, x, y, 0, IntPtr.Zero);
+        System.Threading.Thread.Sleep(80);
+        mouse_event(MOUSEEVENTF_LEFTUP,   x, y, 0, IntPtr.Zero);
+        System.Threading.Thread.Sleep(120);
+
+        if (console != IntPtr.Zero) ShowWindow(console, SW_RESTORE);
+    }
+
+    // Click at an offset within hwnd using the real mouse (console minimised).
+    public static void MouseClickOffset(IntPtr hwnd, int offsetX, int offsetY) {
+        RECT r;
+        if (!GetWindowRect(hwnd, out r)) return;
+
+        IntPtr console = GetConsoleWindow();
+        if (console != IntPtr.Zero) ShowWindow(console, SW_MINIMIZE);
+        System.Threading.Thread.Sleep(250);
+
+        IntPtr root = GetAncestor(hwnd, GA_ROOT);
+        if (root == IntPtr.Zero) root = hwnd;
+        for (int i = 0; i < 6; i++) {
+            SetForegroundWindow(root);
+            System.Threading.Thread.Sleep(80);
+            if (GetForegroundWindow() == root) break;
+        }
+
+        int x = r.Left + offsetX;
+        int y = r.Top  + offsetY;
+        SetCursorPos(x, y);
+        System.Threading.Thread.Sleep(120);
+        mouse_event(MOUSEEVENTF_LEFTDOWN, x, y, 0, IntPtr.Zero);
+        System.Threading.Thread.Sleep(80);
+        mouse_event(MOUSEEVENTF_LEFTUP,   x, y, 0, IntPtr.Zero);
+        System.Threading.Thread.Sleep(120);
+
+        if (console != IntPtr.Zero) ShowWindow(console, SW_RESTORE);
     }
 
     public static void Click(IntPtr hwnd) {
         SendMessage(hwnd, BM_CLICK, IntPtr.Zero, IntPtr.Zero);
     }
+
+    public static string[] ListChildClasses(IntPtr parent) {
+        var list = new System.Collections.Generic.List<string>();
+        EnumChildWindows(parent, (hwnd, lp) => {
+            var cls = new StringBuilder(256);
+            var txt = new StringBuilder(256);
+            GetClassName(hwnd, cls, 256);
+            GetWindowText(hwnd, txt, 256);
+            list.Add(cls.ToString() + "|" + txt.ToString());
+            return true;
+        }, IntPtr.Zero);
+        return list.ToArray();
+    }
 }
 "@
 
-$LogFile         = "$env:USERPROFILE\Desktop\wsp_install_log.txt"
-$ShareLog        = "\\vmware-host\Shared Folders\wsp_tools\install_progress.txt"
-$ErrorCount      = 0
-$script:InstPid  = 0   # installer process ID — set after Start-Process
+$LogFile    = "$env:USERPROFILE\Desktop\wsp_install_log.txt"
+$ShareLog   = "\\vmware-host\Shared Folders\wsp_tools\install_progress.txt"
+$ErrorCount = 0
 
 "" | Out-File $LogFile   -Encoding ASCII
 "" | Out-File $ShareLog  -Encoding ASCII -ErrorAction SilentlyContinue
@@ -164,31 +402,120 @@ function Click-Button {
     return Invoke-Element $el $name
 }
 
+function Get-InstallerHwnd {
+    $hwnd = [Win32Helper]::FindWindowByTitle("Speech Recognition Program")
+    if ($hwnd -ne [IntPtr]::Zero) { return $hwnd }
+    return [Win32Helper]::FindWindowByTitle("Setup")
+}
+
 # ---------------------------------------------------------------------------
-# Click-ChildW32
-# Finds any child control of the installer window whose caption contains
-# $text, then sends BM_CLICK.  Works for radio buttons and checkboxes.
-# Uses the installer PID stored in $script:InstPid so no window title needed.
+# Click-RadioIndexW32
+# Strategy 1: find by class name "TNewRadioButton" (Inno Setup custom class).
+# Strategy 2: find by BS_AUTORADIOBUTTON style (visible-only filter).
+# Strategy 3: find by BS_AUTORADIOBUTTON style (any visibility).
+# Each HWND found is clicked via PostClick then ClickCenter (console min'd).
+# One-time diagnostic dump of child classes and radio candidates on first call.
 # ---------------------------------------------------------------------------
-function Click-ChildW32 {
-    param([string]$text, [int]$timeoutSec = 20)
+function Click-RadioIndexW32 {
+    param([int]$index = 0, [int]$timeoutSec = 20)
     $deadline = (Get-Date).AddSeconds($timeoutSec)
+    $dumped   = $false
+
     while ((Get-Date) -lt $deadline) {
-        if ($script:InstPid -gt 0) {
-            $hwnd = [Win32Helper]::FindMainWindowByPid([uint32]$script:InstPid)
-            if ($hwnd -ne [IntPtr]::Zero) {
-                $ctrl = [Win32Helper]::FindChildByText($hwnd, $text)
-                if ($ctrl -ne [IntPtr]::Zero) {
-                    [Win32Helper]::Click($ctrl)
-                    Log "Clicked (W32): $text"
+        $hwnd = Get-InstallerHwnd
+        if ($hwnd -ne [IntPtr]::Zero) {
+
+            # One-time diagnostic dump
+            if (-not $dumped) {
+                $dumped = $true
+                Log "  [dump] Unique child classes:"
+                foreach ($c in [Win32Helper]::ListUniqueClasses($hwnd)) {
+                    Log "    $c"
+                }
+                Log "  [dump] BS_AUTORADIOBUTTON candidates:"
+                foreach ($c in [Win32Helper]::ListRadioCandidates($hwnd)) {
+                    Log "    $c"
+                }
+            }
+
+            # Strategy 1: class name "TNewRadioButton" (Inno Setup's actual class)
+            $allRB = [Win32Helper]::FindAllByClass($hwnd, "TNewRadioButton")
+            if ($allRB.Length -gt $index) {
+                $ctrl = $allRB[$index]
+                Log "  [S1] TNewRadioButton[$index] HWND=$ctrl vis=$([Win32Helper]::IsWindowVisible($ctrl))"
+                [Win32Helper]::PostClick($ctrl)
+                Start-Sleep -Milliseconds 400
+                [Win32Helper]::ClickCenter($ctrl)
+                Start-Sleep -Milliseconds 400
+                Log "radio[$index] S1=TNewRadioButton HWND=$ctrl"
+                return $true
+            }
+
+            # Strategy 2: visible radio by BS_AUTORADIOBUTTON
+            $ctrl2 = [Win32Helper]::FindVisibleRadioByIndex($hwnd, $index)
+            if ($ctrl2 -ne [IntPtr]::Zero) {
+                Log "  [S2] visible BS_AUTORADIOBUTTON[$index] HWND=$ctrl2"
+                [Win32Helper]::PostClick($ctrl2)
+                Start-Sleep -Milliseconds 400
+                [Win32Helper]::ClickCenter($ctrl2)
+                Start-Sleep -Milliseconds 400
+                Log "radio[$index] S2=VisibleBSAuto HWND=$ctrl2"
+                return $true
+            }
+
+            # Strategy 3: any radio by BS_AUTORADIOBUTTON (all pages)
+            $ctrl3 = [Win32Helper]::FindRadioByIndex($hwnd, $index)
+            if ($ctrl3 -ne [IntPtr]::Zero) {
+                $total   = [Win32Helper]::CountAllRadios($hwnd)
+                $visible = [Win32Helper]::CountVisibleRadios($hwnd)
+                Log "  [S3] BS_AUTORADIOBUTTON[$index] total=$total vis=$visible HWND=$ctrl3"
+                [Win32Helper]::PostClick($ctrl3)
+                Start-Sleep -Milliseconds 400
+                [Win32Helper]::ClickCenter($ctrl3)
+                Start-Sleep -Milliseconds 400
+                Log "radio[$index] S3=AnyBSAuto HWND=$ctrl3"
+                return $true
+            }
+
+            Log "  [diag] index $index not found by any strategy yet"
+        }
+        Start-Sleep -Milliseconds 400
+    }
+    Log "Radio[$index] not found after ${timeoutSec}s" "WARN"
+    return $false
+}
+
+# ---------------------------------------------------------------------------
+# Click-TaskCheckbox
+# TNewCheckListBox is custom-drawn; use real mouse at the checkbox offset.
+# Console is minimised before clicking so it does not intercept the event.
+# ---------------------------------------------------------------------------
+function Click-TaskCheckbox {
+    param([int]$itemIndex = 0, [int]$timeoutSec = 20)
+    $deadline = (Get-Date).AddSeconds($timeoutSec)
+    $classes  = @("TNewCheckListBox","ListBox","SysListView32","TListBox")
+
+    while ((Get-Date) -lt $deadline) {
+        $hwnd = Get-InstallerHwnd
+        if ($hwnd -ne [IntPtr]::Zero) {
+            foreach ($cls in $classes) {
+                $listbox = [Win32Helper]::FindChildByClass($hwnd, $cls)
+                if ($listbox -ne [IntPtr]::Zero) {
+                    $offX = 8
+                    $offY = 10 + ($itemIndex * 20)
+                    [Win32Helper]::MouseClickOffset($listbox, $offX, $offY)
+                    Log "Clicked task checkbox[$itemIndex] via mouse on '$cls' (offset $offX,$offY)"
                     Start-Sleep -Milliseconds 400
                     return $true
                 }
             }
+            Log "  [diag] task listbox not found yet; dumping child classes" "WARN"
+            $entries = [Win32Helper]::ListChildClasses($hwnd)
+            foreach ($e in ($entries | Sort-Object -Unique)) { Log "    child: $e" }
         }
         Start-Sleep -Milliseconds 400
     }
-    Log "Control '$text' not found after ${timeoutSec}s" "WARN"
+    Log "Task checkbox[$itemIndex] not found after ${timeoutSec}s" "WARN"
     return $false
 }
 
@@ -199,7 +526,22 @@ function Click-ChildW32 {
 Log "=== WSP Installer Automation Started ==="
 Log "Host: $env:COMPUTERNAME  User: $env:USERNAME"
 
-# Search Desktop first, then VMware shared folder
+# Uninstall any existing WSP installation so the wizard shows from the beginning.
+$wspExe    = "$env:LOCALAPPDATA\SpeechRecognitionProgram\wsp.exe"
+$uninstExe = "$env:LOCALAPPDATA\SpeechRecognitionProgram\unins000.exe"
+if (Test-Path $wspExe) {
+    Log "WSP already installed - uninstalling silently..."
+    if (Test-Path $uninstExe) {
+        Start-Process $uninstExe -ArgumentList "/VERYSILENT /SUPPRESSMSGBOXES" -Wait
+        Start-Sleep -Seconds 3
+        Log "Uninstall finished"
+    } else {
+        Log "Uninstaller not found - cannot proceed" "ERROR"
+        exit 1
+    }
+}
+
+# Find installer executable
 $installer = Get-ChildItem "$env:USERPROFILE\Desktop\wsp_setup*.exe" -ErrorAction SilentlyContinue |
              Sort-Object LastWriteTime -Descending | Select-Object -First 1
 if (-not $installer) {
@@ -212,22 +554,18 @@ if (-not $installer) {
     exit 1
 }
 Log "Launching: $($installer.FullName)"
-$proc            = Start-Process $installer.FullName -PassThru
-$script:InstPid  = $proc.Id
-Log "Installer PID: $($script:InstPid)"
+# /model and /licence are custom params read by InitializeWizard() in the ISS script.
+# /TASKS is built into Inno Setup and pre-checks the named task checkbox.
+Start-Process $installer.FullName -ArgumentList '/model=tiny /licence=accept /TASKS="desktopicon"'
 Start-Sleep -Seconds 4
 
-# Page 1: Welcome
+# Page 1: Welcome (allow up to 10 min for 1.6 GB installer to extract to temp dir)
 Log "--- Page 1: Welcome ---"
-if (-not (Click-Button "Next" 60)) { Log "Aborting" "ERROR"; exit 1 }
+if (-not (Click-Button "Next" 600)) { Log "Aborting" "ERROR"; exit 1 }
 
-# Page 2: HuggingFace Licence
-# Caption: "I accept the licence terms (speaker identification will be available)"
-Log "--- Page 2: HuggingFace Licence ---"
+# Page 2: HuggingFace Licence (Accept pre-selected via /licence=accept)
+Log "--- Page 2: HuggingFace Licence (Accept pre-selected) ---"
 Start-Sleep -Seconds 1
-if (-not (Click-ChildW32 "I accept the licence terms")) {
-    Log "Could not select Accept - continuing with Decline" "WARN"
-}
 if (-not (Click-Button "Next")) { Log "Aborting" "ERROR"; exit 1 }
 
 # Page 3: Install Directory
@@ -235,22 +573,14 @@ Log "--- Page 3: Install Directory (default path) ---"
 Start-Sleep -Seconds 1
 if (-not (Click-Button "Next")) { Log "Aborting" "ERROR"; exit 1 }
 
-# Page 4: Whisper Model
-# Caption: "  Tiny    (~75 MB  -- fastest, lowest accuracy)"
-Log "--- Page 4: Whisper Model (Tiny) ---"
+# Page 4: Whisper Model (Tiny pre-selected via /model=tiny)
+Log "--- Page 4: Whisper Model (Tiny pre-selected) ---"
 Start-Sleep -Seconds 1
-if (-not (Click-ChildW32 "Tiny")) {
-    Log "Could not select Tiny - Medium will be used" "WARN"
-}
 if (-not (Click-Button "Next")) { Log "Aborting" "ERROR"; exit 1 }
 
-# Page 5: Additional Tasks — check desktop shortcut before Next
-# Checkbox caption resolves to "Create a &desktop icon" in English
-Log "--- Page 5: Additional Tasks ---"
+# Page 5: Additional Tasks (desktopicon pre-checked via /TASKS="desktopicon")
+Log "--- Page 5: Additional Tasks (desktop icon pre-checked) ---"
 Start-Sleep -Seconds 1
-if (-not (Click-ChildW32 "desktop icon")) {
-    Log "Desktop icon checkbox not found - shortcut may not be created" "WARN"
-}
 if (-not (Click-Button "Next")) { Log "Aborting" "ERROR"; exit 1 }
 
 # Page 6: Ready to Install
@@ -261,10 +591,10 @@ if (-not (Click-Button "Install" 30)) { Log "Aborting" "ERROR"; exit 1 }
 # ---------------------------------------------------------------------------
 # Dialog loop: VLC + model downloads (up to 30 min)
 # ---------------------------------------------------------------------------
-Log "--- Waiting for downloads and installation (up to 30 min) ---"
+Log "--- Waiting for downloads and installation (up to 60 min) ---"
 
 $retryCounts = @{}
-$deadline    = (Get-Date).AddMinutes(30)
+$deadline    = (Get-Date).AddMinutes(60)
 $done        = $false
 
 while ((Get-Date) -lt $deadline -and -not $done) {
@@ -282,7 +612,15 @@ while ((Get-Date) -lt $deadline -and -not $done) {
     if ($yes -and $no) {
         $text = Get-AllVisibleText
         Log "Yes/No dialog: $text"
-        if ($text -match "retry|Retry") {
+        if ($text -match "Exit Setup|exit now|installation will not") {
+            Log "Detected Exit Setup dialog - clicking No to stay"
+            Invoke-Element $no "No (stay in installer)" | Out-Null
+        } elseif ($text -match "VLC media player|VLC") {
+            # Skip VLC download - it is not needed to validate the installer.
+            # Clicking No shows an informational MB_OK which the OK handler will dismiss.
+            Log "VLC prompt - clicking No (skip VLC)"
+            Invoke-Element $no "No (skip VLC)" | Out-Null
+        } elseif ($text -match "retry|Retry") {
             $key = ($text -split '\|')[0].Trim() -replace '\s+', ' '
             $retryCounts[$key] = [int]$retryCounts[$key] + 1
             if ($retryCounts[$key] -le 2) {
@@ -301,7 +639,6 @@ while ((Get-Date) -lt $deadline -and -not $done) {
     }
 
     # OK button: only click if it belongs to a real MessageBox (#32770).
-    # This prevents accidentally clicking OK in other windows (e.g. Windows Settings).
     $dlgHwnd = [Win32Helper]::FindWindow("#32770", $null)
     if ($dlgHwnd -ne [IntPtr]::Zero) {
         $okHwnd = [Win32Helper]::FindChildByText($dlgHwnd, "OK")
@@ -328,17 +665,35 @@ if (-not $done) {
 
 Log "=== Verifying installation ==="
 
-$wspExe = "$env:LOCALAPPDATA\SpeechRecognitionProgram\wsp.exe"
-if (Test-Path $wspExe) {
-    Log "PASS: wsp.exe found at $wspExe"
+$wspExe2 = "$env:LOCALAPPDATA\SpeechRecognitionProgram\wsp.exe"
+if (Test-Path $wspExe2) {
+    Log "PASS: wsp.exe found at $wspExe2"
 } else {
-    Log "FAIL: wsp.exe NOT found at $wspExe" "ERROR"
+    Log "FAIL: wsp.exe NOT found at $wspExe2" "ERROR"
 }
 
 $cfg = "$env:LOCALAPPDATA\SpeechRecognitionProgram\config.json"
 if (Test-Path $cfg) {
     Log "PASS: config.json found"
-    Log "      $(Get-Content $cfg -Raw -Encoding UTF8)"
+    $cfgRaw = Get-Content $cfg -Raw -Encoding UTF8
+    Log "      $cfgRaw"
+    try {
+        $cfgObj = $cfgRaw | ConvertFrom-Json
+        # CHK-123: whisper_model
+        if ($cfgObj.whisper_model -eq "tiny") {
+            Log "PASS: whisper_model = 'tiny'"
+        } else {
+            Log "FAIL: whisper_model = '$($cfgObj.whisper_model)' (expected 'tiny')" "ERROR"
+        }
+        # CHK-124: licence_accepted
+        if ($cfgObj.licence_accepted -eq $true) {
+            Log "PASS: licence_accepted = true"
+        } else {
+            Log "FAIL: licence_accepted = '$($cfgObj.licence_accepted)' (expected true)" "ERROR"
+        }
+    } catch {
+        Log "FAIL: could not parse config.json: $_" "ERROR"
+    }
 } else {
     Log "FAIL: config.json NOT found" "ERROR"
 }

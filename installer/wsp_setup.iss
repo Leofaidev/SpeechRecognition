@@ -450,6 +450,8 @@ end;
   ========================================================================= }
 
 procedure InitializeWizard();
+var
+  CLIModel: String;
 begin
   { Download progress page — shared for VLC and model files }
   DownloadPage := CreateDownloadPage(
@@ -463,6 +465,33 @@ begin
   LicenceAccepted := False;
   SelectedModel   := 'medium';
   VLCWasInstalled := IsVLCInstalled();
+
+  { Command-line overrides for automated testing (wizard still shows):
+      /model=tiny|base|small|medium|large-v3
+      /licence=accept }
+  CLIModel := LowerCase(ExpandConstant('{param:model:}'));
+  if CLIModel = 'tiny' then
+  begin
+    ModelTinyRB.Checked := True; ModelMediumRB.Checked := False;
+  end
+  else if CLIModel = 'base' then
+  begin
+    ModelBaseRB.Checked := True; ModelMediumRB.Checked := False;
+  end
+  else if CLIModel = 'small' then
+  begin
+    ModelSmallRB.Checked := True; ModelMediumRB.Checked := False;
+  end
+  else if CLIModel = 'large-v3' then
+  begin
+    ModelLargeRB.Checked := True; ModelMediumRB.Checked := False;
+  end;
+
+  if LowerCase(ExpandConstant('{param:licence:}')) = 'accept' then
+  begin
+    HFAcceptRB.Checked := True;
+    HFDeclineRB.Checked := False;
+  end;
 end;
 
 { Resolve which model radio button is checked. }
