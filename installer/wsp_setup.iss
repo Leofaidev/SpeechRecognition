@@ -245,21 +245,21 @@ function InstallVLC(): Boolean;
 var
   TmpInstaller: String;
   ErrorCode:    Integer;
-  CurlExe:     String;
+  PSExe:       String;
+  PSCmd:       String;
 begin
   Result := True;
   TmpInstaller := ExpandConstant('{tmp}\{#VLCInstaller}');
-  { Use full path so curl.exe is found regardless of PATH when called from Inno Setup. }
-  CurlExe := ExpandConstant('{sys}\curl.exe');
+  PSExe := ExpandConstant('{sys}\WindowsPowerShell\v1.0\powershell.exe');
+  { Net.WebClient follows HTTP 302 redirects; available on all Windows 10 versions. }
+  PSCmd := '-NoProfile -NonInteractive -Command "(New-Object Net.WebClient).DownloadFile(''{#VLCDownloadURL}'',''' + TmpInstaller + ''')"';
 
   DownloadPage.Clear;
   DownloadPage.Show;
   DownloadPage.SetText('Downloading VLC media player...', 'Please wait - this may take a minute');
   DownloadPage.SetProgress(0, 0);
 
-  ShellExec('', CurlExe,
-      '-L -s --output "' + TmpInstaller + '" "{#VLCDownloadURL}"',
-      '', SW_HIDE, ewWaitUntilTerminated, ErrorCode);
+  ShellExec('', PSExe, PSCmd, '', SW_HIDE, ewWaitUntilTerminated, ErrorCode);
 
   DownloadPage.Hide;
 
