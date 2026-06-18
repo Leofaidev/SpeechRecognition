@@ -19,7 +19,7 @@
 #define AppExeName   "wsp.exe"
 #define VLCVersion   "3.0.21"
 #define VLCInstaller "vlc-3.0.21-win64.exe"
-#define VLCDownloadURL "https://download.videolan.org/pub/videolan/vlc/3.0.21/win64/vlc-3.0.21-win64.exe"
+#define VLCDownloadURL "https://vlc.elhacker.net/vlc/3.0.21/win64/vlc-3.0.21-win64.exe"
 
 ; ---------------------------------------------------------------------------
 ; [Setup]
@@ -251,8 +251,9 @@ begin
   Result := True;
   TmpInstaller := ExpandConstant('{tmp}\{#VLCInstaller}');
   PSExe := ExpandConstant('{sys}\WindowsPowerShell\v1.0\powershell.exe');
-  { Net.WebClient follows HTTP 302 redirects; available on all Windows 10 versions. }
-  PSCmd := '-NoProfile -NonInteractive -Command "(New-Object Net.WebClient).DownloadFile(''{#VLCDownloadURL}'',''' + TmpInstaller + ''')"';
+  { Force TLS 1.2: older Windows 10 builds default to TLS 1.0 which videolan.org rejects.
+    Net.WebClient follows HTTP 302 redirects; available on all Windows 10 versions. }
+  PSCmd := '-NoProfile -NonInteractive -Command "[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12;(New-Object Net.WebClient).DownloadFile(''{#VLCDownloadURL}'',''' + TmpInstaller + ''')"';
 
   DownloadPage.Clear;
   DownloadPage.Show;
