@@ -554,8 +554,13 @@ begin
       begin
         if not InstallVLC() then
         begin
-          Result := False;
-          Exit;
+          if CLIModelParam = '' then
+          begin
+            Result := False;
+            Exit;
+          end;
+          { In automated mode, VLC failure is non-fatal: continue to model download.
+            Verification script will catch VLC absence via Test-Path. }
         end;
       end;
       { No notification when user declines VLC — avoids blocking automated installs. }
