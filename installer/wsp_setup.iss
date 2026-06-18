@@ -245,19 +245,19 @@ function InstallVLC(): Boolean;
 var
   TmpInstaller: String;
   ErrorCode:    Integer;
+  CurlExe:     String;
 begin
   Result := True;
   TmpInstaller := ExpandConstant('{tmp}\{#VLCInstaller}');
+  { Use full path so curl.exe is found regardless of PATH when called from Inno Setup. }
+  CurlExe := ExpandConstant('{sys}\curl.exe');
 
-  { Use curl.exe (built into Windows 10 v1803+) with -L to follow CDN redirects.
-    Inno Setup's built-in downloader does not follow HTTP 302 redirects, which
-    causes the videolan.org URL to fail silently. }
   DownloadPage.Clear;
   DownloadPage.Show;
-  DownloadPage.SetText('Downloading VLC media player...', 'Please wait — this may take a minute');
+  DownloadPage.SetText('Downloading VLC media player...', 'Please wait - this may take a minute');
   DownloadPage.SetProgress(0, 0);
 
-  ShellExec('', 'curl.exe',
+  ShellExec('', CurlExe,
       '-L -s --output "' + TmpInstaller + '" "{#VLCDownloadURL}"',
       '', SW_HIDE, ewWaitUntilTerminated, ErrorCode);
 
@@ -265,10 +265,11 @@ begin
 
   if not FileExists(TmpInstaller) then
   begin
-    SuppressibleMsgBox(
-      'Failed to download VLC media player.' + #13#10 +
-      'Please install VLC manually from https://www.videolan.org/ and re-run setup.',
-      mbError, MB_OK, IDOK);
+    if CLIModelParam = '' then
+      SuppressibleMsgBox(
+        'Failed to download VLC media player.' + #13#10 +
+        'Please install VLC manually from https://www.videolan.org/ and re-run setup.',
+        mbError, MB_OK, IDOK);
     Result := False;
     Exit;
   end;
@@ -277,10 +278,11 @@ begin
   if not ShellExec('', TmpInstaller, '/L=1033 /S', '', SW_HIDE,
       ewWaitUntilTerminated, ErrorCode) then
   begin
-    MsgBox(
-      'VLC installation failed (error ' + IntToStr(ErrorCode) + ').' + #13#10 +
-      'Please install VLC manually and restart the application.',
-      mbError, MB_OK);
+    if CLIModelParam = '' then
+      MsgBox(
+        'VLC installation failed (error ' + IntToStr(ErrorCode) + ').' + #13#10 +
+        'Please install VLC manually and restart the application.',
+        mbError, MB_OK);
     Result := False;
   end;
 
