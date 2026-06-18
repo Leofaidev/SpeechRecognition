@@ -249,24 +249,28 @@ begin
   Result := True;
   TmpInstaller := ExpandConstant('{tmp}\{#VLCInstaller}');
 
-  { Download the VLC installer }
+  { Use curl.exe (built into Windows 10 v1803+) with -L to follow CDN redirects.
+    Inno Setup's built-in downloader does not follow HTTP 302 redirects, which
+    causes the videolan.org URL to fail silently. }
   DownloadPage.Clear;
-  DownloadPage.Add('{#VLCDownloadURL}', '{#VLCInstaller}', '');
   DownloadPage.Show;
-  try
-    try
-      DownloadPage.Download;
-    except
-      DownloadPage.Hide;
-      SuppressibleMsgBox(
-        'Failed to download VLC media player.' + #13#10 +
-        'Please install VLC manually from https://www.videolan.org/ and re-run setup.',
-        mbError, MB_OK, IDOK);
-      Result := False;
-      Exit;
-    end;
-  finally
-    DownloadPage.Hide;
+  DownloadPage.SetText('Downloading VLC media player...', 'Please wait — this may take a minute');
+  DownloadPage.SetProgress(0, 0);
+
+  ShellExec('', 'curl.exe',
+      '-L -s --output "' + TmpInstaller + '" "{#VLCDownloadURL}"',
+      '', SW_HIDE, ewWaitUntilTerminated, ErrorCode);
+
+  DownloadPage.Hide;
+
+  if not FileExists(TmpInstaller) then
+  begin
+    SuppressibleMsgBox(
+      'Failed to download VLC media player.' + #13#10 +
+      'Please install VLC manually from https://www.videolan.org/ and re-run setup.',
+      mbError, MB_OK, IDOK);
+    Result := False;
+    Exit;
   end;
 
   { Run VLC installer silently }
