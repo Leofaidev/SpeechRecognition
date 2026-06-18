@@ -674,10 +674,8 @@ while ((Get-Date) -lt $deadline -and -not $done) {
             Log "Detected Exit Setup dialog - clicking No to stay"
             Invoke-Element $no "No (stay in installer)" | Out-Null
         } elseif ($text -match "VLC media player|VLC") {
-            # Skip VLC download - it is not needed to validate the installer.
-            # Clicking No shows an informational MB_OK which the OK handler will dismiss.
-            Log "VLC prompt - clicking No (skip VLC)"
-            Invoke-Element $no "No (skip VLC)" | Out-Null
+            Log "VLC prompt - clicking Yes (download and install VLC)"
+            Invoke-Element $yes "Yes (install VLC)" | Out-Null
         } elseif ($text -match "retry|Retry") {
             $key = ($text -split '\|')[0].Trim() -replace '\s+', ' '
             $retryCounts[$key] = [int]$retryCounts[$key] + 1
@@ -761,6 +759,16 @@ if (Test-Path $shortcut) {
     Log "PASS: Desktop shortcut created"
 } else {
     Log "FAIL: Desktop shortcut missing" "ERROR"
+}
+
+$vlcExe   = "C:\Program Files\VideoLAN\VLC\vlc.exe"
+$vlcExe32 = "C:\Program Files (x86)\VideoLAN\VLC\vlc.exe"
+if (Test-Path $vlcExe) {
+    Log "PASS: VLC installed at $vlcExe"
+} elseif (Test-Path $vlcExe32) {
+    Log "PASS: VLC installed at $vlcExe32"
+} else {
+    Log "FAIL: VLC not found (expected at Program Files\VideoLAN\VLC\vlc.exe)" "ERROR"
 }
 
 Log "=== Done. Errors: $ErrorCount ==="
