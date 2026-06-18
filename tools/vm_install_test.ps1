@@ -591,9 +591,10 @@ if (-not $installer) {
     exit 1
 }
 Log "Launching: $($installer.FullName)"
-# /model and /licence are custom params read by InitializeWizard() in the ISS script.
-# /TASKS is built into Inno Setup and pre-checks the named task checkbox.
-Start-Process $installer.FullName -ArgumentList '/model=tiny /licence=accept /TASKS="desktopicon"'
+# WSP_MODEL env var is the primary mechanism for automated model selection.
+# The self-extractor may not forward /model= CLI params reliably from a UNC path.
+$env:WSP_MODEL = 'tiny'
+Start-Process $installer.FullName -ArgumentList '/model=tiny /TASKS="desktopicon"'
 Start-Sleep -Seconds 4
 
 function Click-PageNext {

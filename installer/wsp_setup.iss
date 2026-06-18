@@ -133,6 +133,7 @@ var
   LicenceAccepted:  Boolean;
   SelectedModel:    String;   { "tiny"|"base"|"small"|"medium"|"large-v3" }
   VLCWasInstalled:  Boolean;  { True if VLC was already present on entry }
+  CLIModelParam:    String;   { /model= value stored once at init; empty = interactive }
 
 { =========================================================================
   Helper functions
@@ -175,14 +176,13 @@ var
   FinalLicence: Boolean;
   CLIParam:    String;
 begin
-  { Direct CLI overrides bypass radio-button state which can be lost on page transitions. }
   FinalModel   := ModelSize;
   FinalLicence := AcceptedLicence;
-  CLIParam := LowerCase(ExpandConstant('{param:model:}'));
+  CLIParam := CLIModelParam;
   if CLIParam <> '' then
   begin
     FinalModel   := CLIParam;
-    FinalLicence := True;   { automated test: /model= implies licence accepted }
+    FinalLicence := True;
   end;
 
   ModelPath := AppDir + '\models\faster-whisper-' + FinalModel;
@@ -463,8 +463,6 @@ end;
   ========================================================================= }
 
 procedure InitializeWizard();
-var
-  CLIModel: String;
 begin
   { Download progress page — shared for VLC and model files }
   DownloadPage := CreateDownloadPage(
@@ -479,37 +477,38 @@ begin
   SelectedModel   := 'medium';
   VLCWasInstalled := IsVLCInstalled();
 
-  { Command-line overrides for automated testing (wizard still shows):
-      /model=tiny|base|small|medium|large-v3
-      /licence=accept }
-  CLIModel := LowerCase(ExpandConstant('{param:model:}'));
-  if CLIModel = 'tiny' then
+  { Store /model= CLI param once at startup into a global.
+    Re-calling ExpandConstant in later callbacks (NextButtonClick, CurStepChanged)
+    can return empty if the message pump runs during a MsgBox — storing it here
+    guarantees it is always available. }
+  { Prefer the WSP_MODEL env var (set by automation scripts); fall back to /model= CLI param.
+    The self-extractor may not forward CLI params reliably from a UNC path. }
+  CLIModelParam := LowerCase(GetEnv('WSP_MODEL'));
+  if CLIModelParam = '' then
+    CLIModelParam := LowerCase(ExpandConstant('{param:model:}'));
+  if CLIModelParam <> '' then
   begin
-    ModelTinyRB.Checked := True; ModelMediumRB.Checked := False;
-  end
-  else if CLIModel = 'base' then
-  begin
-    ModelBaseRB.Checked := True; ModelMediumRB.Checked := False;
-  end
-  else if CLIModel = 'small' then
-  begin
-    ModelSmallRB.Checked := True; ModelMediumRB.Checked := False;
-  end
-  else if CLIModel = 'large-v3' then
-  begin
-    ModelLargeRB.Checked := True; ModelMediumRB.Checked := False;
-  end;
-
-  if LowerCase(ExpandConstant('{param:licence:}')) = 'accept' then
-  begin
-    HFAcceptRB.Checked := True;
+    SelectedModel   := CLIModelParam;
+    LicenceAccepted := True;
+    HFAcceptRB.Checked  := True;
     HFDeclineRB.Checked := False;
   end;
+
+  { Pre-select the matching model radio button for visual consistency. }
+  if      CLIModelParam = 'tiny'    then begin ModelTinyRB.Checked  := True; ModelMediumRB.Checked := False; end
+  else if CLIModelParam = 'base'    then begin ModelBaseRB.Checked  := True; ModelMediumRB.Checked := False; end
+  else if CLIModelParam = 'small'   then begin ModelSmallRB.Checked := True; ModelMediumRB.Checked := False; end
+  else if CLIModelParam = 'large-v3' then begin ModelLargeRB.Checked := True; ModelMediumRB.Checked := False; end;
 end;
 
 { Resolve which model radio button is checked. }
 procedure UpdateSelectedModel();
 begin
+  if CLIModelParam <> '' then
+  begin
+    SelectedModel := CLIModelParam;
+    Exit;
+  end;
   if      ModelTinyRB.Checked   then SelectedModel := 'tiny'
   else if ModelBaseRB.Checked   then SelectedModel := 'base'
   else if ModelSmallRB.Checked  then SelectedModel := 'small'
@@ -552,21 +551,15 @@ begin
           Result := False;
           Exit;
         end;
-      end else
-      begin
-        MsgBox(
-          'VLC was not installed. Audio playback will not be available.' + #13#10 +
-          'You can install VLC later from https://www.videolan.org/',
-          mbInformation, MB_OK);
       end;
+      { No notification when user declines VLC — avoids blocking automated installs. }
     end;
 
     { Step 2: Whisper model download }
-    { CLI override: apply directly in case radio-button state was lost on page transitions.
-      /model= also implies licence acceptance (automated test scenario). }
-    if LowerCase(ExpandConstant('{param:model:}')) <> '' then
+    { Re-apply CLI model/licence in case radio-button page transitions overwrote globals. }
+    if CLIModelParam <> '' then
     begin
-      SelectedModel   := LowerCase(ExpandConstant('{param:model:}'));
+      SelectedModel   := CLIModelParam;
       LicenceAccepted := True;
     end;
     if not DownloadWhisperModel(SelectedModel) then
