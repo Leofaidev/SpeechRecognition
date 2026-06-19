@@ -51,24 +51,38 @@ class BatchQueuePanel(BasePanel):
 
         self._files: list[str] = []
         self._selected: str | None = None
+        self._row_frames: dict[str, ctk.CTkFrame] = {}
         self._locked = False
         self._refresh()
 
     def _refresh(self) -> None:
         for w in self._file_list.winfo_children():
             w.destroy()
+        self._row_frames = {}
         if not self._files:
             ctk.CTkLabel(self._file_list,
                          text=self._t("batch_empty")).pack(padx=8, pady=8)
             return
         for path in self._files:
-            frame = ctk.CTkFrame(self._file_list, fg_color="transparent")
+            is_sel = (path == self._selected)
+            frame = ctk.CTkFrame(
+                self._file_list,
+                fg_color=("gray75", "gray30") if is_sel else "transparent",
+            )
             frame.pack(fill="x", pady=1)
             lbl = ctk.CTkLabel(frame, text=Path(path).name)
             lbl.pack(side="left", padx=8)
-            _sel = lambda e, p=path: setattr(self, "_selected", p)
+            self._row_frames[path] = frame
+            _sel = lambda e, p=path: self._select(p)
             frame.bind("<Button-1>", _sel)
             lbl.bind("<Button-1>", _sel)
+
+    def _select(self, path: str) -> None:
+        self._selected = path
+        for p, frame in self._row_frames.items():
+            frame.configure(
+                fg_color=("gray75", "gray30") if p == path else "transparent"
+            )
 
     def _add_files(self) -> None:
         if self._locked:

@@ -13,37 +13,51 @@ if not getattr(sys, "frozen", False):
 
 
 def _ensure_no_console() -> None:
-    """GUI mode: re-launch with pythonw.exe so no console window ever appears.
+    """GUI mode (unfrozen): re-launch with pythonw.exe so no console window appears.
 
     python.exe allocates a console before any Python code runs, so FreeConsole()
     always flashes.  Re-launching as pythonw.exe avoids the window entirely.
-    If pythonw.exe is not found (unusual), fall back to hiding the window.
+    Not needed for the frozen exe (built with console=False).
     """
-    if sys.platform != "win32":
+    if sys.platform != "win32" or getattr(sys, "frozen", False):
         return
     exe = Path(sys.executable)
     if exe.name.lower() == "pythonw.exe":
-        return  # already running without a console
+        return
 
     pythonw = exe.parent / "pythonw.exe"
     if pythonw.exists():
         import subprocess
-        # Re-launch this exact script with pythonw.exe, then exit immediately.
         subprocess.Popen(
             [str(pythonw), str(Path(__file__).resolve())] + sys.argv[1:],
             creationflags=0x08000000,  # CREATE_NO_WINDOW
         )
         sys.exit(0)
     else:
-        # pythonw.exe not available — at least hide the console window
         try:
             import ctypes
             hwnd = ctypes.windll.kernel32.GetConsoleWindow()
             if hwnd:
-                ctypes.windll.user32.ShowWindow(hwnd, 0)  # SW_HIDE
+                ctypes.windll.user32.ShowWindow(hwnd, 0)
             ctypes.windll.kernel32.FreeConsole()
         except Exception:
             pass
+
+
+def _attach_cli_console() -> None:
+    """Frozen windowed exe: attach to the parent console for CLI stdout/stderr.
+
+    AttachConsole(-1) succeeds only when the process has a parent console
+    (launched from cmd/PowerShell).  When launched from the desktop shortcut
+    there is no parent console, so it returns False and we leave streams alone.
+    """
+    if not (sys.platform == "win32" and getattr(sys, "frozen", False)):
+        return
+    import ctypes
+    if ctypes.windll.kernel32.AttachConsole(-1):
+        sys.stdout = open("CONOUT$", "w", encoding="utf-8")  # noqa: WPS515
+        sys.stderr = open("CONOUT$", "w", encoding="utf-8")  # noqa: WPS515
+        sys.stdin  = open("CONIN$",  "r", encoding="utf-8")  # noqa: WPS515
 
 
 def _close_existing_instance(pid_file: Path) -> None:
@@ -73,6 +87,7 @@ def _write_pid(pid_file: Path) -> None:
 
 
 def main() -> None:
+    _attach_cli_console()
     if len(sys.argv) > 1:
         from cli.parser import main as cli_main
         sys.exit(cli_main())

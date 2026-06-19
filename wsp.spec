@@ -130,7 +130,7 @@ exe = EXE(
     upx=True,
     upx_exclude=[],
     runtime_tmpdir=None,
-    console=True,               # console=True so CLI stdout/stderr are visible
+    console=False,              # windowed exe; CLI mode uses AttachConsole(-1)
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,
