@@ -81,11 +81,13 @@ class OutputConfigPanel(BasePanel):
 
         self._clipboard_warn = ctk.CTkLabel(
             scroll, text=t("output_clipboard_file_warning"),
-            text_color="#ff9800")
+            text_color="#ff9800", wraplength=380, justify="left",
+            font=ctk.CTkFont(size=11))
         self._clipboard_warn.grid(row=row, column=0, sticky="w",
                                    padx=12, pady=2)
         self._clipboard_warn.grid_remove()
         row += 1
+        self._update_clipboard_warn()
 
         # ---- Combine consecutive segments ---------------------------
         self._section(scroll, t("output_combine_section"), row); row += 1
@@ -130,9 +132,21 @@ class OutputConfigPanel(BasePanel):
     def _save_formats(self) -> None:
         active = [f for f, v in self._format_vars.items() if v.get()]
         self._config.set("output_formats", active)
+        self._update_clipboard_warn()
 
     def _on_clipboard_dest(self) -> None:
         self._config.set("output_to_clipboard", self._dest_clipboard.get())
+        self._update_clipboard_warn()
+
+    def _update_clipboard_warn(self) -> None:
+        clipboard_only = (
+            self._dest_clipboard.get()
+            and not any(v.get() for v in self._format_vars.values())
+        )
+        if clipboard_only:
+            self._clipboard_warn.grid()
+        else:
+            self._clipboard_warn.grid_remove()
 
     def _browse_folder(self) -> None:
         from tkinter import filedialog

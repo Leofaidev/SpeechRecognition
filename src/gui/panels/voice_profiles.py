@@ -375,10 +375,29 @@ class VoiceProfilesPanel(BasePanel):
     def _edit_profile(self) -> None:
         if not self._selected_profile:
             return
+
+        def _on_edit_done(fn: str) -> None:
+            self._refresh_speakers()
+            self._mark_sessions_outdated(fn)
+
         from gui.panels.profile_dialog import ProfileDialog
         ProfileDialog(self, config=self._config, t=self._t,
                       folder_name=self._selected_profile,
-                      on_done=lambda fn: self._refresh_speakers())
+                      on_done=_on_edit_done)
+
+    def _mark_sessions_outdated(self, folder_name: str) -> None:
+        try:
+            from pathlib import Path as _Path
+            from library.storage import LibraryStorage
+            from session.history import mark_outdated
+            library_root = _Path(self._config.get("library_root", "library"))
+            meta = LibraryStorage(library_root).read_meta(folder_name)
+            parts = [meta.last_name, meta.first_name]
+            display = " ".join(p for p in parts if p).strip() or meta.nickname or folder_name
+            sessions_dir = _Path(self._config.get("sessions_dir", "sessions"))
+            mark_outdated(sessions_dir, display)
+        except Exception:
+            pass
 
     def _delete_profile(self) -> None:
         if not self._selected_profile:
