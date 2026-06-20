@@ -73,34 +73,40 @@ class HotkeysPanel(BasePanel):
         self._key_vars: dict[str, ctk.StringVar] = {}
         self._warn_labels: dict[str, ctk.CTkLabel] = {}
 
-        for row, action in enumerate(_ACTIONS, start=1):
+        for idx, action in enumerate(_ACTIONS):
             display_label = {
                 "start_recording": t("hotkey_start_label"),
                 "stop_recording": t("hotkey_stop_label"),
             }[action]
 
+            entry_row = 1 + idx * 2
+            warn_row  = 2 + idx * 2
+
             ctk.CTkLabel(self, text=display_label).grid(
-                row=row, column=0, sticky="w", padx=12, pady=4)
+                row=entry_row, column=0, sticky="w", padx=12, pady=(4, 0))
             current_key = saved_bindings.get(action, _DEFAULT_KEYS[action])
             var = ctk.StringVar(value=current_key)
             self._key_vars[action] = var
             self._prev_key_val[action] = current_key
 
             entry = ctk.CTkEntry(self, textvariable=var, width=200)
-            entry.grid(row=row, column=1, sticky="ew", padx=8, pady=4)
+            entry.grid(row=entry_row, column=1, sticky="ew", padx=8, pady=(4, 0))
             entry.bind("<FocusIn>",
                        lambda e, a=action, v=var: self._on_entry_focus(a, v))
             entry.bind("<FocusOut>",
                        lambda e, a=action, v=var: self._on_entry_blur(a, v))
             entry.bind("<Key>", lambda e, a=action: self._capture_key(e, a))
 
-            warn = ctk.CTkLabel(self, text="", text_color="#ff9800")
-            warn.grid(row=row, column=2, sticky="w", padx=4, pady=4)
+            warn = ctk.CTkLabel(self, text="", text_color="#ff9800",
+                                font=ctk.CTkFont(size=11), anchor="w")
+            warn.grid(row=warn_row, column=0, columnspan=2,
+                      sticky="w", padx=12, pady=(0, 4))
             self._warn_labels[action] = warn
 
+        n_rows = 1 + len(_ACTIONS) * 2
         # Buttons
         btn_frame = ctk.CTkFrame(self, fg_color="transparent")
-        btn_frame.grid(row=len(_ACTIONS) + 1, column=0, columnspan=3,
+        btn_frame.grid(row=n_rows, column=0, columnspan=2,
                        sticky="e", padx=12, pady=12)
         ctk.CTkButton(btn_frame, text=t("btn_reset_hotkeys"),
                       fg_color="#555555",
@@ -115,7 +121,7 @@ class HotkeysPanel(BasePanel):
                      font=ctk.CTkFont(size=11),
                      wraplength=460,
                      justify="left").grid(
-            row=len(_ACTIONS) + 2, column=0, columnspan=3,
+            row=n_rows + 1, column=0, columnspan=2,
             sticky="w", padx=12, pady=(0, 12))
 
     # ------------------------------------------------------------------
