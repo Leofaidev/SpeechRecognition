@@ -26,6 +26,7 @@ class ProfileDialog(ctk.CTkToplevel):
         self._on_done = on_done or (lambda fn: None)
         self._player = None
         self._active_play_btn = None
+        self._initial_values: dict[str, str] = {}
         self.title(t("dialog_edit_profile"))
         self.geometry("520x740")
         self.grab_set()
@@ -67,6 +68,7 @@ class ProfileDialog(ctk.CTkToplevel):
 
         # Metadata fields
         self._name_vars: dict[str, ctk.StringVar] = {}
+        self._name_entries: dict[str, ctk.CTkEntry] = {}
         for key, label_key in [
             ("lastname",     "profile_lastname"),
             ("firstname",    "profile_firstname"),
@@ -82,7 +84,13 @@ class ProfileDialog(ctk.CTkToplevel):
             self._name_vars[key] = var
             _em = ctk.CTkEntry(self, textvariable=var)
             _em.grid(row=row, column=1, columnspan=2, sticky="ew", padx=4, pady=4)
+            self._name_entries[key] = _em
             bind_context_menu(_em)
+            _em._entry.bind(
+                "<Control-z>",
+                lambda e, v=var, k=key: self._revert_field(v, k),
+                add=True,
+            )
             row += 1
 
         # Buttons
@@ -102,19 +110,29 @@ class ProfileDialog(ctk.CTkToplevel):
     # Load existing metadata
     # ------------------------------------------------------------------
 
+    def _revert_field(self, var: ctk.StringVar, key: str) -> str:
+        """Ctrl+Z handler: revert this field to its value when the dialog opened."""
+        var.set(self._initial_values.get(key, ""))
+        return "break"
+
     def _load_existing(self) -> None:
         library_root = Path(self._config.get("library_root", "library"))
         try:
             from library.storage import LibraryStorage
             storage = LibraryStorage(library_root)
             meta = storage.read_meta(self._folder_name)
-            self._name_vars["lastname"].set(meta.last_name)
-            self._name_vars["firstname"].set(meta.first_name)
-            self._name_vars["middlename"].set(meta.middle_name)
-            self._name_vars["nickname"].set(meta.nickname)
-            self._name_vars["organisation"].set(meta.organisation)
-            self._name_vars["position"].set(meta.position)
-            self._name_vars["note"].set(meta.note)
+            vals = {
+                "lastname":     meta.last_name,
+                "firstname":    meta.first_name,
+                "middlename":   meta.middle_name,
+                "nickname":     meta.nickname,
+                "organisation": meta.organisation,
+                "position":     meta.position,
+                "note":         meta.note,
+            }
+            for k, v in vals.items():
+                self._name_vars[k].set(v)
+            self._initial_values = dict(vals)
         except Exception:
             pass
 
