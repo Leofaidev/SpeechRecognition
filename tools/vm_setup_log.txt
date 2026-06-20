@@ -1,0 +1,24 @@
+[22:20:38] [INFO] === WSP VM Setup Check  (DESKTOP-TJHB84I  claude) ===
+[22:20:39] [INFO] --- 1. UAC ---
+[22:20:39] [CHANGE] UAC: enabling disable (EnableLUA=0)
+[22:20:39] [INFO] UAC: set EnableLUA=0 -- reboot required to take effect
+[22:20:39] [INFO] --- 2. Windows Defender ---
+[22:20:41] [CHANGE] Defender real-time protection: disabled
+[22:20:41] [INFO] --- 3. SmartScreen ---
+[22:20:41] [CHANGE] SmartScreen: set to Off
+[22:20:41] [CHANGE] SmartScreen policy: set EnableSmartScreen=0
+[22:20:41] [INFO] --- 4. Display scaling ---
+[22:20:42] [INFO] Display scaling: 100% (OK)
+[22:20:42] [INFO] --- 5. Autologon ---
+[22:20:42] [INFO] Autologon: enabled for 'claude'
+[22:20:42] [INFO] --- 6. PowerShell execution policy ---
+[22:20:42] [CHANGE] Execution policy: set to Unrestricted
+[22:20:42] [INFO] --- 7. WSP-Run-Watcher task ---
+[22:20:48] [CHANGE] WSP-Run-Watcher: NOT installed -- will install now
+[22:20:54] [INFO] WSP-Run-Watcher: installed successfully (state=Running)
+[22:20:54] [INFO] --- 8. Clean state ---
+[22:20:54] [FAIL] Python: FOUND at C:\Users\claude\AppData\Local\Microsoft\WindowsApps\python.exe -- should NOT be installed on a clean test VM
+[22:20:54] [INFO] VLC: not found (OK -- clean)
+[22:20:54] [INFO] WSP: not found (OK -- clean)
+[22:20:54] [INFO] === Summary: 6 change(s) applied, 1 item(s) need manual attention ===
+[22:20:54] [INFO] ACTION REQUIRED: fix the items marked [FAIL] before taking the snapshot

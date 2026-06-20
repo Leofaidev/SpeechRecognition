@@ -1,104 +1,37 @@
 
-[18:08:44] [INFO] === WSP Installer Automation Started ===
-[18:08:44] [INFO] Host: DESKTOP-EEKU2I6  User: claude
-[18:08:44] [INFO] Launching: \\vmware-host\Shared Folders\wsp_installer\wsp_setup.exe
-[18:09:01] [INFO] --- Page 1: Welcome ---
-[18:09:03] [INFO] Clicked: Next
-[18:09:04] [INFO] --- Page 2: HuggingFace Licence (Accept pre-selected) ---
-[18:09:06] [INFO] Clicked: Next
-[18:09:07] [INFO] --- Page 3: Install Directory (default path) ---
-[18:09:09] [INFO] Clicked: Next
-[18:09:10] [INFO] --- Page 4: Whisper Model (Tiny pre-selected) ---
-[18:09:12] [INFO] Clicked: Next
-[18:09:13] [INFO] --- Page 5: Additional Tasks (desktop icon pre-checked) ---
-[18:09:20] [INFO]   [DIAG] Installer HWND=262596
-[18:09:20] [INFO]   [DIAG-BTN] name='Start' enabled=True
-[18:09:20] [INFO]   [DIAG-BTN] name='Type here to search' enabled=True
-[18:09:20] [INFO]   [DIAG-BTN] name='Task View' enabled=True
-[18:09:20] [INFO]   [DIAG-BTN] name='Copilot' enabled=True
-[18:09:20] [INFO]   [DIAG-BTN] name='Microsoft Edge' enabled=True
-[18:09:20] [INFO]   [DIAG-BTN] name='File Explorer' enabled=True
-[18:09:20] [INFO]   [DIAG-BTN] name='Microsoft Store' enabled=True
-[18:09:20] [INFO]   [DIAG-BTN] name='Outlook' enabled=True
-[18:09:20] [INFO]   [DIAG-BTN] name='Windows PowerShell - 1 running window' enabled=True
-[18:09:20] [INFO]   [DIAG-BTN] name='Setup - Speech Recognition Program 1.0.0 - 1 running window' enabled=True
-[18:09:20] [INFO]   [DIAG-BTN] name='Notification Chevron' enabled=True
-[18:09:20] [INFO]   [DIAG-BTN] name='Meet Now' enabled=True
-[18:09:20] [INFO]   [DIAG-BTN] name='Network 2
-Internet access' enabled=True
-[18:09:20] [INFO]   [DIAG-BTN] name='Speakers: 67%' enabled=True
-[18:09:20] [INFO]   [DIAG-BTN] name='Tray Input Indicator - English (United States)' enabled=True
-[18:09:20] [INFO]   [DIAG-BTN] name='Action Center, 1 new notification' enabled=True
-[18:09:20] [INFO]   [DIAG-BTN] name='Show desktop' enabled=True
-[18:09:20] [INFO]   [DIAG-BTN] name='Back by small amount' enabled=False
-[18:09:20] [INFO]   [DIAG-BTN] name='Forward by small amount' enabled=False
-[18:09:20] [INFO]   [DIAG-BTN] name='Back by small amount' enabled=False
-[18:09:20] [INFO]   [DIAG-BTN] name='Forward by small amount' enabled=False
-[18:09:20] [INFO]   [DIAG-BTN] name='Back' enabled=True
-[18:09:20] [INFO]   [DIAG-BTN] name='Install' enabled=True
-[18:09:21] [INFO]   [DIAG-BTN] name='Cancel' enabled=True
-[18:09:21] [INFO]   [DIAG-BTN] name='Minimize' enabled=True
-[18:09:21] [INFO]   [DIAG-BTN] name='Maximize' enabled=False
-[18:09:21] [INFO]   [DIAG-BTN] name='Close' enabled=True
-[18:09:21] [INFO]   [DIAG-BTN] name='Back by small amount' enabled=True
-[18:09:21] [INFO]   [DIAG-BTN] name='Back by large amount' enabled=True
-[18:09:21] [INFO]   [DIAG-BTN] name='Forward by large amount' enabled=True
-[18:09:21] [INFO]   [DIAG-BTN] name='Forward by small amount' enabled=True
-[18:09:21] [INFO]   [DIAG-BTN] name='Minimize' enabled=True
-[18:09:21] [INFO]   [DIAG-BTN] name='Maximize' enabled=True
-[18:09:21] [INFO]   [DIAG-BTN] name='Close' enabled=True
-[18:09:21] [INFO]   [W32] BM_CLICK on 'Next' HWND=66390
-[18:09:22] [INFO] --- Page 6: Ready to Install ---
-[18:09:34] [INFO] Clicked: Install
-[18:09:35] [INFO] --- Waiting for downloads and installation (up to 60 min) ---
-[18:09:36] [INFO] Yes/No dialog: VLC media player is required for audio playback and was not found.
-Download and install VLC now?
-[18:09:36] [INFO] VLC prompt - clicking Yes (download and install VLC)
-[18:09:36] [INFO] Clicked: Yes (install VLC)
-[18:12:46] [INFO] Finish button found - installation complete
-[18:12:47] [INFO] Clicked: Finish
-[18:12:48] [INFO] === Verifying installation ===
-[18:12:48] [INFO] PASS: wsp.exe found at C:\Users\claude\AppData\Local\SpeechRecognitionProgram\wsp.exe
-[18:12:48] [INFO] PASS: config.json found
-[18:12:48] [INFO]       {
-  "source_language": "auto",
-  "target_language": "en",
+[22:26:59] [INFO] === WSP Installer Automation Started ===
+[22:26:59] [INFO] Host: DESKTOP-TJHB84I  User: claude
+[22:26:59] [INFO] Launching: \\vmware-host\Shared Folders\wsp_installer\wsp_setup.exe
+[22:27:59] [INFO] --- Page 1: Welcome ---
+[22:28:02] [INFO] Clicked: Next
+[22:28:03] [INFO] --- Page 2: HuggingFace Licence (Accept pre-selected) ---
+[22:28:05] [INFO] Clicked: Next
+[22:28:06] [INFO] --- Page 3: Install Directory (default path) ---
+[22:28:08] [INFO] Clicked: Next
+[22:28:09] [INFO] --- Page 4: Whisper Model (Tiny pre-selected) ---
+[22:28:11] [INFO] Clicked: Next
+[22:28:12] [INFO] --- Page 5: Additional Tasks (desktop icon pre-checked) ---
+[22:28:14] [INFO] Clicked: Next
+[22:28:15] [INFO] --- Page 6: Ready to Install ---
+[22:28:27] [INFO] Clicked: Install
+[22:28:28] [INFO] --- Waiting for downloads and installation (up to 60 min) ---
+[22:28:29] [INFO] Yes/No dialog: Search | VLC media player is required for audio playback and was not found.
+Download and install VLC now? | Administrator: Windows PowerShell | C:\WINDOWS\System32\WindowsPowerShell\v1.0\powershell.exe | Administrator: C:\WINDOWS\System32\WindowsPowerShell\v1.0\powershell.exe | C:\WINDOWS\System32\WindowsPowerShell\v1.0\powershell.exe
+[22:28:29] [INFO] VLC prompt - clicking Yes (download and install VLC)
+[22:28:29] [INFO] Clicked: Yes (install VLC)
+[22:32:09] [INFO] Finish button found - installation complete
+[22:32:14] [INFO] Clicked: Finish
+[22:32:15] [INFO] === Verifying installation ===
+[22:32:15] [INFO] PASS: wsp.exe found at C:\Users\claude\AppData\Local\SpeechRecognitionProgram\wsp.exe
+[22:32:15] [INFO] PASS: config.json found
+[22:32:16] [INFO]       {
   "whisper_model": "tiny",
   "whisper_model_path": "C:\\Users\\claude\\AppData\\Local\\SpeechRecognitionProgram\\models\\faster-whisper-tiny",
-  "bad_audio_threshold": 0.6,
-  "min_profile_samples": 3,
-  "translation_enabled": false,
-  "translation_engine": "local",
-  "auto_start": false,
-  "licence_accepted": true,
-  "output_folder": "",
-  "output_formats": [
-    "txt"
-  ],
-  "output_fields": {
-    "timestamp": true,
-    "speaker": true,
-    "language": true,
-    "confidence": true,
-    "text": true,
-    "original_text": true
-  },
-  "completion_sound": "chime",
-  "gpu_enabled": true,
-  "transcript_font_size": 12,
-  "recording_mode": "regular",
-  "ui_language": "en",
-  "combine_consecutive_segments": true,
-  "hotkeys": {
-    "start_stop": "ctrl+shift+r",
-    "stop_recording": "ctrl+shift+s",
-    "copy_to_clipboard": "ctrl+shift+c",
-    "toggle_mode": "F10"
-  },
-  "library_root": "C:\\Users\\claude\\AppData\\Local\\SpeechRecognition\\library"
+  "licence_accepted": true
 }
-[18:12:49] [INFO] PASS: whisper_model = 'tiny'
-[18:12:49] [INFO] PASS: licence_accepted = true
-[18:12:49] [INFO] PASS: Desktop shortcut created
-[18:12:49] [INFO] PASS: VLC installed at C:\Program Files\VideoLAN\VLC\vlc.exe
-[18:12:49] [INFO] === Done. Errors: 0 ===
+
+[22:32:16] [INFO] PASS: whisper_model = 'tiny'
+[22:32:16] [INFO] PASS: licence_accepted = true
+[22:32:16] [INFO] PASS: Desktop shortcut created
+[22:32:16] [INFO] PASS: VLC installed at C:\Program Files\VideoLAN\VLC\vlc.exe
+[22:32:16] [INFO] === Done. Errors: 0 ===
