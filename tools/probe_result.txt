@@ -1,0 +1,7 @@
+﻿FOUND #32770 hwnd=0x303FA title='Setup'
+  child cls=Button txt='OK'
+  -> BM_CLICK
+  child cls=Static txt=''
+  child cls=Static txt='VLC was not installed. Audio playback will not be available.
+You can install VLC later from https://www.videolan.org/'
+  -> WM_COMMAND IDOK sent to 0x303FA

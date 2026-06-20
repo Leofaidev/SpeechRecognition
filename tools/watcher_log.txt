@@ -1,0 +1,71 @@
+[11:59:45] === WSP Run-Watcher started  user=claude  session= ===
+[11:59:45] Shared folders available after 0s
+[12:02:50] Launching: vm_install_test.ps1 -> C:\Users\claude\AppData\Local\Temp\wsp_runner\20260617_120250_vm_install_test.ps1
+[12:19:06] === WSP Run-Watcher started  user=claude  session= ===
+[12:19:06] Shared folders available after 0s
+[12:50:26] Launching: hello.ps1 -> C:\Users\claude\AppData\Local\Temp\wsp_runner\20260617_125026_hello.ps1
+[12:50:27] Launching: vm_install_test.ps1 -> C:\Users\claude\AppData\Local\Temp\wsp_runner\20260617_125026_vm_install_test.ps1
+[12:50:27] hello.ps1 executed
+[13:00:29] Launching: vm_install_test.ps1 -> C:\Users\claude\AppData\Local\Temp\wsp_runner\20260617_130029_vm_install_test.ps1
+[13:23:53] === WSP Run-Watcher started  user=claude  session= ===
+[13:23:53] Shared folders available after 0s
+[13:24:25] Launching: vm_install_test.ps1 -> C:\Users\claude\AppData\Local\Temp\wsp_runner\20260617_132425_vm_install_test.ps1
+[13:33:23] === WSP Run-Watcher started  user=claude  session= ===
+[13:33:23] Shared folders available after 0s
+[13:33:31] Launching: vm_install_test.ps1 -> C:\Users\claude\AppData\Local\Temp\wsp_runner\20260617_133331_vm_install_test.ps1
+[13:51:28] Launching: vm_install_test.ps1 -> C:\Users\claude\AppData\Local\Temp\wsp_runner\20260617_135128_vm_install_test.ps1
+[14:09:43] Launching: vm_install_test.ps1 -> C:\Users\claude\AppData\Local\Temp\wsp_runner\20260617_140943_vm_install_test.ps1
+[14:19:36] Launching: vm_install_test.ps1 -> C:\Users\claude\AppData\Local\Temp\wsp_runner\20260617_141936_vm_install_test.ps1
+[14:59:51] Launching: vm_install_test.ps1 -> C:\Users\claude\AppData\Local\Temp\wsp_runner\20260617_145951_vm_install_test.ps1
+[15:11:40] Launching: vm_install_test.ps1 -> C:\Users\claude\AppData\Local\Temp\wsp_runner\20260617_151140_vm_install_test.ps1
+[15:23:51] === WSP Run-Watcher started  user=claude  session= ===
+[15:23:51] Shared folders available after 0s
+[15:26:10] Launching: vm_install_test.ps1 -> C:\Users\claude\AppData\Local\Temp\wsp_runner\20260617_152610_vm_install_test.ps1
+[15:48:28] Launching: vm_install_test.ps1 -> C:\Users\claude\AppData\Local\Temp\wsp_runner\20260617_154828_vm_install_test.ps1
+[16:21:42] Launching: vm_install_test.ps1 -> C:\Users\claude\AppData\Local\Temp\wsp_runner\20260617_162142_vm_install_test.ps1
+[11:30:40] === WSP Run-Watcher started  user=claude  session= ===
+[11:30:46] Shared folders available after 0s
+[11:38:16] === WSP Run-Watcher started  user=claude  session= ===
+[11:38:17] Shared folders available after 0s
+[11:59:01] Launching: vm_install_test.ps1 -> C:\Users\claude\AppData\Local\Temp\wsp_runner\20260618_115900_vm_install_test.ps1
+[12:27:31] Launching: probe_ui.ps1 -> C:\Users\claude\AppData\Local\Temp\wsp_runner\20260618_122731_probe_ui.ps1
+[12:27:45] Launching: probe_ui.ps1 -> C:\Users\claude\AppData\Local\Temp\wsp_runner\20260618_122745_probe_ui.ps1
+[12:28:31] Launching: probe_net.ps1 -> C:\Users\claude\AppData\Local\Temp\wsp_runner\20260618_122831_probe_net.ps1
+[12:29:34] Launching: probe_http.ps1 -> C:\Users\claude\AppData\Local\Temp\wsp_runner\20260618_122934_probe_http.ps1
+[12:31:58] Launching: probe_dl.ps1 -> C:\Users\claude\AppData\Local\Temp\wsp_runner\20260618_123158_probe_dl.ps1
+[12:33:31] Launching: probe_text.ps1 -> C:\Users\claude\AppData\Local\Temp\wsp_runner\20260618_123331_probe_text.ps1
+[12:36:26] Launching: click_ok.ps1 -> C:\Users\claude\AppData\Local\Temp\wsp_runner\20260618_123626_click_ok.ps1
+[12:37:12] Launching: click_ok2.ps1 -> C:\Users\claude\AppData\Local\Temp\wsp_runner\20260618_123712_click_ok2.ps1
+[12:38:50] Launching: probe_class.ps1 -> C:\Users\claude\AppData\Local\Temp\wsp_runner\20260618_123850_probe_class.ps1
+[12:40:35] Launching: fix_click_ok.ps1 -> C:\Users\claude\AppData\Local\Temp\wsp_runner\20260618_124035_fix_click_ok.ps1
+[12:42:58] Launching: fix_ok2.ps1 -> C:\Users\claude\AppData\Local\Temp\wsp_runner\20260618_124258_fix_ok2.ps1
+[12:43:48] Launching: fix_enter.ps1 -> C:\Users\claude\AppData\Local\Temp\wsp_runner\20260618_124348_fix_enter.ps1
+[13:03:35] === WSP Run-Watcher started  user=claude  session= ===
+[13:03:35] Shared folders available after 0s
+[13:21:06] Launching: vm_install_test.ps1 -> C:\Users\claude\AppData\Local\Temp\wsp_runner\20260618_132106_vm_install_test.ps1
+[14:01:51] === WSP Run-Watcher started  user=claude  session= ===
+[14:01:51] Shared folders available after 0s
+[14:01:51] Launching: vm_install_test.ps1 -> C:\Users\claude\AppData\Local\Temp\wsp_runner\20260618_140151_vm_install_test.ps1
+[14:56:40] === WSP Run-Watcher started  user=claude  session= ===
+[14:56:42] Shared folders available after 0s
+[14:56:42] Launching: vm_install_test.ps1 -> C:\Users\claude\AppData\Local\Temp\wsp_runner\20260618_145642_vm_install_test.ps1
+[16:30:59] === WSP Run-Watcher started  user=claude  session= ===
+[16:30:59] Shared folders available after 0s
+[16:30:59] Launching: vm_install_test.ps1 -> C:\Users\claude\AppData\Local\Temp\wsp_runner\20260618_163059_vm_install_test.ps1
+[17:01:20] === WSP Run-Watcher started  user=claude  session= ===
+[17:01:20] Shared folders available after 0s
+[17:01:47] Launching: vm_install_test.ps1 -> C:\Users\claude\AppData\Local\Temp\wsp_runner\20260618_170147_vm_install_test.ps1
+[17:33:45] === WSP Run-Watcher started  user=claude  session= ===
+[17:33:45] Shared folders available after 0s
+[17:33:54] Launching: vm_install_test.ps1 -> C:\Users\claude\AppData\Local\Temp\wsp_runner\20260618_173354_vm_install_test.ps1
+[17:42:05] Launching: test_vlc_install.ps1 -> C:\Users\claude\AppData\Local\Temp\wsp_runner\20260618_174156_test_vlc_install.ps1
+[17:43:54] Launching: test_vlc_tls12.ps1 -> C:\Users\claude\AppData\Local\Temp\wsp_runner\20260618_174354_test_vlc_tls12.ps1
+[17:45:48] Launching: test_vlc_bits.ps1 -> C:\Users\claude\AppData\Local\Temp\wsp_runner\20260618_174548_test_vlc_bits.ps1
+[17:47:55] Launching: test_vlc_cdn.ps1 -> C:\Users\claude\AppData\Local\Temp\wsp_runner\20260618_174755_test_vlc_cdn.ps1
+[18:08:30] === WSP Run-Watcher started  user=claude  session= ===
+[18:08:32] Shared folders available after 0s
+[18:08:42] Launching: vm_install_test.ps1 -> C:\Users\claude\AppData\Local\Temp\wsp_runner\20260618_180842_vm_install_test.ps1
+[17:08:29] === WSP Run-Watcher started  user=claude  session= ===
+[17:08:32] Shared folders available after 0s
+[08:38:12] === WSP Run-Watcher started  user=claude  session= ===
+[08:38:13] Shared folders available after 0s

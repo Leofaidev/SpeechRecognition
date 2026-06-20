@@ -1,0 +1,7 @@
+﻿=== CHK run 06/19/2026 17:26:21 ===
+17:35:58  CHK-121  [FAIL]  Key= after=
+17:36:34  CHK-121  [FAIL]  Key not found after enable
+17:38:07  CHK-121  [PASS]  Registry key added on enable, removed on disable
+17:40:34  CHK-146  [PASS]  Two files x two formats = 4 output files, exit 0
+17:40:34  CHK-147  [PASS]  CPU-only (CUDA_VISIBLE_DEVICES=-1): output produced, exit 0
+18:22:49  CHK-109  [PASS]  Add Row → 3 rows confirmed; Undo → back to 2 rows

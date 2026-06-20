@@ -1,0 +1,7 @@
+
+[17:45:50] Trying Start-BitsTransfer (WinInet)...
+[17:46:40] BITS FAILED: The connection with the server was terminated abnormally
+
+[17:46:40] Trying certutil...
+[17:46:43] certutil FAILED
+[17:46:43] Done

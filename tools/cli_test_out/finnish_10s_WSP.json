@@ -1,0 +1,15 @@
+[
+  {
+    "start": 0.0,
+    "end": 10.0,
+    "speaker": "Unknown",
+    "language": "English",
+    "language_code": "en",
+    "confidence": 0.5845694927907883,
+    "no_speech_prob": 0.8388671875,
+    "bad_audio": true,
+    "low_confidence": false,
+    "text": "XXXXX",
+    "translated_text": null
+  }
+]

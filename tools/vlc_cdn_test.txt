@@ -1,0 +1,7 @@
+
+[17:47:55] Testing direct CDN: https://vlc.elhacker.net/vlc/3.0.21/win64/vlc-3.0.21-win64.exe
+[17:48:17] DOWNLOAD OK: 42.9 MB
+[17:48:17] Running /S ...
+[17:48:30] Exit code: 0
+[17:48:30] PASS: VLC installed
+[17:48:30] Done

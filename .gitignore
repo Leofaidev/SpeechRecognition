@@ -87,6 +87,9 @@ desktop.ini
 *.log
 logs/
 
+# Installer build output (too large for git; distribute via GitHub Releases)
+installer/Output/
+
 # Runtime user data (output transcriptions, sessions, voice profiles)
 output_WSP*.txt
 output_WSP*.docx

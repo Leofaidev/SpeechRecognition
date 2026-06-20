@@ -1,0 +1,3 @@
+
+[17:42:06] Downloading VLC...
+[17:42:52] DOWNLOAD FAILED: Exception calling "DownloadFile" with "2" argument(s): "The underlying connection was closed: An unexpected error occurred on a send."
