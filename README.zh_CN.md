@@ -2,7 +2,7 @@
 
 一款适用于 Windows 的本地运行、GPU 加速语音识别桌面应用程序。将口语音频转换为文本，识别各个说话者，可选择性地翻译结果，并以多种可配置格式输出。
 
-**版本 1.0** — 发布于 2026年5月21日
+**版本 1.0** — 发布于 2026年6月20日
 
 [English](README.md) | [Deutsch](README.de.md) | [Español](README.es.md) | [Suomi](README.fi.md) | [Русский](README.ru.md) | [繁體中文](README.zh_TW.md)
 

@@ -2,7 +2,7 @@
 
 Paikallisesti suoritettava, GPU-kiihdytetty puheentunnistuksen työpöytäsovellus Windowsille. Muuntaa puhutun äänen tekstiksi, tunnistaa yksittäiset puhujat, kääntää tuloksen tarvittaessa ja toimittaa tulosteen useissa määritettävissä olevissa muodoissa.
 
-**Versio 1.0** — julkaistu 21.5.2026
+**Versio 1.0** — julkaistu 20.6.2026
 
 [English](README.md) | [Deutsch](README.de.md) | [Español](README.es.md) | [Русский](README.ru.md) | [简体中文](README.zh_CN.md) | [繁體中文](README.zh_TW.md)
 

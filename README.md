@@ -2,7 +2,7 @@
 
 A locally executed, GPU-accelerated speech recognition desktop application for Windows. Converts spoken audio into text, identifies individual speakers, optionally translates the result, and delivers output in multiple configurable formats.
 
-**Version 1.0** — released 2026-05-21
+**Version 1.0** — released 2026-06-20
 
 [Deutsch](README.de.md) | [Español](README.es.md) | [Suomi](README.fi.md) | [Русский](README.ru.md) | [简体中文](README.zh_CN.md) | [繁體中文](README.zh_TW.md)
 

@@ -2,7 +2,7 @@
 
 Una aplicación de escritorio para reconocimiento de voz con aceleración GPU ejecutada localmente para Windows. Convierte el audio hablado en texto, identifica hablantes individuales, opcionalmente traduce el resultado y entrega la salida en múltiples formatos configurables.
 
-**Versión 1.0** — publicada el 21/05/2026
+**Versión 1.0** — publicada el 20/06/2026
 
 [English](README.md) | [Deutsch](README.de.md) | [Suomi](README.fi.md) | [Русский](README.ru.md) | [简体中文](README.zh_CN.md) | [繁體中文](README.zh_TW.md)
 

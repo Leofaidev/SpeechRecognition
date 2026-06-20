@@ -2,7 +2,7 @@
 
 一款適用於 Windows 的本地執行、GPU 加速語音識別桌面應用程式。將口語音訊轉換為文字，識別各個說話者，可選擇性地翻譯結果，並以多種可配置格式輸出。
 
-**版本 1.0** — 發布於 2026年5月21日
+**版本 1.0** — 發布於 2026年6月20日
 
 [English](README.md) | [Deutsch](README.de.md) | [Español](README.es.md) | [Suomi](README.fi.md) | [Русский](README.ru.md) | [简体中文](README.zh_CN.md)
 

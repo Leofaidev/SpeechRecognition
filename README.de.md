@@ -2,7 +2,7 @@
 
 Eine lokal ausgeführte, GPU-beschleunigte Desktop-Anwendung zur Spracherkennung für Windows. Wandelt gesprochene Audiodaten in Text um, identifiziert einzelne Sprecher, übersetzt das Ergebnis optional und liefert die Ausgabe in mehreren konfigurierbaren Formaten.
 
-**Version 1.0** — veröffentlicht am 21.05.2026
+**Version 1.0** — veröffentlicht am 20.06.2026
 
 [English](README.md) | [Español](README.es.md) | [Suomi](README.fi.md) | [Русский](README.ru.md) | [简体中文](README.zh_CN.md) | [繁體中文](README.zh_TW.md)
 
