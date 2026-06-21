@@ -258,6 +258,8 @@ class SessionHistoryPanel(BasePanel):
             from session.history import regenerate_output
             written = regenerate_output(
                 sessions_dir, self._selected_id, output_dir,
+                formats=self._config.get("output_formats", ["txt"]),
+                fields=self._config.get("output_fields", None),
                 combine=self._config.get("combine_consecutive_segments", True))
             from tkinter import messagebox
             messagebox.showinfo(

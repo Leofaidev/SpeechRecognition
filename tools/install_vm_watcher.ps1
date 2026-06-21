@@ -106,7 +106,7 @@ $settings = New-ScheduledTaskSettingsSet `
 $principal = New-ScheduledTaskPrincipal `
     -UserId $env:USERNAME `
     -LogonType Interactive `
-    -RunLevel Limited
+    -RunLevel Highest
 
 Register-ScheduledTask `
     -TaskName  $taskName `

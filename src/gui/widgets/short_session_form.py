@@ -25,6 +25,37 @@ import customtkinter as ctk
 from gui.widgets.context_menu import bind_context_menu
 
 
+def _bind_cross_layout_undo(textbox: ctk.CTkTextbox) -> None:
+    """Make Ctrl+Z undo work regardless of the active keyboard layout.
+
+    Tkinter's built-in <Control-z> class binding matches on the keysym 'z',
+    which is layout-dependent and doesn't fire on non-English layouts (e.g.
+    Russian, Finnish).  We add two widget-level bindings:
+      - <Control-z> / <Control-Z>: handle English layout; return 'break' so
+        the class binding doesn't also run (no double-undo).
+      - <Control-KeyPress>: fallback for non-English layouts; the Ctrl+Z
+        control character '\x1a' is layout-independent and always present.
+        This handler is skipped on English layout because 'break' from the
+        more-specific <Control-z> binding stops further event dispatch.
+    """
+    inner = textbox._textbox  # underlying tk.Text
+
+    def _undo(event=None):
+        try:
+            inner.edit_undo()
+        except Exception:
+            pass
+        return "break"
+
+    def _undo_by_char(event):
+        if event.char == "\x1a":   # Ctrl+Z control char, layout-independent
+            return _undo()
+
+    textbox.bind("<Control-z>", _undo)
+    textbox.bind("<Control-Z>", _undo)
+    textbox.bind("<Control-KeyPress>", _undo_by_char, add=True)
+
+
 class ShortSessionForm(ctk.CTkFrame):
     """Two-field form for Short Session mode.
 
@@ -124,6 +155,7 @@ class ShortSessionForm(ctk.CTkFrame):
         self._field1.insert("1.0", t("field_placeholder_transcription"))
         self._field1.bind("<FocusIn>", self._clear_placeholder1)
         bind_context_menu(self._field1)
+        _bind_cross_layout_undo(self._field1)
 
         self._btn1 = ctk.CTkButton(
             frame1,
@@ -144,6 +176,7 @@ class ShortSessionForm(ctk.CTkFrame):
         self._field2.insert("1.0", t("field_placeholder_translation"))
         self._field2.bind("<FocusIn>", self._clear_placeholder2)
         bind_context_menu(self._field2)
+        _bind_cross_layout_undo(self._field2)
 
         self._btn2 = ctk.CTkButton(
             self._frame2,

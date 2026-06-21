@@ -91,6 +91,15 @@ class ProfileDialog(ctk.CTkToplevel):
                 lambda e, v=var, k=key: self._revert_field(v, k),
                 add=True,
             )
+            # Non-English layouts don't generate <Control-z> (keysym differs per
+            # layout); '\x1a' is the Ctrl+Z control char and is layout-independent.
+            _em._entry.bind(
+                "<Control-KeyPress>",
+                lambda e, v=var, k=key: (
+                    self._revert_field(v, k) if e.char == "\x1a" else None
+                ),
+                add=True,
+            )
             row += 1
 
         # Buttons

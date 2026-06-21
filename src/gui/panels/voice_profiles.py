@@ -376,26 +376,47 @@ class VoiceProfilesPanel(BasePanel):
         if not self._selected_profile:
             return
 
+        # Capture the current display name BEFORE the dialog opens so we can
+        # retroactively relabel sessions if the name changes.
+        folder_name = self._selected_profile
+        old_display = self._profile_display_name(folder_name)
+
         def _on_edit_done(fn: str) -> None:
             self._refresh_speakers()
-            self._mark_sessions_outdated(fn)
+            self._refresh_groups()
+            self._relabel_sessions_after_rename(fn, old_display)
 
         from gui.panels.profile_dialog import ProfileDialog
         ProfileDialog(self, config=self._config, t=self._t,
-                      folder_name=self._selected_profile,
+                      folder_name=folder_name,
                       on_done=_on_edit_done)
 
-    def _mark_sessions_outdated(self, folder_name: str) -> None:
+    def _profile_display_name(self, folder_name: str) -> str:
+        """Return the current display name for a profile folder."""
         try:
-            from pathlib import Path as _Path
             from library.storage import LibraryStorage
-            from session.history import mark_outdated
-            library_root = _Path(self._config.get("library_root", "library"))
-            meta = LibraryStorage(library_root).read_meta(folder_name)
+            meta = LibraryStorage(
+                Path(self._config.get("library_root", "library"))
+            ).read_meta(folder_name)
             parts = [meta.last_name, meta.first_name]
-            display = " ".join(p for p in parts if p).strip() or meta.nickname or folder_name
+            return " ".join(p for p in parts if p).strip() or meta.nickname or folder_name
+        except Exception:
+            return folder_name
+
+    def _relabel_sessions_after_rename(self, folder_name: str, old_display: str) -> None:
+        """Retroactively update all session JSONs when a speaker's name changes."""
+        try:
+            new_display = self._profile_display_name(folder_name)
+            if not old_display or old_display == new_display:
+                return
+            from pathlib import Path as _Path
+            from session.history import list_sessions, load, save
             sessions_dir = _Path(self._config.get("sessions_dir", "sessions"))
-            mark_outdated(sessions_dir, display)
+            for s in list_sessions(sessions_dir):
+                if old_display in s.get("speakers", []):
+                    manager = load(sessions_dir, s["session_id"])
+                    manager.relabel(old_display, new_display)
+                    save(sessions_dir, manager)
         except Exception:
             pass
 

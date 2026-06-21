@@ -69,3 +69,14 @@
 [17:08:32] Shared folders available after 0s
 [08:38:12] === WSP Run-Watcher started  user=claude  session= ===
 [08:38:13] Shared folders available after 0s
+[22:20:52] === WSP Run-Watcher started  user=claude  session= ===
+[22:20:52] Shared folders available after 0s
+[22:23:50] === WSP Run-Watcher started  user=claude  session= ===
+[22:23:50] Shared folders available after 0s
+[22:25:19] === WSP Run-Watcher started  user=claude  session= ===
+[22:25:19] Shared folders available after 0s
+[22:26:57] Launching: vm_install_test.ps1 -> C:\Users\claude\AppData\Local\Temp\wsp_runner\20260620_222656_vm_install_test.ps1
+[07:34:32] === WSP Run-Watcher started  user=claude  session= ===
+[07:34:33] Shared folders available after 0s
+[08:36:26] === WSP Run-Watcher started  user=claude  session= ===
+[08:36:26] Shared folders available after 0s

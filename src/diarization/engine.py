@@ -188,7 +188,7 @@ class DiarizationEngine:
         import re
         msg = str(exc)
         m = re.search(r"pyannote/[\w.-]+", msg)
-        blocked = m.group(0) if m else "a required model"
+        blocked = m.group(0) if m else _DEFAULT_MODEL
         raise RuntimeError(
             f"Speaker diarization model could not be loaded.\n\n"
             f"Access was denied for: {blocked}\n\n"
@@ -196,7 +196,9 @@ class DiarizationEngine:
             f"  1. Log in at huggingface.co\n"
             f"  2. Visit huggingface.co/{blocked} and click "
             f"'Agree and access repository'\n"
-            f"  3. Restart the application\n\n"
+            f"  3. Enter your HuggingFace token in AI Config → "
+            f"'HuggingFace Token' field\n"
+            f"  4. Restart the application\n\n"
             f"(All pyannote models must be approved separately.)"
         ) from exc
 

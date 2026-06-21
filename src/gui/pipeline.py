@@ -426,6 +426,12 @@ class PipelineRunner:
                         _copy_to_clipboard(_clip)
                     except Exception:
                         pass
+                # Rebuild session segments now that speaker labels have been
+                # finalised by the labelling dialog (speaker_id mutations on
+                # _segs are visible here; the snapshot taken earlier at
+                # session.add_segments() still has "Speaker N" strings).
+                _session._segments.clear()
+                _session.add_segments(_segs)
                 _session.output_files = [str(p) for p in written_d]
                 sessions_dir_d = _Path(_cfg.get("sessions_dir", "sessions"))
                 try:
