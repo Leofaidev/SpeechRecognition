@@ -52,6 +52,8 @@ def write(
         "translation": False,
     }
 
+    use_trans = _fields.get("translation_enabled", False)
+
     blocks: list[str] = []
     for seg in segments:
         lines: list[str] = []
@@ -64,8 +66,9 @@ def write(
         if _fields.get("confidence", True):
             lines.append(f"Confidence: {seg.confidence:.2f}")
         if _fields.get("text", True):
-            lines.append(f"Text: {seg.text}")
-        if _fields.get("translation", False) and seg.translated_text:
+            txt = (seg.translated_text or seg.text) if use_trans else seg.text
+            lines.append(f"Text: {txt}")
+        if _fields.get("translation", False) and seg.translated_text and not use_trans:
             lines.append(f"Translation: {seg.translated_text}")
         blocks.append("\n".join(lines))
 

@@ -399,6 +399,9 @@ class PipelineRunner:
                     inp = _Path(_source_path) if _source_path else _Path("output")
                     out_segs = _segs
                     _output_fields = _cfg.get("output_fields", None)
+                    if _cfg.get("translation_enabled", False):
+                        _output_fields = dict(_output_fields or {})
+                        _output_fields["translation_enabled"] = True
                     if _cfg.get("combine_consecutive_segments", True):
                         from output.segment_combiner import combine_consecutive
                         _combined_segs = combine_consecutive(out_segs)
@@ -465,6 +468,9 @@ class PipelineRunner:
                 input_path = _Path(source_path) if source_path else _Path("output")
                 out_segs = ts_segments
                 output_fields = config.get("output_fields", None)
+                if config.get("translation_enabled", False):
+                    output_fields = dict(output_fields or {})
+                    output_fields["translation_enabled"] = True
                 if config.get("combine_consecutive_segments", True):
                     from output.segment_combiner import combine_consecutive
                     combined_segs = combine_consecutive(out_segs)

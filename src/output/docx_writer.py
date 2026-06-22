@@ -51,6 +51,8 @@ def write(
 
     doc = Document()
 
+    use_trans = _fields.get("translation_enabled", False)
+
     for i, seg in enumerate(segments):
         if _fields.get("timestamp", True):
             doc.add_paragraph(f"{_format_time(seg.start)} --> {_format_time(seg.end)}")
@@ -61,8 +63,9 @@ def write(
         if _fields.get("confidence", True):
             doc.add_paragraph(f"Confidence: {seg.confidence:.2f}")
         if _fields.get("text", True):
-            doc.add_paragraph(f"Text: {seg.text}")
-        if _fields.get("translation", False) and seg.translated_text:
+            txt = (seg.translated_text or seg.text) if use_trans else seg.text
+            doc.add_paragraph(f"Text: {txt}")
+        if _fields.get("translation", False) and seg.translated_text and not use_trans:
             doc.add_paragraph(f"Translation: {seg.translated_text}")
         if i < len(segments) - 1:
             doc.add_paragraph("")  # blank separator

@@ -36,7 +36,8 @@ def write(
     """
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    use_translation = bool((fields or {}).get("translation", False))
+    _f = fields or {}
+    use_translation = bool(_f.get("translation", False)) or bool(_f.get("translation_enabled", False))
 
     lines: list[str] = []
     for i, seg in enumerate(segments, start=1):
