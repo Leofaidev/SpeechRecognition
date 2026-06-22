@@ -286,8 +286,12 @@ class TranscriptionEngine:
         model_id = model_path if model_path else self._config.get("whisper_model", "medium")
         gpu_enabled = self._config.get("gpu_enabled", True)
 
-        import torch
-        device = "cuda" if (gpu_enabled and torch.cuda.is_available()) else "cpu"
+        try:
+            import torch
+            cuda_available = gpu_enabled and torch.cuda.is_available()
+        except ImportError:
+            cuda_available = False
+        device = "cuda" if cuda_available else "cpu"
         compute_type = "float16" if device == "cuda" else "int8"
 
         def _try_load():
