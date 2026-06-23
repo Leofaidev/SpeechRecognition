@@ -170,12 +170,17 @@ class App(ctk.CTk):
         else:
             self._icon_idle = str(_assets / "WSP.png")
             self._icon_recording = str(_assets / "WSP_recording.png")
-        self.after(200, lambda: self._set_window_icon(self._icon_idle))
-
         self._build_layout()
         self._register_hotkeys()
         if sys.platform == "linux":
             self.after(50, self._poll_hotkey_queue)
+        # Set icon immediately after the layout is built (update_idletasks
+        # ensures winfo_id() is valid), then schedule a backup 500 ms later
+        # to cover the Xlib _NET_WM_ICON path which needs the mainloop running.
+        if sys.platform != "win32":
+            self.update_idletasks()
+            self._set_window_icon(self._icon_idle)
+        self.after(500, lambda: self._set_window_icon(self._icon_idle))
 
         # Linux: mouse wheel uses Button-4/5 instead of MouseWheel.
         # Walk up from the event target to find the nearest CTkScrollableFrame
@@ -273,14 +278,8 @@ class App(ctk.CTk):
                 w.change_property(net_icon, Xatom.CARDINAL, 32, icon_data)
             dpy.sync()
             dpy.close()
-        except Exception as _icon_exc:
-            try:
-                with open("/tmp/wsp_icon_err.log", "a") as _f:
-                    import traceback
-                    _f.write(f"[_NET_WM_ICON] {type(_icon_exc).__name__}: {_icon_exc}\n")
-                    traceback.print_exc(file=_f)
-            except Exception:
-                pass
+        except Exception:
+            pass
 
     # Layout construction
     # ------------------------------------------------------------------

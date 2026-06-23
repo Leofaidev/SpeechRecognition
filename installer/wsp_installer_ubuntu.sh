@@ -491,6 +491,14 @@ echo ""
 
 if yn "Launch Speech Recognition Program now?" "Y"; then
     info "Launching…"
-    nohup bash "$LAUNCHER" >/dev/null 2>&1 &
-    disown
+    # Use gtk-launch so GNOME Shell receives startup notification and
+    # immediately associates the window with the desktop entry (correct
+    # dock icon without relying on StartupWMClass matching timing).
+    # Fall back to direct launch if gtk-launch is unavailable.
+    if command -v gtk-launch &>/dev/null && [[ -n "${DISPLAY:-}${WAYLAND_DISPLAY:-}" ]]; then
+        gtk-launch SpeechRecognitionProgram >/dev/null 2>&1 &
+    else
+        nohup bash "$LAUNCHER" >/dev/null 2>&1 &
+        disown
+    fi
 fi
