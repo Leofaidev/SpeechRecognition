@@ -407,17 +407,18 @@ fi
 # ---------------------------------------------------------------------------
 # 11. Desktop entry
 # ---------------------------------------------------------------------------
-APPS_DIR="$HOME/.local/share/applications"
-ICONS_DIR="$HOME/.local/share/icons/hicolor/256x256/apps"
-mkdir -p "$APPS_DIR" "$ICONS_DIR"
+# Install to /usr/share/applications/ so GNOME Shell 50 includes the entry
+# in Shell.AppSystem.get_installed() for StartupWMClass window matching.
+# User-local ~/.local/share/applications/ is NOT searched for this purpose
+# on Ubuntu 26.04 / GNOME 50.
+SYS_APPS_DIR="/usr/share/applications"
+SYS_ICONS_DIR="/usr/share/icons/hicolor/256x256/apps"
 
 ICON_SRC="$INSTALL_DIR/assets/WSP.png"
-ICON_DEST="$ICONS_DIR/SpeechRecognitionProgram.png"
+ICON_DEST="$SYS_ICONS_DIR/SpeechRecognitionProgram.png"
 if [[ -f "$ICON_SRC" ]]; then
-    cp "$ICON_SRC" "$ICON_DEST"
-    # Register in hicolor theme so GNOME Shell resolves by name (full paths
-    # are not reliably loaded by GNOME Shell on GNOME 46+).
-    gtk-update-icon-cache -f -t "$HOME/.local/share/icons/hicolor/" 2>/dev/null || true
+    sudo cp "$ICON_SRC" "$ICON_DEST"
+    sudo gtk-update-icon-cache -f -t /usr/share/icons/hicolor/ 2>/dev/null || true
     info "Icon: $ICON_DEST"
     ICON_FIELD="SpeechRecognitionProgram"
 else
@@ -425,8 +426,8 @@ else
     ICON_FIELD="application-x-executable"
 fi
 
-DESKTOP="$APPS_DIR/SpeechRecognitionProgram.desktop"
-cat > "$DESKTOP" <<DESKENTRY
+DESKTOP="$SYS_APPS_DIR/SpeechRecognitionProgram.desktop"
+sudo tee "$DESKTOP" >/dev/null <<DESKENTRY
 [Desktop Entry]
 Type=Application
 Name=Speech Recognition Program
@@ -435,14 +436,24 @@ Comment=Locally-executed GPU-accelerated speech recognition
 Exec=${LAUNCHER}
 Icon=${ICON_FIELD}
 Terminal=false
-Categories=AudioVideo;Audio;Utility;
+Categories=AudioVideo;Audio;
 Keywords=speech;voice;transcription;recognition;whisper;
 StartupNotify=true
 StartupWMClass=Wsp
 DESKENTRY
-chmod 644 "$DESKTOP"
-update-desktop-database "$APPS_DIR" 2>/dev/null || true
+sudo chmod 644 "$DESKTOP"
+sudo update-desktop-database "$SYS_APPS_DIR" 2>/dev/null || true
 info "Desktop entry: $DESKTOP"
+
+# Pin app to GNOME dock so the icon is always visible and correctly rendered.
+if command -v gsettings &>/dev/null; then
+    _FAVS=$(gsettings get org.gnome.shell favorite-apps 2>/dev/null || echo "")
+    if [[ -n "$_FAVS" ]] && ! echo "$_FAVS" | grep -q "SpeechRecognitionProgram"; then
+        _NEW=$(echo "$_FAVS" | sed "s/\]$/, 'SpeechRecognitionProgram.desktop'\]/")
+        gsettings set org.gnome.shell favorite-apps "$_NEW" 2>/dev/null || true
+        info "App pinned to GNOME dock"
+    fi
+fi
 
 # ---------------------------------------------------------------------------
 # 12. Initial config
