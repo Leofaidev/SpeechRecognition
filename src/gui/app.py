@@ -179,6 +179,7 @@ class App(ctk.CTk):
         # to cover the Xlib _NET_WM_ICON path which needs the mainloop running.
         if sys.platform != "win32":
             self.update_idletasks()
+            self._set_linux_window_identity()
             self._set_window_icon(self._icon_idle)
         self.after(500, lambda: self._set_window_icon(self._icon_idle))
 
@@ -202,6 +203,38 @@ class App(ctk.CTk):
 
         # Minimize-to-tray intercept
         self.protocol("WM_DELETE_WINDOW", self._on_close)
+
+    def _set_linux_window_identity(self) -> None:
+        """Set _GTK_APPLICATION_ID, _NET_WM_PID, _NET_STARTUP_ID on the
+        X11 window.  GNOME Shell reads _GTK_APPLICATION_ID to look up
+        '<id>.desktop' and use its Icon= field for the dock; without it
+        the dock shows a gray 'unknown app' placeholder.  Must be called
+        before mainloop so GNOME Shell reads the property on its first
+        window-added event."""
+        if sys.platform == "win32":
+            return
+        try:
+            import os as _os
+            from Xlib import display as xdisplay, Xatom
+            dpy = xdisplay.Display()
+            utf8 = dpy.intern_atom("UTF8_STRING")
+            frame = dpy.create_resource_object("window", self.winfo_id())
+            parent = frame.query_tree().parent
+            targets = [w for w in (parent, frame)
+                       if w is not None and w.id != dpy.screen().root.id]
+            pid_atom = dpy.intern_atom("_NET_WM_PID")
+            gtk_id_atom = dpy.intern_atom("_GTK_APPLICATION_ID")
+            startup_atom = dpy.intern_atom("_NET_STARTUP_ID")
+            startup_id = _os.environ.get("DESKTOP_STARTUP_ID", "")
+            for w in targets:
+                w.change_property(pid_atom, Xatom.CARDINAL, 32, [_os.getpid()])
+                w.change_property(gtk_id_atom, utf8, 8, b"SpeechRecognitionProgram")
+                if startup_id:
+                    w.change_property(startup_atom, utf8, 8, startup_id.encode())
+            dpy.sync()
+            dpy.close()
+        except Exception:
+            pass
 
     def _set_window_icon(self, path: str) -> None:
         if not Path(path).exists():
