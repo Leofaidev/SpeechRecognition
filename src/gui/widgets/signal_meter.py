@@ -57,9 +57,12 @@ class SignalMeter(ctk.CTkFrame):
 
     def set_level(self, level: float) -> None:
         """Update the displayed level.  ``level`` must be in [0.0, 1.0]."""
-        self._level = max(0.0, min(1.0, level))
-        fill_w = int(self._bar_width * self._level)
-        colour = _colour_for(self._level)
+        level = max(0.0, min(1.0, level))
+        if level == self._level:
+            return
+        self._level = level
+        fill_w = int(self._bar_width * level)
+        colour = _colour_for(level)
         self._canvas.coords(self._fill_rect, 0, 0, fill_w, self._bar_height)
         self._canvas.itemconfig(self._fill_rect, fill=colour)
 

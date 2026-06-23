@@ -99,13 +99,15 @@ class SubstitutionDictPanel(BasePanel):
         win.geometry("480x300")
         win.resizable(True, True)
         win.transient(self.winfo_toplevel())
-        win.grab_set()
         txt = ctk.CTkTextbox(win, wrap="word", activate_scrollbars=True)
         txt.pack(fill="both", expand=True, padx=12, pady=(12, 4))
         txt.insert("end", t(text_key))
         txt.configure(state="disabled")
         ctk.CTkButton(win, text=t("btn_close"),
                       command=win.destroy).pack(pady=(4, 12))
+        win.update_idletasks()
+        win.lift()
+        win.grab_set()
         win.after(100, win.focus_force)
 
     # ------------------------------------------------------------------
@@ -310,7 +312,8 @@ class _EntryEditDialog(ctk.CTkToplevel):
         self.resizable(False, False)
         self.transient(parent.winfo_toplevel())
         self._build()
-        self.update()          # flush Tk geometry so widgets render before grab
+        self.update_idletasks()
+        self.lift()
         self.grab_set()
         self._focus_id = self.after(100, self._src_entry.focus_force)
 

@@ -110,7 +110,7 @@ class OpusMTTranslator:
     def _run_model(self, tokenizer, model, text: str) -> str:
         inputs = tokenizer([text], return_tensors="pt", padding=True,
                            truncation=True, max_length=512)
-        output = model.generate(**inputs, max_new_tokens=512)
+        output = model.generate(**inputs)
         return tokenizer.decode(output[0], skip_special_tokens=True)
 
     # ------------------------------------------------------------------

@@ -241,7 +241,6 @@ class AIConfigPanel(BasePanel):
         win.geometry("480x260")
         win.resizable(True, True)
         win.transient(self.winfo_toplevel())
-        win.grab_set()
 
         txt = ctk.CTkTextbox(win, wrap="word", activate_scrollbars=True)
         txt.pack(fill="both", expand=True, padx=12, pady=(12, 4))
@@ -250,6 +249,9 @@ class AIConfigPanel(BasePanel):
         bind_context_menu(txt, readonly=True, t=t)
 
         ctk.CTkButton(win, text=t("btn_close"), command=win.destroy).pack(pady=(4, 12))
+        win.update_idletasks()
+        win.lift()
+        win.grab_set()
         win.after(100, win.focus_force)
 
     # ------------------------------------------------------------------

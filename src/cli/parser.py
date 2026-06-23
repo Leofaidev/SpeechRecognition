@@ -177,7 +177,16 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     # Lazy imports to avoid pulling in heavy deps for --help / unrecognised param
     from config.store import ConfigStore
-    config = ConfigStore()
+    import os as _os
+    from pathlib import Path as _Path
+    _xdg = _os.environ.get("XDG_DATA_HOME", "")
+    _base = (
+        _os.environ.get("LOCALAPPDATA") or _os.path.expanduser("~")
+        if sys.platform == "win32"
+        else (_xdg if _xdg else _os.path.join(_os.path.expanduser("~"), ".local", "share"))
+    )
+    _cfg_path = _Path(_base) / "SpeechRecognition" / "config.json"
+    config = ConfigStore(_cfg_path) if _cfg_path.exists() else ConfigStore()
 
     ok, message, code = validate_args(args, config)
     if not ok:

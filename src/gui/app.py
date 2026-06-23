@@ -132,6 +132,7 @@ class App(ctk.CTk):
         self._pending_fragment_paths: dict = {}
         self._labelling_queue: list = []
         self._labelling_index: int = 0
+        self._linux_icon_cache: dict = {}    # path → {"argb": list, "photos": tuple}
         self._batch_done_event = None        # set when batch labelling finishes
 
         self._pipeline = PipelineRunner(
@@ -173,6 +174,8 @@ class App(ctk.CTk):
 
         self._build_layout()
         self._register_hotkeys()
+        if sys.platform == "linux":
+            self.after(50, self._poll_hotkey_queue)
 
         # Linux: mouse wheel uses Button-4/5 instead of MouseWheel.
         # Walk up from the event target to find the nearest CTkScrollableFrame
@@ -196,8 +199,20 @@ class App(ctk.CTk):
         self.protocol("WM_DELETE_WINDOW", self._on_close)
 
     # ------------------------------------------------------------------
+    def _log_icon_debug(self, msg: str) -> None:
+        if sys.platform == "win32":
+            return
+        try:
+            import datetime
+            ts = datetime.datetime.now().strftime("%H:%M:%S")
+            with open("/tmp/wsp_icon.log", "a") as _f:
+                _f.write(f"{ts} {msg}\n")
+        except Exception:
+            pass
+
     def _set_window_icon(self, path: str) -> None:
         if not Path(path).exists():
+            self._log_icon_debug(f"missing {path}")
             return
         if sys.platform == "win32":
             try:
@@ -222,33 +237,59 @@ class App(ctk.CTk):
             except Exception:
                 pass
             return
-        # Linux: set _NET_WM_ICON via Xlib — iconphoto() is unreliable on Xwayland.
-        # Resize to 128x128: X11 max request is 65535 units; 256x256 (65538) exceeds it.
-        # winfo_id() returns a Tk child window; walk up to the WM_CLASS top-level.
+        # Linux / XWayland: two mechanisms — Tk-native iconphoto() and direct
+        # Xlib _NET_WM_ICON.  Both writes are logged to /tmp/wsp_icon.log so
+        # we can diagnose failures without needing a display over SSH.
+        #
+        # 1) iconphoto() via Tk's own X11 path — provides multiple sizes so
+        #    GNOME Shell 50 can pick the best fit (48 px for the dash/taskbar).
+        #    Cache the PhotoImage objects keyed by path so we reuse them on
+        #    subsequent calls and don't leak images into Tk's registry.
+        try:
+            from PIL import Image, ImageTk
+            if "photos" not in self._linux_icon_cache.get(path, {}):
+                _base = Image.open(path).convert("RGBA")
+                _photos = tuple(
+                    ImageTk.PhotoImage(_base.resize((s, s), Image.LANCZOS))
+                    for s in (128, 64, 48, 32, 16)
+                )
+                self._linux_icon_cache.setdefault(path, {})["photos"] = _photos
+            _photos = self._linux_icon_cache[path]["photos"]
+            self.iconphoto(False, *_photos)
+            self._icon_photos = _photos  # strong ref so GC won't free the pixmaps
+            self._log_icon_debug(f"iconphoto OK  {Path(path).name}")
+        except Exception as _ie:
+            self._log_icon_debug(f"iconphoto FAIL {_ie}")
+        # 2) _NET_WM_ICON via Xlib (EWMH) — used by the Activities overview and
+        #    alt-tab switcher.  Resize to 128×128 (65538 total values) to stay
+        #    within the X11 max-request limit of 65535 units.
+        #    Set on BOTH the frame window (winfo_id) AND its direct parent so we
+        #    cover both the Tk-frame and the Tk-wrapper that Mutter monitors.
         try:
             from PIL import Image
             from Xlib import display as xdisplay, Xatom
-            img = Image.open(path).convert("RGBA").resize((128, 128), Image.LANCZOS)
-            icon_data = [128, 128]
-            for r, g, b, a in img.getdata():
-                icon_data.append((a << 24) | (r << 16) | (g << 8) | b)
+            if "argb" not in self._linux_icon_cache.get(path, {}):
+                img = Image.open(path).convert("RGBA").resize((128, 128), Image.LANCZOS)
+                _argb: list = [128, 128]
+                for r, g, b, a in img.getdata():
+                    _argb.append((a << 24) | (r << 16) | (g << 8) | b)
+                self._linux_icon_cache.setdefault(path, {})["argb"] = _argb
+            icon_data = self._linux_icon_cache[path]["argb"]
             dpy = xdisplay.Display()
-            WM_CLASS_atom = dpy.intern_atom("WM_CLASS")
-            win = dpy.create_resource_object("window", self.winfo_id())
-            # Walk up the parent chain until we reach the window that has WM_CLASS
-            for _ in range(10):
-                if win.get_full_property(WM_CLASS_atom, Xatom.STRING) is not None:
-                    break
-                parent = win.query_tree().parent
-                if parent is None or parent.id == dpy.screen().root.id:
-                    break
-                win = parent
-            atom = dpy.intern_atom("_NET_WM_ICON")
-            win.change_property(atom, Xatom.CARDINAL, 32, icon_data)
-            dpy.flush()
+            net_icon = dpy.intern_atom("_NET_WM_ICON")
+            frame = dpy.create_resource_object("window", self.winfo_id())
+            parent = frame.query_tree().parent
+            # Set on parent first (the Tk wrapper Mutter watches), then frame.
+            targets = [w for w in (parent, frame)
+                       if w is not None and w.id != dpy.screen().root.id]
+            for w in targets:
+                w.change_property(net_icon, Xatom.CARDINAL, 32, icon_data)
+            dpy.sync()
+            _ids = " ".join(f"{w.id:#x}" for w in targets)
+            self._log_icon_debug(f"xlib OK  wins={_ids}  {Path(path).name}")
             dpy.close()
-        except Exception:
-            pass
+        except Exception as _xe:
+            self._log_icon_debug(f"xlib FAIL {_xe}")
 
     # Layout construction
     # ------------------------------------------------------------------
@@ -1110,7 +1151,6 @@ class App(ctk.CTk):
         dialog.geometry("640x220")
         dialog.resizable(True, True)
         dialog.transient(self)
-        dialog.grab_set()
 
         txt = ctk.CTkTextbox(dialog, wrap="word")
         txt.pack(fill="both", expand=True, padx=12, pady=(12, 4))
@@ -1119,6 +1159,9 @@ class App(ctk.CTk):
         bind_context_menu(txt, readonly=True, t=t)
 
         ctk.CTkButton(dialog, text=t("btn_close"), command=dialog.destroy).pack(pady=(4, 12))
+        dialog.update_idletasks()
+        dialog.lift()
+        dialog.grab_set()
         dialog.after(100, dialog.focus_force)
 
     # ------------------------------------------------------------------
@@ -1413,6 +1456,21 @@ class App(ctk.CTk):
 
     def _clear_hk_pending(self) -> None:
         self._hk_pending = False
+
+    def _poll_hotkey_queue(self) -> None:
+        """Drain evdev hotkey actions queued by the background thread.
+
+        Called every 50 ms from the Tk main thread so that global hotkeys work
+        even when the app window is iconified (minimized).  The evdev thread
+        only does queue.put(); no Tk calls from background threads.
+        """
+        q = self._hotkeys._action_queue
+        while not q.empty():
+            try:
+                q.get_nowait()()
+            except Exception:
+                pass
+        self.after(50, self._poll_hotkey_queue)
 
     # ------------------------------------------------------------------
     # Tray (T-108 to T-112)

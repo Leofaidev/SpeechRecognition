@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import glob
 import os
+import queue as _queue
 import select
 import struct
 import sys
@@ -234,8 +235,11 @@ class HotkeyManager:
         self._handlers: dict[str, list] = {}
 
         # Linux: evdev listener + stored combos (key_str -> (mods, code, cb))
+        # Callbacks are queued here by the evdev thread; the Tk main thread drains
+        # them via a 50 ms after() poll so cross-thread after() calls are avoided.
         self._evdev_listener: _EvdevListener | None = None
         self._evdev_entries: dict[str, tuple[frozenset[str], int, Callable]] = {}
+        self._action_queue: _queue.SimpleQueue[Callable[[], None]] = _queue.SimpleQueue()
 
         # macOS / other: pynput GlobalHotKeys listener + active map
         self._pynput_listener: object | None = None
@@ -403,8 +407,18 @@ class HotkeyManager:
         self._registered.discard(key)
 
     def _push_evdev_combos(self) -> None:
-        """Sync the evdev listener with current _evdev_entries."""
-        combos = [(m, c, cb) for m, c, cb in self._evdev_entries.values()]
+        """Sync the evdev listener with current _evdev_entries.
+
+        The evdev thread must never call Tk methods directly — doing so when
+        the window is iconified can deadlock Tcl's event loop.  Instead each
+        callback is posted to _action_queue; the Tk main thread drains it via
+        a 50 ms after()-poll (see App._poll_hotkey_queue).
+        """
+        q = self._action_queue
+        combos = [
+            (m, c, lambda cb=cb: q.put_nowait(cb))
+            for m, c, cb in self._evdev_entries.values()
+        ]
         if self._evdev_listener is None:
             self._evdev_listener = _EvdevListener()
         self._evdev_listener.set_combos(combos)

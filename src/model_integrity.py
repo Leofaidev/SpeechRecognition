@@ -26,6 +26,7 @@ def is_auth_or_network_error(exc: Exception) -> bool:
         "unauthorized", "authentication", "token", "password",
         "connection", "timeout", "network", "ssl", "cert",
         "name or service not known", "nodename nor servname provided",
+        "outgoing traffic", "offline", "hf_hub_offline",
     ))
 
 

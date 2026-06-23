@@ -423,20 +423,37 @@ class VoiceProfilesPanel(BasePanel):
     def _delete_profile(self) -> None:
         if not self._selected_profile:
             return
-        from tkinter import messagebox
-        if messagebox.askyesno(
-                self._t("delete_confirm_title"),
-                self._t("delete_confirm_msg", count=1)):
+        profile_name = self._selected_profile
+        dlg = ctk.CTkToplevel(self)
+        dlg.title("")
+        dlg.resizable(False, False)
+        dlg.transient(self.winfo_toplevel())
+        dlg.grid_columnconfigure(0, weight=1)
+        ctk.CTkLabel(dlg, text=self._t("delete_confirm_msg", count=1)).grid(
+            row=0, column=0, columnspan=2, padx=16, pady=(16, 8))
+
+        def _do_delete():
+            dlg.destroy()
             library_root = Path(self._config.get("library_root", "library"))
             try:
                 from library.storage import LibraryStorage
-                LibraryStorage(library_root).delete_profile(
-                    self._selected_profile)
+                LibraryStorage(library_root).delete_profile(profile_name)
             except Exception:
                 pass
             self._selected_profile = None
             self._refresh_speakers()
             self._refresh_groups()
+
+        btn_frame = ctk.CTkFrame(dlg, fg_color="transparent")
+        btn_frame.grid(row=1, column=0, columnspan=2, pady=(0, 14))
+        ctk.CTkButton(btn_frame, text=self._t("btn_confirm"),
+                      command=_do_delete).pack(side="left", padx=8)
+        ctk.CTkButton(btn_frame, text=self._t("btn_cancel"),
+                      command=dlg.destroy).pack(side="left", padx=8)
+        dlg.update_idletasks()
+        dlg.lift()
+        dlg.grab_set()
+        dlg.focus_set()
 
     def _import_profiles(self) -> None:
         from tkinter import filedialog
@@ -508,7 +525,7 @@ class VoiceProfilesPanel(BasePanel):
         dlg = ctk.CTkToplevel(self)
         dlg.title("")
         dlg.resizable(False, False)
-        dlg.grab_set()
+        dlg.transient(self.winfo_toplevel())
         dlg.grid_columnconfigure(0, weight=1)
 
         ctk.CTkLabel(dlg, text=self._t("group_name_prompt")).grid(
@@ -516,7 +533,6 @@ class VoiceProfilesPanel(BasePanel):
         var = ctk.StringVar()
         entry = ctk.CTkEntry(dlg, textvariable=var, width=220)
         entry.grid(row=1, column=0, columnspan=2, padx=16, pady=(0, 12))
-        entry.focus_set()
 
         def _confirm():
             name = var.get().strip()
@@ -536,50 +552,96 @@ class VoiceProfilesPanel(BasePanel):
         ctk.CTkButton(btn_frame, text=self._t("btn_cancel"),
                       command=dlg.destroy).pack(side="left", padx=8)
         entry.bind("<Return>", lambda e: _confirm())
+        dlg.update_idletasks()
+        dlg.lift()
+        dlg.grab_set()
+        entry.focus_set()
 
     def _rename_group(self) -> None:
         if not self._selected_group:
             return
-        from tkinter.simpledialog import askstring
-        new = askstring("", self._t("group_new_name_prompt"), parent=self)
-        if not new:
-            return
-        library_root = Path(self._config.get("library_root", "library"))
-        from library.storage import LibraryStorage
-        from library.groups import LibraryGroups
-        groups = LibraryGroups(LibraryStorage(library_root))
-        try:
-            groups.rename_group(self._selected_group, new)
-        except Exception:
-            pass
-        # Keep config-stored names in sync
-        known = list(self._config.get("known_groups", []))
-        if self._selected_group in known:
-            known.remove(self._selected_group)
-            if new not in known:
-                known.append(new)
-            self._config.set("known_groups", known)
-        self._refresh_groups()
+        old_name = self._selected_group
+        dlg = ctk.CTkToplevel(self)
+        dlg.title("")
+        dlg.resizable(False, False)
+        dlg.transient(self.winfo_toplevel())
+        dlg.grid_columnconfigure(0, weight=1)
+        ctk.CTkLabel(dlg, text=self._t("group_new_name_prompt")).grid(
+            row=0, column=0, columnspan=2, padx=16, pady=(16, 8), sticky="w")
+        var = ctk.StringVar(value=old_name)
+        entry = ctk.CTkEntry(dlg, textvariable=var, width=220)
+        entry.grid(row=1, column=0, columnspan=2, padx=16, pady=(0, 12))
+
+        def _do_rename():
+            new = var.get().strip()
+            if not new or new == old_name:
+                dlg.destroy()
+                return
+            dlg.destroy()
+            library_root = Path(self._config.get("library_root", "library"))
+            from library.storage import LibraryStorage
+            from library.groups import LibraryGroups
+            groups = LibraryGroups(LibraryStorage(library_root))
+            try:
+                groups.rename_group(old_name, new)
+            except Exception:
+                pass
+            known = list(self._config.get("known_groups", []))
+            if old_name in known:
+                known.remove(old_name)
+                if new not in known:
+                    known.append(new)
+                self._config.set("known_groups", known)
+            self._refresh_groups()
+
+        btn_frame = ctk.CTkFrame(dlg, fg_color="transparent")
+        btn_frame.grid(row=2, column=0, columnspan=2, pady=(0, 14))
+        ctk.CTkButton(btn_frame, text=self._t("btn_confirm"),
+                      command=_do_rename).pack(side="left", padx=8)
+        ctk.CTkButton(btn_frame, text=self._t("btn_cancel"),
+                      command=dlg.destroy).pack(side="left", padx=8)
+        entry.bind("<Return>", lambda e: _do_rename())
+        dlg.update_idletasks()
+        dlg.lift()
+        dlg.grab_set()
+        entry.select_range(0, "end")
+        entry.focus_set()
 
     def _delete_group(self) -> None:
         if not self._selected_group:
             return
-        from tkinter import messagebox
-        if not messagebox.askyesno(
-                self._t("delete_confirm_title"),
-                self._t("delete_confirm_msg", count=1)):
-            return
-        library_root = Path(self._config.get("library_root", "library"))
-        from library.storage import LibraryStorage
-        from library.groups import LibraryGroups
-        groups = LibraryGroups(LibraryStorage(library_root))
-        try:
-            groups.delete_group(self._selected_group)
-        except Exception:
-            pass
-        # Remove from config-stored names
-        known = list(self._config.get("known_groups", []))
-        if self._selected_group in known:
-            known.remove(self._selected_group)
-            self._config.set("known_groups", known)
-        self._refresh_groups()
+        group_name = self._selected_group
+        dlg = ctk.CTkToplevel(self)
+        dlg.title("")
+        dlg.resizable(False, False)
+        dlg.transient(self.winfo_toplevel())
+        dlg.grid_columnconfigure(0, weight=1)
+        ctk.CTkLabel(dlg, text=self._t("delete_confirm_msg", count=1)).grid(
+            row=0, column=0, columnspan=2, padx=16, pady=(16, 8))
+
+        def _do_delete():
+            dlg.destroy()
+            library_root = Path(self._config.get("library_root", "library"))
+            from library.storage import LibraryStorage
+            from library.groups import LibraryGroups
+            groups = LibraryGroups(LibraryStorage(library_root))
+            try:
+                groups.delete_group(group_name)
+            except Exception:
+                pass
+            known = list(self._config.get("known_groups", []))
+            if group_name in known:
+                known.remove(group_name)
+                self._config.set("known_groups", known)
+            self._refresh_groups()
+
+        btn_frame = ctk.CTkFrame(dlg, fg_color="transparent")
+        btn_frame.grid(row=1, column=0, columnspan=2, pady=(0, 14))
+        ctk.CTkButton(btn_frame, text=self._t("btn_confirm"),
+                      command=_do_delete).pack(side="left", padx=8)
+        ctk.CTkButton(btn_frame, text=self._t("btn_cancel"),
+                      command=dlg.destroy).pack(side="left", padx=8)
+        dlg.update_idletasks()
+        dlg.lift()
+        dlg.grab_set()
+        dlg.focus_set()

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import subprocess
 import threading
 from pathlib import Path
 from typing import Callable
@@ -26,14 +27,21 @@ class ProfileDialog(ctk.CTkToplevel):
         self._on_done = on_done or (lambda fn: None)
         self._player = None
         self._active_play_btn = None
+        self._pa_proc: subprocess.Popen | None = None
+        self._pa_stop_flag: threading.Event | None = None
         self._initial_values: dict[str, str] = {}
         self.title(t("dialog_edit_profile"))
         self.geometry("520x740")
-        self.grab_set()
         self.protocol("WM_DELETE_WINDOW", self._cancel)
         self._build()
         self._load_existing()
+        self.update_idletasks()
+        self.transient(parent.winfo_toplevel())
+        self.lift()
+        self.grab_set()
         self.focus_force()
+        # XWayland/Wayland sometimes re-stacks windows after initial map
+        self.after(150, lambda: self.lift() if self.winfo_exists() else None)
 
     # ------------------------------------------------------------------
     # Build
@@ -200,8 +208,12 @@ class ProfileDialog(ctk.CTkToplevel):
 
     def _remove_sample(self, sample_name: str) -> None:
         from tkinter import messagebox
-        if not messagebox.askyesno(
-                self._t("delete_confirm_title"), f"{sample_name}"):
+        self.grab_release()
+        confirmed = messagebox.askyesno(
+            self._t("delete_confirm_title"), f"{sample_name}", parent=self)
+        self.lift()
+        self.grab_set()
+        if not confirmed:
             return
         library_root = Path(self._config.get("library_root", "library"))
         try:
@@ -227,13 +239,19 @@ class ProfileDialog(ctk.CTkToplevel):
                     self.after(0, self._build_samples_list)
             threading.Thread(target=_bg, daemon=True).start()
         except Exception as exc:
-            from tkinter import messagebox
-            messagebox.showerror(self._t("error_title"), str(exc))
+            self.grab_release()
+            messagebox.showerror(self._t("error_title"), str(exc), parent=self)
+            self.lift()
+            self.grab_set()
 
     def _add_sample(self) -> None:
         from tkinter import filedialog
+        self.grab_release()
         path = filedialog.askopenfilename(
+            parent=self,
             filetypes=[("Audio", "*.mp3 *.wav *.mp4 *.avi")])
+        self.lift()
+        self.grab_set()
         if not path:
             return
         library_root = Path(self._config.get("library_root", "library"))
@@ -270,7 +288,10 @@ class ProfileDialog(ctk.CTkToplevel):
             threading.Thread(target=_bg, daemon=True).start()
         except Exception as exc:
             from tkinter import messagebox
-            messagebox.showerror(self._t("error_title"), str(exc))
+            self.grab_release()
+            messagebox.showerror(self._t("error_title"), str(exc), parent=self)
+            self.lift()
+            self.grab_set()
 
     # ------------------------------------------------------------------
     # Sample playback (toggle Play / Stop)
@@ -294,12 +315,70 @@ class ProfileDialog(ctk.CTkToplevel):
             btn.configure(text=self._t("btn_stop"))
         except Exception:
             self._player = None
-            self._active_play_btn = None
+            # VLC not available — fall back to subprocess player (ffplay / aplay)
+            self._start_subprocess_playback(path, btn)
+
+    def _start_subprocess_playback(self, path: str, btn) -> None:
+        """Play *path* via ffplay or aplay when python-vlc is unavailable."""
+        self._active_play_btn = btn
+        btn.configure(text=self._t("btn_stop"))
+        stop_flag = threading.Event()
+        self._pa_stop_flag = stop_flag
+
+        def _thread() -> None:
+            proc: subprocess.Popen | None = None
+            try:
+                for cmd in (
+                    ["ffplay", "-nodisp", "-autoexit", "-loglevel", "quiet", path],
+                    ["aplay", "--quiet", path],
+                ):
+                    try:
+                        proc = subprocess.Popen(
+                            cmd,
+                            stdout=subprocess.DEVNULL,
+                            stderr=subprocess.DEVNULL,
+                        )
+                        self._pa_proc = proc
+                        break
+                    except FileNotFoundError:
+                        continue
+                if proc is None:
+                    return
+                while proc.poll() is None:
+                    if stop_flag.is_set():
+                        proc.terminate()
+                        break
+                    stop_flag.wait(0.05)
+            except Exception:
+                if proc is not None:
+                    try:
+                        proc.terminate()
+                    except Exception:
+                        pass
+            finally:
+                if proc is not None:
+                    try:
+                        proc.wait(timeout=2)
+                    except Exception:
+                        pass
+                self._pa_proc = None
+                self.after(0, self._on_sample_playback_ended)
+
+        threading.Thread(target=_thread, daemon=True).start()
 
     def _stop_sample_playback(self) -> None:
         if self._player is not None:
             self._player.stop()
             self._player = None
+        if self._pa_stop_flag is not None:
+            self._pa_stop_flag.set()
+            self._pa_stop_flag = None
+        if self._pa_proc is not None:
+            try:
+                self._pa_proc.terminate()
+            except Exception:
+                pass
+            self._pa_proc = None
         if self._active_play_btn is not None:
             try:
                 self._active_play_btn.configure(text=self._t("btn_play"))
@@ -344,6 +423,8 @@ class ProfileDialog(ctk.CTkToplevel):
     def _cancel(self) -> None:
         self._stop_sample_playback()
         self._on_done(None)
+        self.grab_release()
+        self.withdraw()
         self.destroy()
 
     def _confirm(self) -> None:
@@ -366,4 +447,6 @@ class ProfileDialog(ctk.CTkToplevel):
             return
         self._stop_sample_playback()
         self._on_done(self._folder_name)
+        self.grab_release()
+        self.withdraw()
         self.destroy()
