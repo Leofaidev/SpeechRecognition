@@ -273,8 +273,14 @@ class App(ctk.CTk):
                 w.change_property(net_icon, Xatom.CARDINAL, 32, icon_data)
             dpy.sync()
             dpy.close()
-        except Exception:
-            pass
+        except Exception as _icon_exc:
+            try:
+                with open("/tmp/wsp_icon_err.log", "a") as _f:
+                    import traceback
+                    _f.write(f"[_NET_WM_ICON] {type(_icon_exc).__name__}: {_icon_exc}\n")
+                    traceback.print_exc(file=_f)
+            except Exception:
+                pass
 
     # Layout construction
     # ------------------------------------------------------------------
