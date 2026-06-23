@@ -255,7 +255,10 @@ class App(ctk.CTk):
             if "argb" not in self._linux_icon_cache.get(path, {}):
                 img = Image.open(path).convert("RGBA").resize((128, 128), Image.LANCZOS)
                 _argb: list = [128, 128]
-                for r, g, b, a in img.getdata():
+                import struct
+                raw = img.tobytes()
+                for i in range(0, len(raw), 4):
+                    r, g, b, a = struct.unpack_from("4B", raw, i)
                     _argb.append((a << 24) | (r << 16) | (g << 8) | b)
                 self._linux_icon_cache.setdefault(path, {})["argb"] = _argb
             icon_data = self._linux_icon_cache[path]["argb"]

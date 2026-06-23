@@ -433,6 +433,7 @@ Terminal=false
 Categories=AudioVideo;Audio;Utility;
 Keywords=speech;voice;transcription;recognition;whisper;
 StartupNotify=true
+StartupWMClass=Wsp
 DESKENTRY
 chmod 644 "$DESKTOP"
 update-desktop-database "$APPS_DIR" 2>/dev/null || true
