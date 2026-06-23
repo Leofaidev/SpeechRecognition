@@ -415,9 +415,14 @@ ICON_SRC="$INSTALL_DIR/assets/WSP.png"
 ICON_DEST="$ICONS_DIR/SpeechRecognitionProgram.png"
 if [[ -f "$ICON_SRC" ]]; then
     cp "$ICON_SRC" "$ICON_DEST"
+    # Register in hicolor theme so GNOME Shell resolves by name (full paths
+    # are not reliably loaded by GNOME Shell on GNOME 46+).
+    gtk-update-icon-cache -f -t "$HOME/.local/share/icons/hicolor/" 2>/dev/null || true
     info "Icon: $ICON_DEST"
+    ICON_FIELD="SpeechRecognitionProgram"
 else
-    ICON_DEST="application-x-executable"
+    warn "Icon source not found: $ICON_SRC"
+    ICON_FIELD="application-x-executable"
 fi
 
 DESKTOP="$APPS_DIR/SpeechRecognitionProgram.desktop"
@@ -428,7 +433,7 @@ Name=Speech Recognition Program
 GenericName=Speech Recognition
 Comment=Locally-executed GPU-accelerated speech recognition
 Exec=${LAUNCHER}
-Icon=${ICON_DEST}
+Icon=${ICON_FIELD}
 Terminal=false
 Categories=AudioVideo;Audio;Utility;
 Keywords=speech;voice;transcription;recognition;whisper;
