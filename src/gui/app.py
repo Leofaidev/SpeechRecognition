@@ -112,6 +112,12 @@ class App(ctk.CTk):
                  lang_dir: Path | None = None) -> None:
         super().__init__(className="WSP")
 
+        # On Linux: withdraw before GNOME Shell processes the first MapNotify so
+        # _GTK_APPLICATION_ID is already set when the window is shown (deiconify
+        # is called at the end of __init__ after _set_linux_window_identity).
+        if sys.platform == "linux":
+            self.withdraw()
+
         # Services
         self._config = config or ConfigStore()
         lang_code = self._config.get("ui_language", "en")
@@ -181,6 +187,10 @@ class App(ctk.CTk):
             self.update_idletasks()
             self._set_linux_window_identity()
             self._set_window_icon(self._icon_idle)
+        # Linux: now show the window — GNOME Shell reads _GTK_APPLICATION_ID
+        # on this MapNotify and resolves it to SpeechRecognitionProgram.desktop.
+        if sys.platform == "linux":
+            self.deiconify()
         self.after(500, lambda: self._set_window_icon(self._icon_idle))
 
         # Linux: mouse wheel uses Button-4/5 instead of MouseWheel.
