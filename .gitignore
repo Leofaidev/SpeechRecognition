@@ -99,5 +99,10 @@ output_txt/
 sessions/
 library/
 src/output_WSP*/
+src/*_WSP.*
+src/*_WSP_*.*
 src/sessions/
 src/library/[А-ЯA-Z]*/
+
+# Temp debug / scratch files
+check_tmp.txt

@@ -198,21 +198,8 @@ class App(ctk.CTk):
         # Minimize-to-tray intercept
         self.protocol("WM_DELETE_WINDOW", self._on_close)
 
-    # ------------------------------------------------------------------
-    def _log_icon_debug(self, msg: str) -> None:
-        if sys.platform == "win32":
-            return
-        try:
-            import datetime
-            ts = datetime.datetime.now().strftime("%H:%M:%S")
-            with open("/tmp/wsp_icon.log", "a") as _f:
-                _f.write(f"{ts} {msg}\n")
-        except Exception:
-            pass
-
     def _set_window_icon(self, path: str) -> None:
         if not Path(path).exists():
-            self._log_icon_debug(f"missing {path}")
             return
         if sys.platform == "win32":
             try:
@@ -238,9 +225,7 @@ class App(ctk.CTk):
                 pass
             return
         # Linux / XWayland: two mechanisms — Tk-native iconphoto() and direct
-        # Xlib _NET_WM_ICON.  Both writes are logged to /tmp/wsp_icon.log so
-        # we can diagnose failures without needing a display over SSH.
-        #
+        # Xlib _NET_WM_ICON.
         # 1) iconphoto() via Tk's own X11 path — provides multiple sizes so
         #    GNOME Shell 50 can pick the best fit (48 px for the dash/taskbar).
         #    Cache the PhotoImage objects keyed by path so we reuse them on
@@ -257,9 +242,8 @@ class App(ctk.CTk):
             _photos = self._linux_icon_cache[path]["photos"]
             self.iconphoto(False, *_photos)
             self._icon_photos = _photos  # strong ref so GC won't free the pixmaps
-            self._log_icon_debug(f"iconphoto OK  {Path(path).name}")
-        except Exception as _ie:
-            self._log_icon_debug(f"iconphoto FAIL {_ie}")
+        except Exception:
+            pass
         # 2) _NET_WM_ICON via Xlib (EWMH) — used by the Activities overview and
         #    alt-tab switcher.  Resize to 128×128 (65538 total values) to stay
         #    within the X11 max-request limit of 65535 units.
@@ -285,11 +269,9 @@ class App(ctk.CTk):
             for w in targets:
                 w.change_property(net_icon, Xatom.CARDINAL, 32, icon_data)
             dpy.sync()
-            _ids = " ".join(f"{w.id:#x}" for w in targets)
-            self._log_icon_debug(f"xlib OK  wins={_ids}  {Path(path).name}")
             dpy.close()
-        except Exception as _xe:
-            self._log_icon_debug(f"xlib FAIL {_xe}")
+        except Exception:
+            pass
 
     # Layout construction
     # ------------------------------------------------------------------
